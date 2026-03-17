@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FX Exchange Rate Monitor - Professional Trading Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+
+    <script>
+        window.TEXTS = {
+            locale: 'en-US',
+            pairExists: 'This pair is already active',
+            reversePairExists: 'The reverse pair is already active',
+            sameCurrency: 'Currencies must be different',
+            noData: 'Unable to fetch data for this pair',
+            added: 'added',
+            removed: 'removed'
+        };
+
+        window.PERIOD_LABELS = {
+            '1d': '1 Day',
+            '1w': '1 Week',
+            '1m': '1 Month',
+            '3m': '3 Months',
+            '6m': '6 Months',
+            '1y': '1 Year'
+        };
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">
+                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                            <path d="M16 2L28 9V23L16 30L4 23V9L16 2Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <path d="M16 10V22M10 16H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <h1>FX MONITOR</h1>
+                    </div>
+                    <div class="status-indicator">
+                        <span class="pulse"></span>
+                        <span class="status-text">Live</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <a href="index-zh.html" class="lang-switch">🇨🇳 中文</a>
+                    <div class="bank-selector-wrapper">
+                        <label for="bank-select">Bank</label>
+                        <select id="bank-select" class="bank-select">
+                            <optgroup label="🇫🇷 French Banks">
+                                <option value="bnp">BNP Paribas</option>
+                                <option value="ca">Crédit Agricole</option>
+                                <option value="sg">Société Générale</option>
+                                <option value="bpce">Groupe BPCE</option>
+                                <option value="cm">Crédit Mutuel</option>
+                            </optgroup>
+                            <optgroup label="🇨🇳 Chinese Banks">
+                                <option value="icbc">ICBC</option>
+                                <option value="ccb">CCB</option>
+                                <option value="abc">ABC</option>
+                                <option value="boc">BOC</option>
+                                <option value="bocom">BoCom</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- 1. Bank Exchange Rate Board -->
+            <section>
+                <h2>Exchange Rate Board</h2>
+                <div class="rate-table-wrapper">
+                    <table class="rate-table" id="rate-table">
+                        <thead>
+                            <tr>
+                                <th>Pair</th>
+                                <th>TT Buy</th>
+                                <th>TT Sell</th>
+                                <th>Cash Buy</th>
+                                <th>Cash Sell</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rate-table-body">
+                            <tr><td colspan="5" class="placeholder-text">Loading exchange rates...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 2. Understanding Exchange Rates - COMPACT -->
+            <section>
+                <h2>Rate Types</h2>
+                <div class="explanation-compact">
+                    <div class="explanation-item">
+                        <span class="explanation-icon">📊</span>
+                        <div class="explanation-content">
+                            <h4>TT (Wire Transfer)</h4>
+                            <p>Electronic transfer rate for digital transactions</p>
+                        </div>
+                    </div>
+                    <div class="explanation-item">
+                        <span class="explanation-icon">💵</span>
+                        <div class="explanation-content">
+                            <h4>Cash</h4>
+                            <p>Physical currency exchange with handling costs</p>
+                        </div>
+                    </div>
+                    <div class="explanation-item">
+                        <span class="explanation-icon">📉</span>
+                        <div class="explanation-content">
+                            <h4>Buy (Bid)</h4>
+                            <p>Bank buys foreign currency from you</p>
+                        </div>
+                    </div>
+                    <div class="explanation-item">
+                        <span class="explanation-icon">📈</span>
+                        <div class="explanation-content">
+                            <h4>Sell (Ask)</h4>
+                            <p>Bank sells foreign currency to you</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Currency Conversion Calculator with Fees -->
+            <section>
+                <h2>Currency Calculator</h2>
+                <div class="converter-grid">
+                    <div class="converter-input-group">
+                        <label for="convert-from">From</label>
+                        <select id="convert-from" class="converter-select">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="CHF">CHF</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
+                            <option value="CNY">CNY</option>
+                            <option value="HKD">HKD</option>
+                            <option value="SGD">SGD</option>
+                        </select>
+                    </div>
+                    <div class="converter-input-group">
+                        <label for="convert-amount">Amount</label>
+                        <input type="number" id="convert-amount" class="converter-input" value="1000" min="0" step="0.01">
+                    </div>
+                    <div class="converter-input-group">
+                        <label for="convert-to">To</label>
+                        <select id="convert-to" class="converter-select">
+                            <option value="CNY">CNY</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="CHF">CHF</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
+                            <option value="HKD">HKD</option>
+                            <option value="SGD">SGD</option>
+                        </select>
+                    </div>
+                    <div class="converter-input-group">
+                        <label for="rate-type">Type</label>
+                        <select id="rate-type" class="converter-select">
+                            <option value="tt-sell">TT Sell</option>
+                            <option value="tt-buy">TT Buy</option>
+                            <option value="cash-sell">Cash Sell</option>
+                            <option value="cash-buy">Cash Buy</option>
+                        </select>
+                    </div>
+                    <div class="converter-input-group">
+                        <label for="fee-percent">Fee %</label>
+                        <input type="number" id="fee-percent" class="converter-input" value="0" min="0" max="10" step="0.1">
+                    </div>
+                    <div class="converter-input-group">
+                        <label for="fee-fixed">Fixed Fee</label>
+                        <input type="number" id="fee-fixed" class="converter-input" value="0" min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="converter-result">
+                    <span class="result-label">Result</span>
+                    <span class="result-value" id="result-value">--</span>
+                    <div class="result-details" id="result-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Rate</span>
+                            <span class="detail-value" id="detail-rate">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Bank</span>
+                            <span class="detail-value" id="detail-bank">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Fees</span>
+                            <span class="detail-value" id="detail-fees">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Net Amount</span>
+                            <span class="detail-value" id="detail-net">--</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Rate Evolution + Currency Pair Selection COMBINED -->
+            <section>
+                <h2>Rate Evolution & Analysis</h2>
+
+                <div class="chart-controls-wrapper">
+                    <div class="pair-selector-inline">
+                        <select id="base-currency" class="converter-select">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="CHF">CHF</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
+                            <option value="CNY">CNY</option>
+                            <option value="HKD">HKD</option>
+                            <option value="SGD">SGD</option>
+                        </select>
+                        <select id="target-currency" class="converter-select">
+                            <option value="CNY">CNY</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="CHF">CHF</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
+                            <option value="HKD">HKD</option>
+                            <option value="SGD">SGD</option>
+                        </select>
+                        <button id="add-pair-btn" class="add-pair-btn">+ Add</button>
+                    </div>
+
+                    <div class="time-controls">
+                        <button class="time-btn active" data-period="1d" data-days="1">1D</button>
+                        <button class="time-btn" data-period="1w" data-days="7">1W</button>
+                        <button class="time-btn" data-period="1m" data-days="30">1M</button>
+                        <button class="time-btn" data-period="3m" data-days="90">3M</button>
+                        <button class="time-btn" data-period="6m" data-days="180">6M</button>
+                        <button class="time-btn" data-period="1y" data-days="365">1Y</button>
+                    </div>
+                </div>
+
+                <div class="active-pairs-inline" id="active-pairs-container"></div>
+
+                <div class="chart-wrapper">
+                    <canvas id="rateChart"></canvas>
+                </div>
+            </section>
+
+            <!-- 5. Key Metrics -->
+            <section>
+                <h2>Key Metrics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <span class="stat-label">Avg Change</span>
+                        <span class="stat-value" id="avg-change">+0.00%</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Highest</span>
+                        <span class="stat-value" id="highest-rate">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Lowest</span>
+                        <span class="stat-value" id="lowest-rate">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Updated</span>
+                        <span class="stat-value" id="last-update" style="font-size: 1.25rem;">--:--:--</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. Best Time to Exchange Recommendation -->
+            <section>
+                <h2>Exchange Timing Recommendation</h2>
+                <div class="recommendation-grid" id="recommendation-grid">
+                    <p class="placeholder-text">Add currency pairs to the chart to see recommendations...</p>
+                </div>
+            </section>
+
+            <!-- 7. Rate Alerts -->
+            <section>
+                <h2>Rate Alerts</h2>
+                <div class="alerts-container">
+                    <div class="alert-input-group">
+                        <select id="alert-base" class="converter-select">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="CHF">CHF</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
+                            <option value="CNY">CNY</option>
+                            <option value="HKD">HKD</option>
+                            <option value="SGD">SGD</option>
+                        </select>
+                        <span class="alert-arrow">→</span>
+                        <select id="alert-target" class="converter-select">
+                            <option value="CNY">CNY</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="CHF">CHF</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
+                            <option value="HKD">HKD</option>
+                            <option value="SGD">SGD</option>
+                        </select>
+                        <select id="alert-condition" class="converter-select">
+                            <option value="above">Above ≥</option>
+                            <option value="below">Below ≤</option>
+                        </select>
+                        <input type="number" id="alert-value" class="converter-input" placeholder="Target rate" step="0.0001">
+                        <button id="add-alert-btn" class="add-pair-btn">+ Add Alert</button>
+                    </div>
+                    <div class="active-alerts" id="active-alerts">
+                        <p class="placeholder-text">No alerts set. Add an alert to get notified!</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="app.js?v=20250201-2"></script>
+</body>
+</html>

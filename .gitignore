@@ -1,0 +1,26 @@
+# === PRIVATE / INTERNAL ===
+.claude/
+.claude/**
+*.log
+*.conversation
+*.memory
+
+# Old prototype
+exchange-weather.html
+test-language.html
+
+# === OS ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === Archives ===
+*.zip
+*.tar.gz

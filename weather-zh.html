@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>换汇天气 - 今天适合换汇吗？</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#F8FAFC;--card:#FFF;--text:#1A1A2E;--text2:#6B7280;--green:#10B981;--green-bg:#ECFDF5;--red:#EF4444;--red-bg:#FEF2F2;--amber:#F59E0B;--amber-bg:#FFFBEB;--blue:#3B82F6;--blue-bg:#EFF6FF;--sidebar:#FFFFFF;--sidebar-w:220px;--header-h:64px;--shadow:0 2px 16px rgba(0,0,0,.05);--radius:16px;--accent:#6366F1}
+        body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;overflow:hidden}
+
+        /* === LAYOUT === */
+        .layout{display:grid;grid-template-rows:var(--header-h) 1fr;grid-template-columns:var(--sidebar-w) 1fr;height:100vh}
+        .header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--card);border-bottom:1px solid #E5E7EB;z-index:10}
+        .header-left{display:flex;align-items:center;gap:16px}
+        .header-left h1{font-size:1.15rem;font-weight:700;letter-spacing:.5px}
+        .live-dot{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .pair-selector{display:flex;align-items:center;gap:10px}
+        .pair-selector select{font-size:.95rem;font-weight:600;padding:8px 32px 8px 12px;border:1.5px solid #E5E7EB;border-radius:10px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%236B7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E") no-repeat right 10px center;color:var(--text);cursor:pointer;outline:none;-webkit-appearance:none;appearance:none}
+        .pair-selector select:focus{border-color:var(--accent)}
+        .swap-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid #E5E7EB;background:var(--card);font-size:1rem;cursor:pointer;transition:transform .4s,border-color .2s;display:flex;align-items:center;justify-content:center}
+        .swap-btn:hover{border-color:var(--accent)}.swap-btn.spin{transform:rotate(180deg)}
+        .header-right{display:flex;align-items:center;gap:12px}
+        .lang-toggle{font-size:.82rem;color:var(--accent);text-decoration:none;padding:6px 12px;border:1.5px solid var(--accent);border-radius:8px;transition:all .2s;font-weight:500}
+        .lang-toggle:hover{background:var(--accent);color:#fff}
+
+        /* === SIDEBAR === */
+        .sidebar{background:var(--sidebar);border-right:1px solid #E5E7EB;padding:16px 0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+        .tab-btn{display:flex;align-items:center;gap:12px;padding:14px 20px;border:none;background:transparent;color:var(--text2);font-size:.9rem;font-weight:500;cursor:pointer;transition:all .15s;text-align:left;font-family:inherit;border-left:3px solid transparent;width:100%}
+        .tab-btn:hover{background:#F1F5F9;color:var(--text)}
+        .tab-btn.active{background:linear-gradient(90deg,#EEF2FF,transparent);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+        .tab-icon{font-size:1.2rem;width:24px;text-align:center;flex-shrink:0}
+        .tab-label{white-space:nowrap}
+
+        /* === CONTENT === */
+        .content{overflow-y:auto;padding:24px 32px;scroll-behavior:smooth}
+        .content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:3px}
+        .tab-panel{display:none}.tab-panel.active{display:block}
+
+        /* === CARDS === */
+        .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
+        .card-title{font-size:.88rem;font-weight:600;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+        .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+        .card-grid>.card{margin-bottom:0}
+
+        /* Mini weather dashboard */
+        .mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+        .mini-card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:14px 10px;text-align:center;transition:transform .15s;cursor:default}
+        .mini-card:hover{transform:translateY(-2px)}
+        .mini-icon{font-size:1.4rem;line-height:1}
+        .mini-pair{font-size:.75rem;font-weight:600;color:var(--text);margin-top:4px;letter-spacing:.3px}
+        .mini-rate{font-size:.95rem;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+        .mini-chg{font-size:.7rem;font-weight:600;margin-top:2px}
+        .mini-chg.up{color:var(--green)}.mini-chg.down{color:var(--red)}.mini-chg.flat{color:var(--text2)}
+
+        /* Trend 2x2 grid */
+        .trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+        .trend-grid>.card{margin-bottom:0}
+        .trend-grid .regret-grid{grid-template-columns:1fr}
+
+        /* Timeline */
+        .timeline{position:relative;padding-left:24px;border-left:2px solid #E5E7EB}
+        .tl-item{position:relative;padding:0 0 20px 16px}
+        .tl-item:last-child{padding-bottom:0}
+        .tl-dot{position:absolute;left:-31px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--card);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:.55rem}
+        .tl-date{font-size:.72rem;color:var(--text2)}.tl-title{font-weight:600;font-size:.88rem;margin-top:2px}.tl-desc{font-size:.78rem;color:var(--text2);margin-top:1px}
+
+        /* Quiz */
+        .quiz-q{font-size:1.05rem;font-weight:600;margin-bottom:14px;line-height:1.5}
+        .quiz-opts{display:flex;flex-direction:column;gap:8px}
+        .quiz-opt{padding:12px 16px;border:2px solid #E5E7EB;border-radius:10px;background:var(--card);cursor:pointer;font-size:.92rem;transition:all .15s;text-align:left;font-family:inherit;color:var(--text);width:100%}
+        .quiz-opt:hover{border-color:var(--accent);background:#F5F3FF}
+        .quiz-opt.correct{border-color:var(--green);background:var(--green-bg);color:var(--green);font-weight:600}
+        .quiz-opt.wrong{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+        .quiz-opt.dim{opacity:.5;pointer-events:none}
+        .quiz-fb{text-align:center;margin-top:14px;font-weight:600;font-size:.95rem;padding:8px;border-radius:8px}
+        .level-bar{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#F9FAFB;border-radius:12px;margin-bottom:14px}
+        .level-badge{font-size:1.5rem}.level-info{flex:1}
+        .level-name{font-weight:700;font-size:.95rem}.level-score{font-size:.78rem;color:var(--text2)}
+        .level-progress{height:6px;border-radius:3px;background:#E5E7EB;margin-top:6px;overflow:hidden}
+        .level-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),#8B5CF6);transition:width .5s}
+
+        /* Encyclopedia */
+        .ency-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .ency-card{padding:16px;border-radius:12px;background:#F9FAFB;transition:transform .15s}
+        .ency-card:hover{transform:translateY(-2px)}
+        .ency-flag{font-size:2rem}.ency-code{font-size:.82rem;font-weight:700;color:var(--accent);margin-top:4px}
+        .ency-name{font-size:.78rem;color:var(--text2)}.ency-fact{font-size:.8rem;margin-top:6px;line-height:1.5;color:var(--text)}
+
+        /* Batch simulator */
+        .batch-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+        .batch-form input,.batch-form select{font-size:.92rem;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;background:var(--card);color:var(--text);outline:none;width:90px;font-weight:600}
+        .batch-vs{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}
+        .batch-col{padding:16px;border-radius:12px;text-align:center}
+        .batch-col.once{background:var(--amber-bg)}.batch-col.split{background:var(--green-bg)}
+        .batch-col-title{font-size:.78rem;font-weight:600;color:var(--text2)}.batch-col-val{font-size:1.3rem;font-weight:800;margin-top:4px}
+        .batch-col-detail{font-size:.75rem;color:var(--text2);margin-top:4px}
+        .batch-diff{text-align:center;align-self:center;padding:8px;font-weight:700;font-size:.88rem}
+        .batch-diff.win{color:var(--green)}.batch-diff.lose{color:var(--red)}
+
+        /* Purchasing Power */
+        .ppp-split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+        .ppp-col-title{font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:8px;text-align:center}
+        .ppp-item{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.85rem}
+        .ppp-icon{font-size:1rem;width:20px;text-align:center}.ppp-name{flex:1;color:var(--text2)}.ppp-qty{font-weight:700;font-variant-numeric:tabular-nums}
+
+        /* What-if slider */
+        .whatif-range{width:100%;height:8px;-webkit-appearance:none;background:linear-gradient(to right,var(--red),var(--amber),var(--green));border-radius:4px;outline:none;cursor:pointer;margin:12px 0 4px}
+        .whatif-range::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--card);border:3px solid var(--accent);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+        .whatif-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text2)}
+        .whatif-result{text-align:center;margin-top:10px;padding:12px;background:#F9FAFB;border-radius:10px}
+        .whatif-rate{font-size:1.3rem;font-weight:800;color:var(--accent)}.whatif-amount{font-size:1rem;font-weight:700;margin-top:2px}
+        .whatif-diff{font-size:.85rem;font-weight:600;margin-top:2px}
+
+        /* Quiz bank */
+        .learn-top{display:grid;grid-template-columns:3fr 2fr;gap:20px}
+        .learn-top>.card{margin-bottom:0}
+        .qb-cats{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+        .qb-cat{padding:5px 12px;border-radius:16px;border:1.5px solid #E5E7EB;background:var(--card);cursor:pointer;font-size:.78rem;font-weight:500;transition:all .15s;font-family:inherit;color:var(--text)}
+        .qb-cat:hover{border-color:var(--accent)}.qb-cat.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+        .qb-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+        .qb-nav-btn{width:30px;height:30px;border-radius:50%;border:1.5px solid #E5E7EB;background:var(--card);cursor:pointer;font-size:.8rem;font-family:inherit;transition:all .15s;color:var(--text)}
+        .qb-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .qb-meta{font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:6px}
+        .qb-stars{color:#F59E0B;letter-spacing:1px}
+        .qb-progress{font-size:.75rem;color:var(--text2);text-align:center;margin-top:10px}
+        .qb-pbar{height:4px;background:#E5E7EB;border-radius:2px;margin-top:4px;overflow:hidden}
+        .qb-pfill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+
+        /* Prediction enhanced */
+        .predict-btns{display:flex;gap:8px;justify-content:center;margin:12px 0}
+        .predict-btn{flex:1;padding:10px;border:2px solid #E5E7EB;border-radius:10px;background:var(--card);cursor:pointer;font-size:.9rem;font-family:inherit;transition:all .15s;text-align:center}
+        .predict-btn:hover:not(.done){border-color:var(--accent);background:#F5F3FF}
+        .predict-btn.selected{border-color:var(--accent);background:var(--blue-bg);font-weight:600}
+        .predict-btn.done{opacity:.6;cursor:default}
+        .pred-history{display:flex;gap:5px;justify-content:center;margin:10px 0;flex-wrap:wrap}
+        .pred-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700}
+        .pred-dot.win{background:var(--green-bg);color:var(--green)}.pred-dot.loss{background:var(--red-bg);color:var(--red)}.pred-dot.pending{background:#F3F4F6;color:var(--text2)}
+        .pred-streak{text-align:center;font-size:.82rem;margin:6px 0;color:var(--text2)}
+        .predict-stats{display:flex;gap:8px;justify-content:center;margin-top:8px}
+        .predict-stat{padding:5px 10px;background:#F9FAFB;border-radius:6px;text-align:center;font-size:.78rem}
+        .predict-stat strong{display:block;font-size:.95rem}
+
+        /* Concept cards */
+        .concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .concept-card{padding:16px;border-radius:12px;background:#F9FAFB;cursor:pointer;transition:all .2s;border:1.5px solid transparent}
+        .concept-card:hover{border-color:var(--accent);background:#FAFAFE}
+        .concept-card.open{background:var(--card);border-color:var(--accent);box-shadow:var(--shadow)}
+        .concept-head{display:flex;align-items:center;gap:10px}
+        .concept-icon{font-size:1.3rem}.concept-title{font-weight:600;font-size:.88rem;flex:1}
+        .concept-diff{font-size:.68rem;color:var(--amber)}
+        .concept-desc{font-size:.8rem;color:var(--text2);margin-top:6px;line-height:1.5}
+        .concept-body{margin-top:10px;display:none}
+        .concept-card.open .concept-body{display:block}
+        .concept-detail{font-size:.82rem;line-height:1.6;padding:10px;background:#F9FAFB;border-radius:8px;margin-bottom:10px}
+        .concept-quiz-q{font-size:.85rem;font-weight:600;margin-bottom:8px}
+
+        /* Goal tracker */
+        .goal-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+        .goal-form input{font-size:.92rem;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;width:100px;font-weight:600;outline:none;background:var(--card);color:var(--text)}
+        .goal-bar{height:14px;background:#E5E7EB;border-radius:7px;overflow:hidden;margin:10px 0 4px}
+        .goal-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .5s}
+        .goal-pct{text-align:center;font-weight:700;font-size:.88rem}
+        .goal-sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+        .goal-sc{padding:8px;background:#F9FAFB;border-radius:8px;font-size:.8rem;text-align:center}
+        .goal-sc-label{color:var(--text2)}.goal-sc-val{font-weight:700;margin-top:2px}
+
+        /* Annual report */
+        .annual-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+        .annual-form input{font-size:.92rem;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;width:100px;font-weight:600;outline:none;background:var(--card);color:var(--text)}
+        .annual-row{display:flex;justify-content:space-between;padding:10px 14px;border-radius:8px;font-size:.85rem;margin-bottom:6px}
+        .annual-row.cost{background:var(--red-bg)}.annual-row.save{background:var(--green-bg)}
+        .annual-label{color:var(--text2)}.annual-val{font-weight:700}
+        .annual-total{text-align:center;margin-top:10px;padding:14px;background:var(--amber-bg);border-radius:10px}
+        .annual-total-num{font-size:1.4rem;font-weight:800;color:var(--amber)}
+        .annual-total-eq{font-size:.82rem;color:var(--text2);margin-top:2px}
+
+        /* Bookmarks */
+        .bm-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px dashed #D1D5DB;border-radius:8px;background:transparent;cursor:pointer;font-size:.85rem;color:var(--text2);transition:all .2s;font-family:inherit}
+        .bm-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .bm-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;margin-top:6px;background:#F9FAFB;font-size:.82rem}
+        .bm-vs{font-weight:600}
+
+        /* Weather */
+        .weather-card{text-align:center;padding:32px 24px;background:linear-gradient(135deg,#FEF7EE,#FDE8D8);border:none;box-shadow:0 4px 24px rgba(253,184,116,.15)}
+        .weather-icon{font-size:64px;line-height:1;animation:float 3s ease-in-out infinite}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        .weather-label{font-size:1.4rem;font-weight:700;margin-top:8px}
+        .weather-advice{font-size:.95rem;color:var(--text2);margin-top:4px}
+        .weather-rate{font-size:1rem;margin-top:16px;color:var(--text2)}
+        .weather-rate strong{font-size:1.8rem;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+        .weather-change{display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:4px 12px;border-radius:20px;font-size:.85rem;font-weight:600}
+        .weather-change.up{background:var(--green-bg);color:var(--green)}.weather-change.down{background:var(--red-bg);color:var(--red)}.weather-change.flat{background:var(--amber-bg);color:var(--amber)}
+        .weather-trend{margin-top:8px;font-size:.82rem;color:var(--text2)}
+
+        /* Calc */
+        .calc-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#F9FAFB;border-radius:12px;margin-bottom:8px}
+        .calc-row label{font-size:.82rem;color:var(--text2);width:36px;flex-shrink:0}
+        .calc-row input{flex:1;font-size:1.3rem;font-weight:700;border:none;background:transparent;color:var(--text);outline:none;min-width:0}
+        .currency-tag{font-size:.82rem;font-weight:600;color:var(--blue);background:var(--blue-bg);padding:3px 8px;border-radius:6px}
+        .calc-swap-row{display:flex;justify-content:center;margin:-2px 0;position:relative;z-index:1}
+        .calc-swap-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid #E5E7EB;background:var(--card);font-size:.75rem;cursor:pointer;transition:transform .3s}
+        .calc-swap-btn:active{transform:rotate(180deg)}
+        .calc-result{background:var(--green-bg)}.calc-result input{color:var(--green)}.calc-result .currency-tag{color:var(--green);background:#D1FAE5}
+
+        /* Spread */
+        .spread-row{display:flex;justify-content:space-around;align-items:center;margin-bottom:12px}
+        .spread-item{text-align:center}.spread-lbl{font-size:.75rem;color:var(--text2)}.spread-val{font-size:1.15rem;font-weight:700}
+        .spread-arrow{color:var(--text2);font-size:1.1rem}
+        .spread-cost{text-align:center;padding:16px;background:var(--red-bg);border-radius:12px}
+        .spread-cost-num{font-size:1.8rem;font-weight:800;color:var(--red)}
+        .spread-cost-desc{font-size:.82rem;color:var(--text2);margin-top:2px}
+
+        /* Ranking */
+        .rank-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:5px;background:#F9FAFB;transition:transform .15s}
+        .rank-item:hover{transform:translateX(3px)}
+        .rank-item:nth-child(1){background:#FEF3C7}.rank-item:nth-child(2){background:#F3F4F6}.rank-item:nth-child(3){background:#FFEDD5}
+        .rank-medal{font-size:1.3rem;width:26px;text-align:center}.rank-info{flex:1}.rank-name{font-weight:600;font-size:.88rem}.rank-detail{font-size:.75rem;color:var(--text2)}.rank-rate{font-weight:700;font-size:1rem;text-align:right}
+
+        /* Thermo */
+        .thermo-bar-wrap{position:relative;padding:14px 0}
+        .thermo-bar{height:12px;border-radius:6px;background:linear-gradient(to right,var(--blue),#A78BFA,var(--amber),#FB923C,var(--green))}
+        .thermo-marker{width:26px;height:26px;border-radius:50%;background:var(--card);border:2.5px solid var(--text);position:absolute;top:50%;transform:translate(-50%,-50%);transition:left .8s cubic-bezier(.34,1.56,.64,1);box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700}
+        .thermo-labels{display:flex;justify-content:space-between;font-size:.78rem;color:var(--text2);margin-top:4px}
+        .thermo-labels span:first-child::before{content:'❄️ '}.thermo-labels span:last-child::after{content:' 🔥'}
+        .thermo-verdict{text-align:center;margin-top:10px;font-size:.95rem;font-weight:600;padding:8px;border-radius:10px}
+
+        /* Regret */
+        .regret-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+        .regret-card{padding:14px;border-radius:12px;text-align:center;transition:transform .2s}
+        .regret-card:hover{transform:translateY(-2px)}
+        .regret-period{font-size:.75rem;color:var(--text2);margin-bottom:4px}
+        .regret-emoji{font-size:1.6rem;line-height:1;margin-bottom:4px}
+        .regret-amount{font-size:1rem;font-weight:700}
+        .regret-desc{font-size:.72rem;color:var(--text2);margin-top:2px}
+        .regret-card.good{background:var(--green-bg)}.regret-card.good .regret-amount{color:var(--green)}
+        .regret-card.bad{background:var(--red-bg)}.regret-card.bad .regret-amount{color:var(--red)}
+        .regret-card.neutral{background:#F3F4F6}.regret-card.neutral .regret-amount{color:var(--text2)}
+
+        /* Time Machine */
+        .tm-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+        .tm-form input,.tm-form select{font-size:.92rem;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;background:var(--card);color:var(--text);outline:none}
+        .tm-form input:focus{border-color:var(--accent)}
+        .tm-result{padding:14px;background:#F9FAFB;border-radius:12px;text-align:center}
+        .tm-rate{font-size:1.2rem;font-weight:700}.tm-result-val{font-size:1rem;margin-top:4px}
+        .tm-diff{margin-top:6px;font-size:.88rem;font-weight:600;padding:4px 12px;border-radius:8px;display:inline-block}
+        .tm-diff.good{background:var(--green-bg);color:var(--green)}.tm-diff.bad{background:var(--red-bg);color:var(--red)}.tm-diff.same{background:#F3F4F6;color:var(--text2)}
+
+        /* Scenario */
+        .scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .scenario-card{padding:14px;border-radius:12px;background:#F9FAFB;text-align:center;cursor:pointer;transition:all .2s}
+        .scenario-card:hover{transform:translateY(-2px);background:var(--blue-bg)}
+        .scenario-icon{font-size:1.3rem}.scenario-label{font-size:.75rem;color:var(--text2);margin-top:2px}
+        .scenario-amt{font-size:.82rem;font-weight:600;margin-top:5px}
+        .scenario-result{font-size:1.1rem;font-weight:700;color:var(--green);margin-top:2px}
+        .scenario-vs{font-size:.7rem;color:var(--text2);margin-top:2px}
+
+        /* Calendar */
+        .cal-legend{display:flex;gap:10px;justify-content:center;font-size:.72rem;color:var(--text2);margin-bottom:10px;flex-wrap:wrap}
+        .cal-legend span{display:flex;align-items:center;gap:3px}.cal-legend .dot{width:10px;height:10px;border-radius:3px}
+        .cal-header{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:.72rem;color:var(--text2);margin-bottom:4px;font-weight:600}
+        .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+        .cal-cell{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;cursor:default;transition:transform .15s;font-size:.7rem}
+        .cal-cell:not(.empty):hover{transform:scale(1.12);z-index:1}
+        .cal-cell .cal-rate{font-size:.48rem;opacity:.7;margin-top:1px}
+        .cal-cell.empty{background:transparent}.cal-cell.today{box-shadow:0 0 0 2px var(--text)}
+        .cal-cell.level-4{background:#059669;color:#fff}.cal-cell.level-3{background:#6EE7B7;color:#065F46}
+        .cal-cell.level-2{background:#FDE68A;color:#92400E}.cal-cell.level-1{background:#FDBA74;color:#9A3412}.cal-cell.level-0{background:#FCA5A5;color:#991B1B}
+
+        /* Diary */
+        .diary-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+        .diary-form input{font-size:.92rem;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;width:100px;font-weight:600;outline:none;background:var(--card);color:var(--text)}
+        .diary-form input:focus{border-color:var(--accent)}
+        .diary-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+        .diary-stat{padding:10px;background:#F9FAFB;border-radius:8px;text-align:center}
+        .diary-stat-lbl{font-size:.68rem;color:var(--text2)}.diary-stat-val{font-size:.95rem;font-weight:700}
+        .diary-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;margin-bottom:3px;background:#F9FAFB;font-size:.82rem}
+        .diary-entry-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:.85rem;padding:2px 6px;border-radius:4px}
+        .diary-entry-del:hover{background:var(--red-bg)}
+        .diary-empty{text-align:center;color:var(--text2);font-size:.85rem;padding:16px}
+
+        /* Alarm */
+        .alarm-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .alarm-form select,.alarm-form input{font-size:.92rem;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;background:var(--card);color:var(--text);outline:none}
+        .alarm-form input[type="number"]{width:100px;font-weight:600}
+        .btn-primary{padding:8px 18px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .2s;font-family:inherit}
+        .btn-primary:hover{opacity:.85}
+        .alarm-list{margin-top:12px}
+        .alarm-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#F9FAFB;border-radius:8px;margin-bottom:4px;font-size:.88rem}
+        .alarm-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:4px}
+        .alarm-del:hover{background:var(--red-bg)}
+        .alarm-triggered{background:var(--green-bg)!important}
+        .alarm-empty,.tip-empty{text-align:center;color:var(--text2);font-size:.85rem;padding:14px}
+
+        /* Tips */
+        .tip-card{text-align:center}
+        .tip-text{font-size:.92rem;color:var(--text2);line-height:1.7}
+        .tip-refresh{display:inline-block;margin-top:8px;font-size:.78rem;color:var(--accent);cursor:pointer;background:none;border:none;font-family:inherit}
+        .tip-refresh:hover{text-decoration:underline}
+
+        /* Share */
+        .share-actions{display:flex;gap:10px;justify-content:center;margin-top:8px}
+        .share-actions button{padding:10px 20px;border:1.5px solid #E5E7EB;border-radius:10px;background:var(--card);font-size:.88rem;cursor:pointer;transition:all .2s;font-family:inherit;color:var(--text);font-weight:500}
+        .share-actions button:hover{border-color:var(--accent);color:var(--accent)}
+
+        /* Toast */
+        .share-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:10px 20px;border-radius:10px;font-size:.88rem;opacity:0;transition:all .3s;pointer-events:none;z-index:100}
+        .share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+        /* Loading */
+        .loading{text-align:center;padding:80px 20px;color:var(--text2);grid-column:1/-1}
+        .loading-spinner{width:36px;height:36px;border:3px solid #E5E7EB;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* Fade */
+        .card{animation:fadeUp .35s ease forwards}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+        /* === MOBILE === */
+        @media(max-width:768px){
+            body{overflow:auto}
+            .layout{grid-template-columns:1fr;grid-template-rows:var(--header-h) auto 1fr;height:auto;min-height:100vh}
+            .header{padding:0 16px;flex-wrap:wrap;gap:8px;height:auto;min-height:var(--header-h);padding-top:10px;padding-bottom:10px}
+            .sidebar{flex-direction:row;border-right:none;border-bottom:1px solid #E5E7EB;padding:0;overflow-x:auto;overflow-y:hidden;gap:0;-webkit-overflow-scrolling:touch}
+            .sidebar::-webkit-scrollbar{display:none}
+            .tab-btn{flex-direction:column;gap:4px;padding:10px 16px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;min-width:max-content;font-size:.78rem}
+            .tab-btn.active{border-left-color:transparent;border-bottom-color:var(--accent);background:transparent}
+            .tab-icon{font-size:1.1rem}
+            .content{padding:16px}
+            .card-grid{grid-template-columns:1fr}
+            .mini-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+            .trend-grid{grid-template-columns:1fr}
+            .trend-grid .regret-grid{grid-template-columns:1fr 1fr 1fr}
+            .learn-top{grid-template-columns:1fr}
+            .concept-grid{grid-template-columns:1fr}
+            .ency-grid{grid-template-columns:1fr}
+            .batch-vs{grid-template-columns:1fr}
+            .regret-grid{grid-template-columns:1fr 1fr 1fr}
+            .diary-stats{grid-template-columns:1fr 1fr}
+        }
+        footer{text-align:center;padding:16px 0;font-size:.72rem;color:var(--text2)}
+    </style>
+</head>
+<body>
+<div class="layout" id="layout">
+    <header class="header">
+        <div class="header-left">
+            <span class="live-dot"></span>
+            <h1>换汇天气</h1>
+        </div>
+        <div class="pair-selector">
+            <select id="sel-base"><option value="EUR">EUR 欧元</option><option value="USD">USD 美元</option><option value="GBP">GBP 英镑</option><option value="JPY">JPY 日元</option><option value="CHF">CHF 瑞郎</option><option value="CNY">CNY 人民币</option></select>
+            <button class="swap-btn" id="swap-btn" onclick="doSwap()">⇄</button>
+            <select id="sel-target"><option value="CNY">CNY 人民币</option><option value="EUR">EUR 欧元</option><option value="USD">USD 美元</option><option value="GBP">GBP 英镑</option><option value="JPY">JPY 日元</option><option value="CHF">CHF 瑞郎</option></select>
+        </div>
+        <div class="header-right">
+            <a href="weather-en.html" class="lang-toggle">EN 🇬🇧</a>
+        </div>
+    </header>
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content" id="content">
+        <div class="loading"><div class="loading-spinner"></div><p>正在查询最新汇率...</p></div>
+    </main>
+</div>
+<div class="share-toast" id="toast"></div>
+<script>
+// === LANG ===
+const TABS=[
+    {id:'today',icon:'☀️',label:'今日天气'},
+    {id:'bank',icon:'🏦',label:'银行PK'},
+    {id:'trend',icon:'📊',label:'走势分析'},
+    {id:'tools',icon:'🎒',label:'生活助手'},
+    {id:'learn',icon:'🧠',label:'学习园地'},
+    {id:'more',icon:'⚙️',label:'提醒设置'}
+];
+const L={
+    w:[{icon:'☀️',label:'大晴天',advice:'换汇好时机，冲！',c:'var(--green)'},{icon:'⛅',label:'多云转晴',advice:'还不错，可以出手',c:'#34D399'},{icon:'☁️',label:'阴天',advice:'一般般，不急就等等',c:'var(--amber)'},{icon:'🌧️',label:'下雨了',advice:'再观望观望~',c:'#F97316'},{icon:'⛈️',label:'暴风雨',advice:'不建议现在换，等等看',c:'var(--red)'}],
+    today:'今天',vsDayAgo:'比昨天',up:'涨了',dn:'跌了',fl:'没变',
+    t7u:'↗ 近7天上涨趋势',t7d:'↘ 近7天下跌趋势',t7f:'→ 近7天基本持平',
+    calc:'💱 快速换算',cFrom:'我有',cTo:'能换',
+    miniT:'🌍 其他货币天气',
+    spreadT:'💸 银行吃了你多少？',sMid:'中间汇率',sBank:'银行汇率',sCost1:(b,a)=>`换 ${a.toLocaleString()} ${b}，银行大约赚走`,sCost2:p=>`（占总额 ${p}%）`,
+    rankT:'🏦 哪家银行最划算？',rGet:(a,t)=>`换${a}得 ${t}`,rLess:(v,t)=>`比第一少 ${v} ${t}`,
+    thT:'🌡️ 汇率温度计（近30天）',thH:'偏高，换汇较划算 👍',thM:'中间位置，还行 🤔',thL:'偏低，建议再等等 ✋',
+    thV:(p,t)=>`当前处于30天内 <strong>${p}%</strong> 的位置 · ${t}`,
+    regT:(a,b)=>`😅 后悔指数（按 ${a} ${b} 算）`,regP:['昨天','上周','上个月'],
+    regIf:p=>`如果${p}换...`,regMore:(v,t)=>`多换 ${v} ${t}`,regLess:(v,t)=>`少换 ${v} ${t}`,
+    regSame:'差不多~',regGood:'还好等到了今天！',regBad:l=>`${l}换就好了...`,regNeutral:'别纠结啦',
+    tmT:'⏪ 汇率时光机',tmBack:'回到',tmWith:'带着',tmRate:'那天的汇率',tmGet:'能换到',
+    tmBetter:'今天换更划算 ✅',tmWorse:'那天换更划算 😢',tmSame:'差不多~',
+    scT:'🎒 生活场景速算',scVs:'vs上月',
+    scenes:[{icon:'🎓',label:'留学学费',amt:10000},{icon:'✈️',label:'旅行基金',amt:2000},{icon:'🏠',label:'月生活费',amt:800},{icon:'🛍️',label:'购物消费',amt:200}],
+    calT:'📅 近30天换汇日历',calL:['很划算','还行','一般','偏低','不划算'],calD:['一','二','三','四','五','六','日'],
+    diaryT:'📔 换汇日记',diaryAdd:'记一笔',diaryEmpty:'还没有记录，换汇后记一笔吧~',
+    dTotal:'累计换汇',dCount:'次数',dAvg:'平均汇率',dVsToday:'全今天换',
+    qbT:'📚 汇率题海',qbRand:'🎲 随机',qbOf:'/',qbDone:'已答',
+    lvlT:'🏆 换汇段位',lvlScore:'积分',lvlNext:'距下一级',
+    levels:['🌱 新手','🌿 入门','🌳 达人','👑 大师'],levelMin:[0,20,50,100],
+    predT:'🏃 每日竞猜',predQ:'你觉得明天汇率会…',predUp:'📈 涨',predDn:'📉 跌',predFlat:'➡️ 持平',predDone:'今天已竞猜 ✅',predYest:'昨天你猜了',predResult:'实际',predTotal:'总预测',predOk:'猜对',predRate:'准确率',predStreak:'🔥 连续猜对',predBetter:p=>`比 ${p}% 的用户更准！`,
+    conceptT:'📖 外汇知识库',conceptClick:'点击展开详情和小测验',
+    encT:'🪙 货币百科',
+    batchT:'💰 分批换汇模拟器',batchTotal:'总金额',batchN:'分几次',batchGo:'模拟对比',
+    batchOnce:'一次性换',batchSplit:'分批换',batchVs:'vs',
+    tlT:'📰 汇率大事记（近期）',
+    pppT:'🛒 购买力翻译器',pppIn:'在中国能买',pppFr:'在法国能买',
+    wifT:'📈 汇率"如果"滑块',wifCur:'当前',wifYour:(a,c)=>`你的 ${a.toLocaleString()} ${c} =`,
+    goalT:'🎯 换汇目标追踪',goalTarget:'目标',goalSaved:'已攒',goalNeed:'还需',goalSet:'设定',goalIf:'如果汇率变成',
+    annT:'💸 年度换汇成本报告',annMonth:'每月换',annGo:'生成',annSpread:'银行差价成本',annTiming:'最佳时机可省',annDCA:'分批换可省',annTotal:'总可优化空间',annEq:n=>`≈ ${n} 杯星巴克 ☕`,
+    bmT:'🏷️ 汇率书签',bmAdd:'📌 收藏今日汇率',bmEmpty:'还没有书签~',bmVsToday:'vs今天',
+    alarmT:'⏰ 汇率闹钟',aWhen:(b,t)=>`当 ${b}/${t}`,aUp:'涨到 ≥',aDn:'跌到 ≤',aSet:'设置',
+    aEmpty:'还没设置闹钟，设一个好汇率提醒吧~',aReached:'✅ 已达到！',
+    tipT:'💡 换汇小贴士',tipNext:'换一条 →',
+    shareT:'🖼️ 分享今日汇率',shareImg:'📷 保存卡片',shareTxt:'📋 复制文字',
+    copied:'已复制到剪贴板 ✓',copyFail:'复制失败',diffCur:'请选择不同的货币~',
+    foot:'换汇天气 · 数据仅供参考，不构成投资建议',
+    tips:['大额换汇建议分2-3次操作，分散风险','银行"现汇"比"现钞"更优，电汇更划算','每周二三汇率波动较小，适合稳健换汇','关注央行利率决议日，汇率可能大幅波动','节假日前后汇率波动大，建议提前或推后','人民币是全球第五大支付货币','欧元区有20个成员国共享货币','汇率受贸易数据、通胀率、央行政策影响','设置汇率闹钟，让好汇率来找你','不同银行汇率可能相差0.3%~0.8%，货比三家'],
+};
+const CN={EUR:'欧元',USD:'美元',GBP:'英镑',JPY:'日元',CHF:'瑞郎',CNY:'人民币'};
+const BANKS=[
+    {id:'boc',n:'中国银行',f:'🇨🇳',s:.0025},{id:'icbc',n:'工商银行',f:'🇨🇳',s:.0038},
+    {id:'ccb',n:'建设银行',f:'🇨🇳',s:.0032},{id:'abc',n:'农业银行',f:'🇨🇳',s:.0042},
+    {id:'bocom',n:'交通银行',f:'🇨🇳',s:.0036},{id:'bnp',n:'BNP Paribas',f:'🇫🇷',s:.0048},
+    {id:'ca',n:'Crédit Agricole',f:'🇫🇷',s:.0053},{id:'sg',n:'Société Générale',f:'🇫🇷',s:.0056},
+    {id:'cm',n:'Crédit Mutuel',f:'🇫🇷',s:.0050},{id:'bpce',n:'BPCE',f:'🇫🇷',s:.0046}
+];
+
+let QB=[
+// basic
+{c:'basic',d:1,q:'外汇市场的英文缩写是？',o:['FX / Forex','Stock / Equity','Bond / Fixed'],a:0},
+{c:'basic',d:1,q:'汇率 7.82 EUR/CNY 表示什么？',o:['1欧元=7.82人民币','1人民币=7.82欧元','7.82%利率'],a:0},
+{c:'basic',d:1,q:'全球最大的金融市场是？',o:['股票市场','外汇市场','期货市场'],a:1},
+{c:'basic',d:1,q:'外汇市场日交易量大约？',o:['1万亿$','7万亿$','50万亿$'],a:1},
+{c:'basic',d:1,q:'银行"买入价"是指？',o:['银行买你的外币','你买银行的外币','银行间交易价'],a:0},
+{c:'basic',d:1,q:'人民币ISO代码是？',o:['RMB','CNY','CYN'],a:1},
+{c:'basic',d:1,q:'欧元区有多少成员国？',o:['15','20','27'],a:1},
+{c:'basic',d:1,q:'"现汇"和"现钞"哪个更好？',o:['现汇（电汇）','现钞（现金）','一样'],a:0},
+// currency
+{c:'currency',d:1,q:'欧元纸币上的桥是真实的吗？',o:['是','不是，全虚构','一半一半'],a:1},
+{c:'currency',d:1,q:'人民币纸币上印的是？',o:['孙中山','毛泽东','各民族人物'],a:1},
+{c:'currency',d:1,q:'哪个国家不用欧元？',o:['德国','法国','英国'],a:2},
+{c:'currency',d:1,q:'$1纸币上是哪位总统？',o:['林肯','华盛顿','杰斐逊'],a:1},
+{c:'currency',d:1,q:'日元硬币最大面值？',o:['100','500','1000'],a:1},
+{c:'currency',d:2,q:'世界上最贵的货币是？',o:['英镑','科威特第纳尔','瑞郎'],a:1},
+{c:'currency',d:2,q:'欧元纸币哪年流通？',o:['1999','2002','2005'],a:1},
+{c:'currency',d:2,q:'£符号来自哪个拉丁词？',o:['Libra（磅）','London','Liberty'],a:0},
+{c:'currency',d:2,q:'港币和哪种货币挂钩？',o:['人民币','美元','英镑'],a:1},
+{c:'currency',d:2,q:'瑞士法郎纸币的特点？',o:['最大尺寸','竖版设计','没有人像'],a:1},
+// tips
+{c:'tips',d:2,q:'哪天换汇波动最小？',o:['周一','周二三','周五'],a:1},
+{c:'tips',d:2,q:'人民币是第几大支付货币？',o:['第3','第5','第8'],a:1},
+{c:'tips',d:2,q:'在机场换汇通常？',o:['最划算','最贵','和银行一样'],a:1},
+{c:'tips',d:2,q:'大额换汇最佳策略？',o:['一次全换','分批换','等最低点'],a:1},
+{c:'tips',d:2,q:'央行加息通常让本币？',o:['升值','贬值','不变'],a:0},
+{c:'tips',d:2,q:'节假日前汇率通常？',o:['更稳定','波动更大','不变'],a:1},
+{c:'tips',d:2,q:'汇率报价中"中间价"是？',o:['买入卖出的平均','央行指定价','最低价'],a:0},
+// advanced
+{c:'advanced',d:3,q:'什么是"套利交易"？',o:['借低息币买高息币','同时买卖同一币种','期货对冲'],a:0},
+{c:'advanced',d:3,q:'哪些是"避险货币"？',o:['USD,EUR','CHF,JPY,USD','CNY,GBP'],a:1},
+{c:'advanced',d:3,q:'什么是"购买力平价PPP"？',o:['汇率应反映物价差','央行设定汇率','银行协议价'],a:0},
+{c:'advanced',d:3,q:'货币贬值对出口商？',o:['利好','利空','中性'],a:0},
+{c:'advanced',d:3,q:'CPI上涨通常意味着？',o:['通货膨胀','通货紧缩','经济衰退'],a:0},
+{c:'advanced',d:3,q:'美联储加息对美元？',o:['走强','走弱','没影响'],a:0},
+{c:'advanced',d:3,q:'"巨无霸指数"衡量什么？',o:['股票估值','货币被高估/低估','GDP增长'],a:1},
+];
+const QB_CATS=[{id:'all',n:'全部'},{id:'basic',n:'⭐ 基础'},{id:'currency',n:'🪙 货币'},{id:'tips',n:'💡 技巧'},{id:'advanced',n:'🔥 进阶'},{id:'daily',n:'📅 每日新题'}];
+const CONCEPTS=[
+{id:'spread',icon:'📊',t:'点差 Spread',d:1,desc:'买入价和卖出价的差距，是银行的隐形利润来源。',detail:'例：EUR/CNY买入7.80卖出7.85，点差0.05。换1万€你"贡献"了500¥给银行。点差越小对你越有利。',qs:[
+ {q:'点差越大，换汇成本？',o:['越低','越高','不变'],a:1},
+ {q:'银行的汇率利润主要来自？',o:['手续费','买卖价之间的点差','利息'],a:1},
+ {q:'以下哪个点差对你最有利？',o:['0.08','0.02','0.15'],a:1},
+ {q:'点差为零意味着？',o:['银行不赚利润','汇率最高','违法操作'],a:0}]},
+{id:'bidask',icon:'💱',t:'买入价/卖出价',d:1,desc:'买入价(Bid)是银行买你外币的价，卖出价(Ask)是银行卖给你的价。',detail:'记忆：站在银行角度。银行低买高卖，所以买入价<卖出价。你换汇看卖出价（银行卖给你）。',qs:[
+ {q:'你去银行换欧元看哪个价？',o:['买入价','卖出价','中间价'],a:1},
+ {q:'买入价总是___卖出价？',o:['高于','低于','等于'],a:1},
+ {q:'买入7.80卖出7.85，换1000€银行赚？',o:['50元','80元','30元'],a:0},
+ {q:'"买入价"是从谁的角度？',o:['你的','银行的','央行的'],a:1}]},
+{id:'wire',icon:'🏦',t:'现汇 vs 现钞',d:1,desc:'现汇是电子转账汇率，现钞是实体钞票汇率。现汇通常更优惠。',detail:'为何现钞更贵？实体钞票有运输、保管、清点成本。不是必须拿现金就尽量用电汇。',qs:[
+ {q:'为何现钞汇率比现汇差？',o:['钞票有物流成本','政府规定','没有区别'],a:0},
+ {q:'以下哪种方式汇率最好？',o:['去银行取现金','电汇(现汇)','机场兑换'],a:1},
+ {q:'现钞和现汇的差距通常约？',o:['5%-10%','0.5%-1%','0.01%'],a:1},
+ {q:'ATM取外币现金用的是？',o:['现汇价','现钞价','中间价'],a:1}]},
+{id:'central',icon:'🏛️',t:'央行与利率',d:2,desc:'央行调整利率影响货币价值。加息→升值，降息→贬值。',detail:'逻辑：加息→存款收益高→外资流入→需求增→升值。这就是为什么美联储每次开会市场都紧张。',qs:[
+ {q:'央行降息让本币？',o:['升值','贬值','不变'],a:1},
+ {q:'美联储每年开几次议息会议？',o:['4次','8次','12次'],a:1},
+ {q:'ECB是什么的缩写？',o:['欧洲商业银行','欧洲央行','欧洲信用局'],a:1},
+ {q:'央行最常用的汇率调控工具？',o:['利率','印钞','外汇管制'],a:0}]},
+{id:'haven',icon:'🛡️',t:'避险货币',d:2,desc:'市场动荡时资金涌向"安全"货币：美元、瑞郎、日元。',detail:'美元=全球储备货币，瑞士=政治中立+银行业，日本=最大海外债权国。危机时三者走强。',qs:[
+ {q:'哪个不是避险货币？',o:['瑞郎CHF','英镑GBP','日元JPY'],a:1},
+ {q:'避险货币在什么时候走强？',o:['经济繁荣时','全球危机时','通胀时'],a:1},
+ {q:'瑞郎是避险货币因为？',o:['利率最高','政治中立+银行业','人口最少'],a:1},
+ {q:'2008金融危机中走强的是？',o:['英镑','欧元','日元'],a:2}]},
+{id:'inflation',icon:'📈',t:'通胀与汇率',d:2,desc:'高通胀侵蚀购买力，导致货币贬值。',detail:'中国通胀5%法国2%，理论上人民币应贬值约3%维持购买力平衡——这就是"购买力平价"核心。',qs:[
+ {q:'A国通胀远高于B国，A国货币？',o:['升值','贬值','不受影响'],a:1},
+ {q:'CPI是什么的缩写？',o:['央行政策指数','消费者价格指数','货币购买力'],a:1},
+ {q:'通胀对持有现金的人？',o:['有利','不利','没影响'],a:1},
+ {q:'通胀突然下降，货币短期可能？',o:['升值','贬值','崩盘'],a:0}]},
+{id:'carry',icon:'💰',t:'套利交易 Carry Trade',d:3,desc:'借低利率货币投资高利率货币，赚利差。',detail:'风险：高息货币贬值时利差被吞。2008年金融危机大量套利平仓导致日元暴涨。',qs:[
+ {q:'套利交易主要风险？',o:['利率不变','汇率反向波动','交易费'],a:1},
+ {q:'套利交易中借入的通常是？',o:['高利率货币','低利率货币','避险货币'],a:1},
+ {q:'最经典的套利交易是借入？',o:['美元','日元','欧元'],a:1},
+ {q:'套利交易大规模平仓发生在？',o:['经济繁荣时','市场恐慌时','利率不变时'],a:1}]},
+{id:'ppp',icon:'🍔',t:'购买力平价 PPP',d:3,desc:'"巨无霸指数"：汇率应让同一商品在各国价格相同。',detail:'巨无霸美国$5.50，中国¥24，PPP汇率=4.36。实际7.2，人民币"低估"约40%。现实比理论复杂。',qs:[
+ {q:'巨无霸指数衡量什么？',o:['股票估值','货币高估/低估','通胀率'],a:1},
+ {q:'PPP全称是？',o:['Price Per Point','Purchasing Power Parity','Payment Processing Protocol'],a:1},
+ {q:'巨无霸美国$5中国¥20，PPP汇率=？',o:['4.0','5.0','20.0'],a:0},
+ {q:'PPP理论认为长期来看？',o:['汇率趋向反映物价差','汇率完全随机','强国货币必升值'],a:0}]},
+];
+const ENCY_DATA=[
+    {code:'EUR',flag:'🇪🇺',name:'欧元',fact:'20国共用，全球第二大储备货币。纸币上的桥梁和窗户全是虚构的——桥象征连接，窗象征开放。€符号灵感来自希腊字母ε(epsilon)，由奥地利设计师罗伯特·卡利纳设计。2002年1月1日正式流通时，是史上最大规模的货币切换。'},
+    {code:'USD',flag:'🇺🇸',name:'美元',fact:'全球储备货币之王，占全球外汇储备约59%。$1纸币平均寿命6.6年，$100可用15年。$符号可能源自西班牙比索"PS"的连写。全球约65个国家和地区直接使用或挂钩美元。'},
+    {code:'GBP',flag:'🇬🇧',name:'英镑',fact:'世界上仍在使用的最古老货币，可追溯到公元775年。£符号来自拉丁文Libra（天秤/磅）。英镑纸币上印有英国君主肖像，硬币边缘的锯齿最初是为了防止人们刮掉贵金属。'},
+    {code:'JPY',flag:'🇯🇵',name:'日元',fact:'全球第三大交易货币。没有"分"的概念，最小单位就是1日元。1日元硬币仅重1克，轻到能浮在水上。日元纸币采用极其先进的防伪技术，据说是世界上最难伪造的货币之一。'},
+    {code:'CHF',flag:'🇨🇭',name:'瑞郎',fact:'全球最稳定的货币之一，被称为"货币界的黄金"。纸币是竖版设计，世界罕见，充满艺术感。瑞士虽不在欧盟，但地理上被欧盟包围，瑞郎因瑞士的政治中立和强大银行体系而成为避险首选。'},
+    {code:'CNY',flag:'🇨🇳',name:'人民币',fact:'全球第5大支付货币，正加速国际化。100元纸币上毛泽东像由画家刘文西绘制。"元"这个字来自清朝的银圆。2016年人民币被纳入IMF特别提款权(SDR)货币篮子，与美元、欧元、英镑、日元并列。'},
+];
+// === DYNAMIC QUIZ COMPILER ===
+function compileQuiz(){
+    const dqs=[],day=new Date().toDateString(),curs=['EUR','USD','GBP','JPY','CHF','CNY'];
+    function pk(arr,s){return arr[Math.floor(sd(day+s)*arr.length)]}
+    function mkQ(cat,diff,q,correct,w1,w2,seed){
+        const a=[String(correct),String(w1),String(w2)],order=[0,1,2];
+        for(let i=2;i>0;i--){const j=Math.floor(sd(day+seed+i)*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+        return{c:cat,d:diff,q,o:order.map(i=>a[i]),a:order.indexOf(0)};
+    }
+    // Type 1: Conversion (15q)
+    for(let i=0;i<15;i++){
+        const b=pk(curs,'b'+i),t=pk(curs.filter(x=>x!==b),'t'+i);
+        const r=gR(b,t),dp=r>100?2:4,amts=[100,200,500,1000,2000,5000,8000,10000];
+        const amt=pk(amts,'a'+i),c=Math.round(amt*r);
+        const w1=Math.round(c*(1.04+sd(day+'w1'+i)*0.06)),w2=Math.round(c*(0.90+sd(day+'w2'+i)*0.06));
+        dqs.push(mkQ('daily',1,`${b}/${t}=${r.toFixed(dp)}，换${amt.toLocaleString()} ${b}≈？`,c.toLocaleString(),w1.toLocaleString(),w2.toLocaleString(),'cs'+i));
+    }
+    // Type 2: Closest rate (8q)
+    for(let i=0;i<8;i++){
+        const b=pk(curs,'rb'+i),t=pk(curs.filter(x=>x!==b),'rt'+i);
+        const r=gR(b,t),dp=r>100?2:4;
+        dqs.push(mkQ('daily',1,`今天${b}/${t}最接近？`,r.toFixed(dp),(r*1.05).toFixed(dp),(r*0.95).toFixed(dp),'rs'+i));
+    }
+    // Type 3: Trend vs yesterday (6q)
+    for(let i=0;i<6;i++){
+        const b=pk(curs,'tb'+i),t=pk(curs.filter(x=>x!==b),'tt'+i);
+        const w=quickWeather(b,t),act=w.chg>0.0001?0:(w.chg<-0.0001?1:2);
+        dqs.push({c:'daily',d:1,q:`和昨天比${b}/${t}？`,o:['涨了 📈','跌了 📉','基本没变 ➡️'],a:act});
+    }
+    // Type 4: Ranking (6q)
+    const cnyR=curs.filter(x=>x!=='CNY').map(b=>({b,r:gR(b,'CNY')})).sort((a,b)=>b.r-a.r);
+    for(let i=0;i<6;i++){
+        const isMax=i%2===0,tgt=isMax?cnyR[0]:cnyR[cnyR.length-1];
+        const oth=cnyR.filter(p=>p.b!==tgt.b),w1=pk(oth,'rw1'+i),w2=pk(oth.filter(x=>x!==w1),'rw2'+i);
+        dqs.push(mkQ('daily',2,`今天对CNY${isMax?'最贵':'最便宜'}的？`,`${tgt.b}(${tgt.r.toFixed(2)})`,`${w1.b}(${w1.r.toFixed(2)})`,`${w2.b}(${w2.r.toFixed(2)})`,'ro'+i));
+    }
+    // Type 5: Scenario (5q)
+    const scens=[{n:'留学月生活费',a:800},{n:'旅行预算',a:2000},{n:'买台新电脑',a:1500},{n:'给父母汇款',a:5000},{n:'双十一购物',a:300}];
+    for(let i=0;i<5;i++){
+        const sc=pk(scens,'sc'+i),b=pk(['EUR','USD','GBP'],'sb'+i);
+        const r=gR(b,'CNY'),c=Math.round(sc.a*r);
+        dqs.push(mkQ('daily',1,`${sc.n}${sc.a}${b}，按今天汇率≈多少CNY？`,c.toLocaleString(),Math.round(c*1.07).toLocaleString(),Math.round(c*0.93).toLocaleString(),'scs'+i));
+    }
+    // Type 6: Reverse calc (5q)
+    for(let i=0;i<5;i++){
+        const b=pk(curs.filter(x=>x!=='CNY'),'rv'+i),r=gR(b,'CNY');
+        const tgtCNY=pk([5000,10000,20000,50000],'ra'+i);
+        const c=Math.round(tgtCNY/r),w1=Math.round(c*1.06),w2=Math.round(c*0.94);
+        dqs.push(mkQ('daily',2,`要换到${tgtCNY.toLocaleString()}CNY，需要多少${b}？`,c.toLocaleString(),w1.toLocaleString(),w2.toLocaleString(),'rvs'+i));
+    }
+    return dqs;
+}
+const EVENTS_DATA=[
+    {d:-3,e:'🏦',t:'欧央行利率决议',desc:'维持利率不变，EUR小幅上扬'},
+    {d:-8,e:'📊',t:'中国2月CPI数据',desc:'同比+0.7%，略低于预期，CNY承压'},
+    {d:-15,e:'🇺🇸',t:'美联储会议纪要',desc:'暗示年内可能降息，USD走弱'},
+    {d:-22,e:'📈',t:'欧元区PMI数据',desc:'制造业PMI回升至50.2，EUR受提振'},
+    {d:-30,e:'🇨🇳',t:'中国央行MLF操作',desc:'下调10个基点，CNY短线走低'},
+    {d:-45,e:'💹',t:'G7财长会议',desc:'讨论汇率稳定，主要货币波动收窄'},
+    {d:-60,e:'📉',t:'英国GDP数据',desc:'环比-0.1%，GBP承压下行'},
+    {d:-75,e:'🏦',t:'日本央行政策会议',desc:'维持宽松政策，JPY继续走弱'},
+];
+
+const PPP_CN=[{i:'☕',n:'瑞幸咖啡',p:15},{i:'🍜',n:'一碗面',p:18},{i:'🚇',n:'地铁',p:4},{i:'🎬',n:'电影票',p:40},{i:'📱',n:'话费/月',p:50},{i:'🏠',n:'月租(二线)',p:2000}];
+const PPP_FR=[{i:'☕',n:'巴黎咖啡',p:3.5},{i:'🥐',n:'可颂面包',p:1.5},{i:'🚇',n:'地铁',p:2.15},{i:'🎬',n:'电影票',p:12},{i:'📱',n:'话费/月',p:20},{i:'🏠',n:'月租(巴黎)',p:900}];
+
+// === STATE ===
+const S={base:'EUR',target:'CNY',amount:1000,rates:{},cr:0,hist:[],activeTab:'today',
+    alarms:JSON.parse(localStorage.getItem('fx_alarms')||'[]'),
+    diary:JSON.parse(localStorage.getItem('fx_diary')||'[]'),
+    bookmarks:JSON.parse(localStorage.getItem('fx_bm')||'[]'),
+    quiz:(()=>{const q=JSON.parse(localStorage.getItem('fx_quiz')||'{}');return{score:q.score||0,ans:q.ans||{},cAns:q.cAns||{}}})(),
+    predict:(()=>{const p=JSON.parse(localStorage.getItem('fx_pred')||'{}');return{log:p.log||[],today:p.today||'',todayG:p.todayG||''}})(),
+    goal:JSON.parse(localStorage.getItem('fx_goal')||'{"target":0,"saved":0}')};
+const FB={USD:1,EUR:1.08,GBP:1.27,JPY:.0067,CHF:1.13,CNY:.137};
+let qCat='all',qNum=0,openConcept='';
+
+// === ENGINE ===
+async function fetchR(){try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');const d=await r.json();if(d?.rates){S.rates=d.rates;S.rates.USD=1;return}}catch(e){}S.rates={};for(const[k,v]of Object.entries(FB))S.rates[k]=1/v;S.rates.USD=1}
+function gR(b,t){return(S.rates[t]||1)/(S.rates[b]||1)}
+function sd(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return Math.abs(h)%10000/10000}
+function genH(days=90){const base=gR(S.base,S.target),h=[],vol=base>100?.004:.003;let r=base*(1+(sd(S.base+S.target)-.5)*.06);for(let i=days;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);d.setHours(0,0,0,0);r+=(base-r)*.04+(sd(d.toDateString()+S.base+S.target)-.5)*2*vol*base;h.push({date:new Date(d),rate:+r.toFixed(6)})}h[h.length-1].rate=base;S.hist=h;S.cr=base}
+function wIdx(){const r=S.hist.slice(-30).map(h=>h.rate),mn=Math.min(...r),mx=Math.max(...r);return(S.cr-mn)/(mx-mn||.0001)}
+function chg(){if(S.hist.length<2)return{d:0,p:0};const y=S.hist[S.hist.length-2].rate;return{d:S.cr-y,p:((S.cr-y)/y)*100}}
+function thermo(){const r=S.hist.slice(-30).map(h=>h.rate),mn=Math.min(...r),mx=Math.max(...r);return{mn,mx,pos:Math.max(5,Math.min(95,((S.cr-mn)/(mx-mn||.0001))*100))}}
+function regret(a){return[{l:L.regP[0],i:-2},{l:L.regP[1],i:-8},{l:L.regP[2],i:-31}].map(p=>{const x=S.hist.length+p.i;if(x<0)return null;return{label:p.l,diff:(S.cr-S.hist[x].rate)*a}}).filter(Boolean)}
+function bankRates(){return BANKS.map(b=>{const v=(sd(new Date().toDateString()+b.id)-.5)*.001;return{...b,rate:S.cr*(1-b.s+v)}}).sort((a,b)=>b.rate-a.rate)}
+function histRate(ds){const t=new Date(ds);t.setHours(0,0,0,0);let best=S.hist[0];for(const h of S.hist)if(Math.abs(h.date-t)<Math.abs(best.date-t))best=h;return best.rate}
+
+const MINI_PAIRS=[['EUR','CNY'],['USD','CNY'],['GBP','CNY'],['JPY','CNY'],['CHF','CNY'],['EUR','USD']];
+function quickWeather(b,t){
+    const cr=gR(b,t),vol=cr>100?.004:.003,rates=[];
+    let r=cr*(1+(sd(b+t)-.5)*.06);
+    for(let i=30;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);d.setHours(0,0,0,0);
+    r+=(cr-r)*.04+(sd(d.toDateString()+b+t)-.5)*2*vol*cr;rates.push(r)}
+    rates[rates.length-1]=cr;
+    const mn=Math.min(...rates),mx=Math.max(...rates),pct=(cr-mn)/(mx-mn||.0001);
+    const yest=rates[rates.length-2],chg=cr-yest,chgP=((chg)/yest)*100;
+    const wi=pct>=.8?0:pct>=.6?1:pct>=.4?2:pct>=.2?3:4;
+    return{rate:cr,icon:L.w[wi].icon,chg,chgP,dp:cr>100?2:4}
+}
+
+// === SIDEBAR ===
+function renderSidebar(){
+    document.getElementById('sidebar').innerHTML=TABS.map(t=>
+        `<button class="tab-btn${S.activeTab===t.id?' active':''}" onclick="switchTab('${t.id}')"><span class="tab-icon">${t.icon}</span><span class="tab-label">${t.label}</span></button>`
+    ).join('');
+}
+function switchTab(id){S.activeTab=id;renderSidebar();renderContent()}
+
+// === CONTENT ===
+function renderContent(){
+    const dp=S.cr>100?2:4,bN=CN[S.base]||S.base,tN=CN[S.target]||S.target;
+    let h='';
+    switch(S.activeTab){
+        case'today':h=rToday(dp,bN,tN);break;
+        case'bank':h=rBank(dp);break;
+        case'trend':h=rTrend(dp);break;
+        case'tools':h=rTools(dp);break;
+        case'learn':h=rLearn();break;
+        case'more':h=rMore(dp);break;
+    }
+    h+=`<footer>${L.foot}</footer>`;
+    document.getElementById('content').innerHTML=h;
+    bindEvents();
+}
+
+function rToday(dp,bN,tN){
+    const p=wIdx(),wi=p>=.8?0:p>=.6?1:p>=.4?2:p>=.2?3:4,w=L.w[wi];
+    const c=chg(),dir=c.d>.0001?'up':(c.d<-.0001?'down':'flat');
+    const arr=dir==='up'?'↑':(dir==='down'?'↓':'→'),cw=dir==='up'?L.up:(dir==='down'?L.dn:L.fl);
+    const l7=S.hist.slice(-7),trP=l7.length>=2?((l7[l7.length-1].rate-l7[0].rate)/l7[0].rate)*100:0;
+    const trend=trP>.3?L.t7u:(trP<-.3?L.t7d:L.t7f);
+    const res=(S.amount*S.cr).toFixed(2);
+    const best=bankRates()[0],midCost=S.amount*S.cr-S.amount*best.rate,midPct=(S.cr-best.rate)/S.cr*100;
+
+    return`<div class="card weather-card"><div class="weather-icon">${w.icon}</div>
+    <div class="weather-label" style="color:${w.c}">${w.label}</div><div class="weather-advice">${w.advice}</div>
+    <div class="weather-rate">${L.today} 1 ${bN} = <strong>${S.cr.toFixed(dp)}</strong> ${tN}</div>
+    <div class="weather-change ${dir}">${arr} ${L.vsDayAgo}${cw} ${Math.abs(c.d).toFixed(dp)}（${Math.abs(c.p).toFixed(2)}%）</div>
+    <div class="weather-trend">${trend}</div></div>
+    <div class="card-grid">
+    <div class="card"><div class="card-title">${L.calc}</div>
+    <div class="calc-row"><label>${L.cFrom}</label><input type="number" id="calc-in" value="${S.amount}" min="0"><span class="currency-tag">${S.base}</span></div>
+    <div class="calc-swap-row"><button class="calc-swap-btn" onclick="doSwap()">↕</button></div>
+    <div class="calc-row calc-result"><label>${L.cTo}</label><input value="${Number(res).toLocaleString('zh-CN')}" readonly><span class="currency-tag">${S.target}</span></div></div>
+    <div class="card"><div class="card-title">${L.spreadT}</div>
+    <div class="spread-row"><div class="spread-item"><div class="spread-lbl">${L.sMid}</div><div class="spread-val">${S.cr.toFixed(dp)}</div></div>
+    <div class="spread-arrow">→</div><div class="spread-item"><div class="spread-lbl">${L.sBank}</div><div class="spread-val">${best.rate.toFixed(dp)}</div></div></div>
+    <div class="spread-cost"><div class="spread-cost-desc">${L.sCost1(S.base,S.amount)}</div>
+    <div class="spread-cost-num">${midCost.toFixed(1)} ${S.target}</div>
+    <div class="spread-cost-desc">${L.sCost2(midPct.toFixed(2))}</div></div></div></div>
+    <div class="card"><div class="card-title">${L.miniT}</div><div class="mini-grid">${rMini()}</div></div>
+    <div class="card-grid">
+    <div class="card">${rPPP()}</div>
+    <div class="card">${rWhatIf(dp)}</div>
+    </div>`;
+}
+
+function rPPP(){
+    const cnyPerBase=S.base==='CNY'?1:(S.rates['CNY']||1)/(S.rates[S.base]||1);
+    const eurPerBase=S.base==='EUR'?1:(S.rates['EUR']||1)/(S.rates[S.base]||1);
+    const cnyBudget=S.amount*cnyPerBase, eurBudget=S.amount*eurPerBase;
+    let h=`<div class="card-title">${L.pppT}</div><div style="font-size:.8rem;color:var(--text2);margin-bottom:10px">${S.amount.toLocaleString()} ${S.base} 能买什么？</div><div class="ppp-split">`;
+    h+=`<div><div class="ppp-col-title">🇨🇳 ${L.pppIn}</div>`;
+    PPP_CN.forEach(it=>h+=`<div class="ppp-item"><span class="ppp-icon">${it.i}</span><span class="ppp-name">${it.n}</span><span class="ppp-qty">${Math.floor(cnyBudget/it.p)}</span></div>`);
+    h+=`</div><div><div class="ppp-col-title">🇫🇷 ${L.pppFr}</div>`;
+    PPP_FR.forEach(it=>h+=`<div class="ppp-item"><span class="ppp-icon">${it.i}</span><span class="ppp-name">${it.n}</span><span class="ppp-qty">${Math.floor(eurBudget/it.p)}</span></div>`);
+    return h+`</div></div>`;
+}
+
+function rWhatIf(dp){
+    const mn=S.cr*.92,mx=S.cr*1.08,cur=S.cr;
+    const resNow=S.amount*cur;
+    return`<div class="card-title">${L.wifT}</div>
+    <div style="font-size:.8rem;color:var(--text2)">${L.wifYour(S.amount,S.base)}</div>
+    <input type="range" class="whatif-range" id="wif-range" min="${mn.toFixed(6)}" max="${mx.toFixed(6)}" step="${(mx-mn)/200}" value="${cur}" oninput="updateWif()">
+    <div class="whatif-labels"><span>${mn.toFixed(dp)}</span><span style="color:var(--accent)">${L.wifCur} ${cur.toFixed(dp)}</span><span>${mx.toFixed(dp)}</span></div>
+    <div class="whatif-result" id="wif-result"><div class="whatif-rate">${cur.toFixed(dp)}</div><div class="whatif-amount">${resNow.toFixed(0)} ${S.target}</div><div class="whatif-diff" style="color:var(--text2)">← 拖动滑块试试 →</div></div>`;
+}
+
+function rMini(){
+    return MINI_PAIRS.filter(([b,t])=>!(b===S.base&&t===S.target)).slice(0,5).map(([b,t])=>{
+        const m=quickWeather(b,t),dir=m.chg>.0001?'up':(m.chg<-.0001?'down':'flat');
+        const arrow=dir==='up'?'↑':(dir==='down'?'↓':'→');
+        return`<div class="mini-card"><div class="mini-icon">${m.icon}</div><div class="mini-pair">${b}/${t}</div><div class="mini-rate">${m.rate.toFixed(m.dp)}</div><div class="mini-chg ${dir}">${arrow} ${Math.abs(m.chgP).toFixed(2)}%</div></div>`;
+    }).join('');
+}
+
+function rBank(dp){
+    const ranks=bankRates();let h=`<div class="card"><div class="card-title">${L.rankT}</div>`;
+    ranks.forEach((b,i)=>{const medal=i<3?['🥇','🥈','🥉'][i]:`<span style="color:var(--text2)">${i+1}</span>`;
+    const detail=i===0?L.rGet(S.amount.toLocaleString(),(S.amount*b.rate).toFixed(0)):L.rLess((S.amount*(ranks[0].rate-b.rate)).toFixed(1),S.target);
+    h+=`<div class="rank-item"><div class="rank-medal">${medal}</div><div class="rank-info"><div class="rank-name">${b.f} ${b.n}</div><div class="rank-detail">${detail}</div></div><div class="rank-rate">${b.rate.toFixed(dp)}</div></div>`});
+    return h+`</div>`;
+}
+
+function rTrend(dp){
+    const th=thermo(),thT=th.pos>=70?L.thH:(th.pos>=40?L.thM:L.thL),thBg=th.pos>=70?'var(--green-bg)':(th.pos>=40?'var(--amber-bg)':'var(--blue-bg)');
+    let h=`<div class="trend-grid">`;
+    // Top-left: Thermo
+    h+=`<div class="card"><div class="card-title">${L.thT}</div>
+    <div class="thermo-bar-wrap"><div class="thermo-bar"><div class="thermo-marker" style="left:${th.pos}%">${Math.round(th.pos)}</div></div></div>
+    <div class="thermo-labels"><span>${th.mn.toFixed(dp)}</span><span>${th.mx.toFixed(dp)}</span></div>
+    <div class="thermo-verdict" style="background:${thBg}">${L.thV(Math.round(th.pos),thT)}</div></div>`;
+    // Top-right: Regret
+    const regs=regret(S.amount);
+    h+=`<div class="card"><div class="card-title">${L.regT(S.amount.toLocaleString(),S.base)}</div><div class="regret-grid">`;
+    regs.forEach(r=>{const abs=Math.abs(r.diff),g=r.diff>.5,b=r.diff<-.5;
+    h+=`<div class="regret-card ${g?'good':(b?'bad':'neutral')}"><div class="regret-period">${L.regIf(r.label)}</div><div class="regret-emoji">${g?'😎':(b?'😢':'😐')}</div><div class="regret-amount">${g?L.regMore(abs.toFixed(1),S.target):(b?L.regLess(abs.toFixed(1),S.target):L.regSame)}</div><div class="regret-desc">${g?L.regGood:(b?L.regBad(r.label):L.regNeutral)}</div></div>`});
+    h+=`</div></div>`;
+    // Bottom-left: Time Machine
+    const d90=new Date();d90.setDate(d90.getDate()-89);const tmDef=new Date();tmDef.setDate(tmDef.getDate()-7);
+    h+=`<div class="card"><div class="card-title">${L.tmT}</div>
+    <div class="tm-form"><span>${L.tmBack}</span><input type="date" id="tm-date" value="${tmDef.toISOString().slice(0,10)}" min="${d90.toISOString().slice(0,10)}" max="${new Date().toISOString().slice(0,10)}">
+    <span>${L.tmWith}</span><input type="number" id="tm-amt" value="${S.amount}" min="0" style="width:80px"><span>${S.base}</span></div>
+    <div class="tm-result" id="tm-result">${tmCalc(tmDef.toISOString().slice(0,10),S.amount)}</div></div>`;
+    // Bottom-right: Calendar
+    h+=`<div class="card"><div class="card-title">${L.calT}</div><div class="cal-legend">`;
+    ['#059669','#6EE7B7','#FDE68A','#FDBA74','#FCA5A5'].forEach((c,i)=>h+=`<span><span class="dot" style="background:${c}"></span>${L.calL[i]}</span>`);
+    h+=`</div><div class="cal-header">`;L.calD.forEach(d=>h+=`<span>${d}</span>`);
+    h+=`</div><div class="cal-grid">${renderCal(dp)}</div></div>`;
+    h+=`</div>`; // close trend-grid
+    // Timeline
+    h+=`<div class="card"><div class="card-title">${L.tlT}</div><div class="timeline">`;
+    EVENTS_DATA.forEach(ev=>{const d=new Date();d.setDate(d.getDate()+ev.d);
+    h+=`<div class="tl-item"><div class="tl-dot">${ev.e}</div><div class="tl-date">${d.toLocaleDateString('zh-CN')}</div><div class="tl-title">${ev.t}</div><div class="tl-desc">${ev.desc}</div></div>`});
+    h+=`</div></div>`;
+    return h;
+}
+
+function rTools(dp){
+    const mRate=S.hist.length>30?S.hist[S.hist.length-31].rate:S.hist[0].rate;
+    let h=`<div class="card"><div class="card-title">${L.scT}</div><div class="scenario-grid">`;
+    L.scenes.forEach(sc=>{const res=(sc.amt*S.cr).toFixed(0),old=(sc.amt*mRate).toFixed(0),diff=res-old;
+    h+=`<div class="scenario-card" onclick="S.amount=${sc.amt};switchTab('today')"><div class="scenario-icon">${sc.icon}</div><div class="scenario-label">${sc.label}</div>
+    <div class="scenario-amt">${sc.amt.toLocaleString()} ${S.base}</div><div class="scenario-result">= ${Number(res).toLocaleString()} ${S.target}</div>
+    <div class="scenario-vs">${L.scVs} ${diff>=0?'+':''}${diff.toLocaleString()}</div></div>`});
+    h+=`</div></div>`;
+    // Goal tracker
+    h+=rGoal(dp);
+    // Annual report
+    h+=rAnnual(dp);
+    // Batch simulator
+    h+=rBatch(dp);
+    // Diary
+    h+=`<div class="card"><div class="card-title">${L.diaryT}</div>
+    <div class="diary-form"><input type="number" id="diary-amt" value="${S.amount}" min="0"><span style="font-size:.88rem">${S.base}→${S.target} @${S.cr.toFixed(dp)}</span>
+    <button class="btn-primary" onclick="addDiary()">${L.diaryAdd}</button></div>`;
+    const de=S.diary.filter(e=>e.b===S.base&&e.t===S.target);
+    if(de.length){const tot=de.reduce((s,e)=>s+e.a,0),avgR=de.reduce((s,e)=>s+e.r,0)/de.length,vs=de.reduce((s,e)=>s+(S.cr-e.r)*e.a,0);
+    h+=`<div class="diary-stats"><div class="diary-stat"><div class="diary-stat-lbl">${L.dCount}</div><div class="diary-stat-val">${de.length}</div></div>
+    <div class="diary-stat"><div class="diary-stat-lbl">${L.dTotal}</div><div class="diary-stat-val">${tot.toLocaleString()}</div></div>
+    <div class="diary-stat"><div class="diary-stat-lbl">${L.dAvg}</div><div class="diary-stat-val">${avgR.toFixed(dp)}</div></div>
+    <div class="diary-stat"><div class="diary-stat-lbl">${L.dVsToday}</div><div class="diary-stat-val" style="color:${vs>=0?'var(--green)':'var(--red)'}">${vs>=0?'+':''}${vs.toFixed(0)}</div></div></div>`;
+    de.slice().reverse().forEach(e=>h+=`<div class="diary-entry"><span>${e.date} · ${e.a.toLocaleString()} ${e.b} → ${(e.a*e.r).toFixed(0)} ${e.t} @${e.r.toFixed(dp)}</span><button class="diary-entry-del" onclick="delDiary('${e.id}')">✕</button></div>`)}
+    else h+=`<div class="diary-empty">${L.diaryEmpty}</div>`;
+    // Bookmarks inside diary
+    h+=`<div style="margin-top:16px;padding-top:14px;border-top:1px solid #E5E7EB"><div class="card-title">${L.bmT}</div>
+    <button class="bm-btn" onclick="addBM()">📌 ${L.bmAdd}</button>`;
+    const bms=S.bookmarks.filter(b=>b.b===S.base&&b.t===S.target);
+    bms.slice().reverse().forEach(b=>{const diff=S.cr-b.r,dp2=S.cr>100?2:4;
+    h+=`<div class="bm-item"><span>${b.date} · ${b.r.toFixed(dp2)}</span><span class="bm-vs" style="color:${diff>=0?'var(--green)':'var(--red)'}">vs今天 ${diff>=0?'+':''}${diff.toFixed(dp2)}</span><button class="diary-entry-del" onclick="delBM('${b.id}')">✕</button></div>`});
+    if(!bms.length) h+=`<div class="diary-empty">${L.bmEmpty}</div>`;
+    h+=`</div>`;
+    return h+`</div>`;
+}
+
+// === BATCH SIMULATOR ===
+function rBatch(dp){
+    const n=5;
+    let h=`<div class="card"><div class="card-title">${L.batchT}</div>
+    <div class="batch-form"><span>${L.batchTotal}</span><input type="number" id="batch-amt" value="${S.amount}" min="0">
+    <span>${S.base}</span><span>${L.batchN}</span><input type="number" id="batch-n" value="5" min="2" max="12">
+    <button class="btn-primary" onclick="calcBatch()">${L.batchGo}</button></div>
+    <div id="batch-result">${doBatch(S.amount,5,dp)}</div></div>`;
+    return h;
+}
+function doBatch(amt,n,dp){
+    if(!dp)dp=S.cr>100?2:4;
+    const once=amt*S.cr;
+    const step=Math.floor(S.hist.length/n);
+    let splitTotal=0;const details=[];
+    for(let i=0;i<n;i++){const idx=Math.min(S.hist.length-1,i*step);const r=S.hist[idx].rate;
+    splitTotal+=(amt/n)*r;details.push(r.toFixed(dp))}
+    const diff=splitTotal-once;
+    return`<div class="batch-vs"><div class="batch-col once"><div class="batch-col-title">${L.batchOnce}</div>
+    <div class="batch-col-val">${once.toFixed(0)} ${S.target}</div><div class="batch-col-detail">@ ${S.cr.toFixed(dp)}</div></div>
+    <div class="batch-diff ${diff>0?'win':'lose'}">${diff>=0?'+':''}${diff.toFixed(0)}<br>${S.target}</div>
+    <div class="batch-col split"><div class="batch-col-title">${L.batchSplit}(${n}次)</div>
+    <div class="batch-col-val">${splitTotal.toFixed(0)} ${S.target}</div><div class="batch-col-detail">${details.join(' → ')}</div></div></div>`;
+}
+
+function rMore(dp){
+    let h=`<div class="card"><div class="card-title">${L.alarmT}</div>
+    <div class="alarm-form"><span style="font-size:.88rem">${L.aWhen(S.base,S.target)}</span>
+    <select id="alarm-dir"><option value="above">${L.aUp}</option><option value="below">${L.aDn}</option></select>
+    <input type="number" id="alarm-val" placeholder="${S.cr.toFixed(dp)}" step="0.0001">
+    <button class="btn-primary" onclick="addAlarm()">${L.aSet}</button></div><div class="alarm-list">`;
+    const pa=S.alarms.filter(a=>a.b===S.base&&a.t===S.target);
+    if(!pa.length)h+=`<div class="alarm-empty">${L.aEmpty}</div>`;
+    else pa.forEach(a=>{const tr=(a.dir==='above'&&S.cr>=a.v)||(a.dir==='below'&&S.cr<=a.v);
+    h+=`<div class="alarm-item${tr?' alarm-triggered':''}"><span>${a.b}/${a.t} ${a.dir==='above'?'≥':'≤'} ${a.v}${tr?' '+L.aReached:''}</span><button class="alarm-del" onclick="delAlarm('${a.id}')">✕</button></div>`});
+    h+=`</div></div>`;
+    // Tip
+    const tip=L.tips[Math.floor(sd(new Date().toDateString())*L.tips.length)];
+    h+=`<div class="card tip-card"><div class="card-title">${L.tipT}</div>
+    <div class="tip-text" id="tip-t">${tip}</div><button class="tip-refresh" onclick="document.getElementById('tip-t').textContent=L.tips[Math.floor(Math.random()*L.tips.length)]">${L.tipNext}</button></div>`;
+    // Share
+    h+=`<div class="card"><div class="card-title" style="justify-content:center">${L.shareT}</div>
+    <div class="share-actions"><button onclick="dlCard()">${L.shareImg}</button><button onclick="copyTxt()">${L.shareTxt}</button></div></div>`;
+    return h;
+}
+
+function renderCal(dp){
+    const l30=S.hist.slice(-30),rates=l30.map(h=>h.rate),mn=Math.min(...rates),mx=Math.max(...rates),rng=mx-mn||.0001;
+    const today=new Date();today.setHours(0,0,0,0);const fd=l30[0].date,fday=fd.getDay(),mo=fday===0?-6:1-fday;
+    const gs=new Date(fd);gs.setDate(gs.getDate()+mo);const rm={};l30.forEach(h=>{rm[h.date.toDateString()]=h.rate});
+    let o='';for(let i=0;i<42;i++){const d=new Date(gs);d.setDate(d.getDate()+i);if(d>today)break;
+    const rate=rm[d.toDateString()];if(rate!==undefined){const p=(rate-mn)/rng,lv=p>=.8?4:p>=.6?3:p>=.4?2:p>=.2?1:0;
+    o+=`<div class="cal-cell level-${lv}${d.toDateString()===today.toDateString()?' today':''}" title="${d.getMonth()+1}/${d.getDate()} ${rate.toFixed(dp)}"><span class="cal-date">${d.getDate()}</span><span class="cal-rate">${rate.toFixed(dp>2?2:dp)}</span></div>`}
+    else o+=`<div class="cal-cell empty"></div>`}return o;
+}
+
+function tmCalc(ds,amt){const r=histRate(ds),dp=S.cr>100?2:4,res=(amt*r).toFixed(0),now=(amt*S.cr).toFixed(0),diff=now-res;
+const cls=diff>1?'good':(diff<-1?'bad':'same'),txt=diff>1?L.tmBetter:(diff<-1?L.tmWorse:L.tmSame);
+return`<div class="tm-rate">${L.tmRate}：${r.toFixed(dp)}</div><div class="tm-result-val">${L.tmGet}：${Number(res).toLocaleString()} ${S.target}</div>
+<div class="tm-diff ${cls}">vs 今天 ${diff>=0?'+':''}${diff.toLocaleString()} ${S.target} · ${txt}</div>`}
+
+// === EVENTS ===
+function bindEvents(){
+    document.getElementById('calc-in')?.addEventListener('input',e=>{S.amount=parseFloat(e.target.value)||0;renderContent()});
+    document.getElementById('wif-range')?.addEventListener('input',updateWif);
+    document.getElementById('tm-date')?.addEventListener('change',()=>{const d=document.getElementById('tm-date')?.value,a=parseFloat(document.getElementById('tm-amt')?.value)||S.amount;if(d)document.getElementById('tm-result').innerHTML=tmCalc(d,a)});
+    document.getElementById('tm-amt')?.addEventListener('input',()=>{const d=document.getElementById('tm-date')?.value,a=parseFloat(document.getElementById('tm-amt')?.value)||S.amount;if(d)document.getElementById('tm-result').innerHTML=tmCalc(d,a)});
+}
+function doSwap(){const btn=document.getElementById('swap-btn');btn.classList.add('spin');setTimeout(()=>btn.classList.remove('spin'),400);
+[S.base,S.target]=[S.target,S.base];document.getElementById('sel-base').value=S.base;document.getElementById('sel-target').value=S.target;genH();renderContent()}
+function onPair(){const b=document.getElementById('sel-base').value,t=document.getElementById('sel-target').value;if(b===t){toast(L.diffCur);return}S.base=b;S.target=t;genH();renderContent()}
+function addAlarm(){const dir=document.getElementById('alarm-dir').value,v=parseFloat(document.getElementById('alarm-val').value);if(!v)return;S.alarms.push({id:Date.now().toString(36),b:S.base,t:S.target,dir,v});localStorage.setItem('fx_alarms',JSON.stringify(S.alarms));renderContent()}
+function delAlarm(id){S.alarms=S.alarms.filter(a=>a.id!==id);localStorage.setItem('fx_alarms',JSON.stringify(S.alarms));renderContent()}
+function addDiary(){const a=parseFloat(document.getElementById('diary-amt')?.value)||S.amount;S.diary.push({id:Date.now().toString(36),date:new Date().toLocaleDateString('zh-CN'),b:S.base,t:S.target,a,r:S.cr});localStorage.setItem('fx_diary',JSON.stringify(S.diary));renderContent()}
+function delDiary(id){S.diary=S.diary.filter(e=>e.id!==id);localStorage.setItem('fx_diary',JSON.stringify(S.diary));renderContent()}
+
+// === LEARN TAB ===
+function getQList(){return qCat==='all'?QB:QB.filter(q=>q.c===qCat)}
+function rLearn(){
+    const sc=S.quiz.score,lvIdx=sc>=100?3:sc>=50?2:sc>=20?1:0;
+    const nxt=lvIdx<3?L.levelMin[lvIdx+1]:999,pct=lvIdx<3?((sc-L.levelMin[lvIdx])/(nxt-L.levelMin[lvIdx])*100):100;
+    const totalAns=Object.keys(S.quiz.ans).length;
+    // Level bar
+    let h=`<div class="card"><div class="card-title">${L.lvlT}</div>
+    <div class="level-bar"><div class="level-badge">${L.levels[lvIdx].split(' ')[0]}</div><div class="level-info"><div class="level-name">${L.levels[lvIdx]}</div>
+    <div class="level-score">${L.lvlScore}：${sc} ${lvIdx<3?'· '+L.lvlNext+'：'+(nxt-sc)+'分':''} · ${L.qbDone} ${totalAns}/${QB.length}</div>
+    <div class="level-progress"><div class="level-fill" style="width:${Math.min(100,pct)}%"></div></div></div></div></div>`;
+    // 2-column: Quiz + Prediction
+    h+=`<div class="learn-top">`;
+    // LEFT: Quiz Bank
+    const ql=getQList();if(qNum>=ql.length)qNum=0;const qi=ql[qNum],qiGlobal=QB.indexOf(qi);
+    const answered=S.quiz.ans[qiGlobal]!==undefined;
+    h+=`<div class="card"><div class="card-title">${L.qbT}</div>
+    <div class="qb-cats">${QB_CATS.map(c=>`<button class="qb-cat${qCat===c.id?' active':''}" onclick="qCat='${c.id}';qNum=0;renderContent()">${c.n}</button>`).join('')}</div>
+    <div class="qb-nav"><button class="qb-nav-btn" onclick="qNum=Math.max(0,qNum-1);renderContent()">←</button>
+    <div class="qb-meta"><span>${qNum+1}${L.qbOf}${ql.length}</span><span class="qb-stars">${'★'.repeat(qi.d)}${'☆'.repeat(3-qi.d)}</span></div>
+    <button class="qb-nav-btn" onclick="qNum=Math.min(getQList().length-1,qNum+1);renderContent()">→</button></div>
+    <div class="quiz-q">${qi.q}</div><div class="quiz-opts">`;
+    qi.o.forEach((opt,i)=>{let cls='quiz-opt';
+    if(answered){cls+=i===qi.a?' correct':'';cls+=S.quiz.ans[qiGlobal]===i&&i!==qi.a?' wrong':'';if(i!==qi.a&&i!==S.quiz.ans[qiGlobal])cls+=' dim'}
+    h+=`<button class="${cls}" ${answered?'disabled':''}onclick="ansQ(${qiGlobal},${i})">${opt}</button>`});
+    h+=`</div>`;
+    if(answered){const ok=S.quiz.ans[qiGlobal]===qi.a;
+    h+=`<div class="quiz-fb" style="background:${ok?'var(--green-bg);color:var(--green)':'var(--red-bg);color:var(--red)'}">${ok?'✅ +10分！':'❌ 正确答案已标绿'}</div>`}
+    h+=`<div style="display:flex;justify-content:center;gap:8px;margin-top:10px"><button class="qb-nav-btn" style="width:auto;padding:6px 14px;border-radius:8px;font-size:.78rem" onclick="qNum=Math.floor(Math.random()*getQList().length);renderContent()">${L.qbRand}</button></div>
+    <div class="qb-progress">${L.qbDone} ${totalAns}/${QB.length}<div class="qb-pbar"><div class="qb-pfill" style="width:${totalAns/QB.length*100}%"></div></div></div></div>`;
+    // RIGHT: Prediction
+    h+=`<div class="card">${rPredict()}</div>`;
+    h+=`</div>`; // close learn-top
+    // Knowledge Base: Concepts
+    h+=`<div class="card"><div class="card-title">${L.conceptT}</div><div style="font-size:.78rem;color:var(--text2);margin-bottom:12px">${L.conceptClick}</div><div class="concept-grid">`;
+    CONCEPTS.forEach(c=>{const isOpen=openConcept===c.id;
+    const answeredCount=c.qs.filter((_,qi)=>S.quiz.cAns[c.id+'_'+qi]!==undefined).length;
+    const allDone=answeredCount===c.qs.length;
+    // Find first unanswered, or last answered (to show feedback)
+    let showIdx=c.qs.findIndex((_,qi)=>S.quiz.cAns[c.id+'_'+qi]===undefined);
+    if(showIdx===-1) showIdx=c.qs.length-1; // all done, show last
+    const justAnswered=S.quiz.cAns[c.id+'_'+showIdx]!==undefined;
+    h+=`<div class="concept-card${isOpen?' open':''}" onclick="openConcept=openConcept==='${c.id}'?'':'${c.id}';renderContent()">
+    <div class="concept-head"><span class="concept-icon">${c.icon}</span><span class="concept-title">${c.t}</span><span class="concept-diff">${'★'.repeat(c.d)}${'☆'.repeat(3-c.d)} · ${answeredCount}/${c.qs.length}${allDone?' ✅':''}</span></div>
+    <div class="concept-desc">${c.desc}</div>
+    <div class="concept-body"><div class="concept-detail">${c.detail}</div>`;
+    if(allDone){
+        const correctCount=c.qs.filter((_,qi)=>S.quiz.cAns[c.id+'_'+qi]===c.qs[qi].a).length;
+        h+=`<div style="text-align:center;padding:12px;background:var(--green-bg);border-radius:8px;margin-top:8px">
+        <div style="font-size:1.2rem">🎉</div>
+        <div style="font-weight:600;color:var(--green)">全部完成！答对 ${correctCount}/${c.qs.length}</div>
+        <button class="qb-nav-btn" style="width:auto;padding:4px 12px;border-radius:6px;font-size:.75rem;margin-top:6px" onclick="event.stopPropagation();resetConcept('${c.id}')">🔄 重新挑战</button></div>`;
+    } else {
+        const cq=c.qs[showIdx],cKey=c.id+'_'+showIdx,cAns=S.quiz.cAns[cKey];
+        h+=`<div style="margin-top:8px;font-size:.75rem;color:var(--text2)">第 ${showIdx+1}/${c.qs.length} 题</div>
+        <div class="concept-quiz-q">${cq.q}</div><div class="quiz-opts">`;
+        cq.o.forEach((opt,i)=>{let cls='quiz-opt';
+        if(cAns!==undefined){cls+=i===cq.a?' correct':'';cls+=cAns===i&&i!==cq.a?' wrong':'';if(i!==cq.a&&i!==cAns)cls+=' dim'}
+        h+=`<button class="${cls}" ${cAns!==undefined?'disabled':''}onclick="event.stopPropagation();ansConcept('${cKey}',${i},${cq.a})">${opt}</button>`});
+        h+=`</div>`;
+        if(cAns!==undefined&&!allDone)h+=`<div style="text-align:center;margin-top:8px"><button class="qb-nav-btn" style="width:auto;padding:4px 12px;border-radius:6px;font-size:.75rem" onclick="event.stopPropagation();renderContent()">下一题 →</button></div>`;
+    }
+    h+=`</div></div>`});
+    h+=`</div></div>`;
+    // Currency Encyclopedia
+    h+=`<div class="card"><div class="card-title">${L.encT}</div><div class="ency-grid">`;
+    ENCY_DATA.forEach(c=>h+=`<div class="ency-card"><div class="ency-flag">${c.flag}</div><div class="ency-code">${c.code}</div><div class="ency-name">${c.name}</div><div class="ency-fact">${c.fact}</div></div>`);
+    h+=`</div></div>`;
+    return h;
+}
+function ansQ(gi,choice){
+    if(S.quiz.ans[gi]!==undefined)return;
+    S.quiz.ans[gi]=choice;if(choice===QB[gi].a)S.quiz.score+=10;
+    localStorage.setItem('fx_quiz',JSON.stringify(S.quiz));renderContent();
+}
+function ansConcept(cKey,choice,correct){
+    if(S.quiz.cAns[cKey]!==undefined)return;
+    S.quiz.cAns[cKey]=choice;if(choice===correct)S.quiz.score+=15;
+    localStorage.setItem('fx_quiz',JSON.stringify(S.quiz));renderContent();
+}
+function resetConcept(cid){
+    Object.keys(S.quiz.cAns).filter(k=>k.startsWith(cid+'_')).forEach(k=>delete S.quiz.cAns[k]);
+    localStorage.setItem('fx_quiz',JSON.stringify(S.quiz));renderContent();
+}
+function calcBatch(){const a=parseFloat(document.getElementById('batch-amt')?.value)||S.amount;
+const n=parseInt(document.getElementById('batch-n')?.value)||5;
+document.getElementById('batch-result').innerHTML=doBatch(a,Math.max(2,Math.min(12,n)))}
+// === PREDICTION ===
+function rPredict(){
+    const todayKey=new Date().toDateString(),done=S.predict.today===todayKey;
+    const log=S.predict.log||[],total=log.length,ok=log.filter(g=>g.ok).length;
+    const rate=total?Math.round(ok/total*100):0;
+    // Streak
+    let streak=0;for(let i=log.length-1;i>=0;i--){if(log[i].ok)streak++;else break}
+    const simPercentile=Math.min(95,50+rate*0.5);
+    let h=`<div class="card-title">${L.predT}</div>`;
+    // Yesterday's result
+    if(log.length){const last=log[log.length-1];
+    const gIcon=last.g==='up'?'📈':(last.g==='down'?'📉':'➡️');
+    const rIcon=last.r==='up'?'📈':(last.r==='down'?'📉':'➡️');
+    h+=`<div style="text-align:center;font-size:.85rem;padding:6px 10px;border-radius:8px;margin-bottom:10px;background:${last.ok?'var(--green-bg)':'var(--red-bg)'}">
+    ${L.predYest} ${gIcon} → ${L.predResult} ${rIcon} ${last.ok?'✅':'❌'}</div>`}
+    // History dots
+    if(log.length){h+=`<div class="pred-history">`;
+    log.slice(-10).forEach(g=>h+=`<div class="pred-dot ${g.ok?'win':'loss'}">${g.ok?'✓':'✗'}</div>`);
+    h+=`</div>`;if(streak>=2)h+=`<div class="pred-streak">${L.predStreak} ${streak} 次！</div>`}
+    // Predict buttons
+    if(done)h+=`<div style="text-align:center;color:var(--text2);padding:6px;font-size:.85rem">${L.predDone}</div>`;
+    else{h+=`<div style="text-align:center;color:var(--text2);font-size:.85rem">${L.predQ}</div>
+    <div class="predict-btns"><button class="predict-btn" onclick="makePred('up')">${L.predUp}</button><button class="predict-btn" onclick="makePred('down')">${L.predDn}</button><button class="predict-btn" onclick="makePred('flat')">${L.predFlat}</button></div>`}
+    // Stats
+    if(total)h+=`<div class="predict-stats"><div class="predict-stat">${L.predTotal}<strong>${total}</strong></div><div class="predict-stat">${L.predOk}<strong>${ok}</strong></div><div class="predict-stat">${L.predRate}<strong>${rate}%</strong></div></div>
+    <div style="text-align:center;font-size:.75rem;color:var(--accent);margin-top:6px">${L.predBetter(Math.round(simPercentile))}</div>`;
+    return h;
+}
+function makePred(dir){
+    const todayKey=new Date().toDateString();if(S.predict.today===todayKey)return;
+    // Resolve previous prediction
+    if(S.predict.todayG&&S.predict.today){const c=chg();
+    const actual=c.d>0.0001?'up':(c.d<-0.0001?'down':'flat');
+    S.predict.log.push({g:S.predict.todayG,r:actual,ok:S.predict.todayG===actual})}
+    S.predict.today=todayKey;S.predict.todayG=dir;
+    localStorage.setItem('fx_pred',JSON.stringify(S.predict));renderContent();
+}
+
+// === GOAL TRACKER ===
+function rGoal(dp){
+    const g=S.goal,needBase=g.target?g.target/S.cr:0;
+    const pct=g.target&&g.saved?(Math.min(100,g.saved/needBase*100)):0;
+    let h=`<div class="card"><div class="card-title">${L.goalT}</div>
+    <div class="goal-form"><span>${L.goalTarget}</span><input type="number" id="goal-t" value="${g.target||''}" placeholder="50000" min="0"><span>${S.target}</span>
+    <span>${L.goalSaved}</span><input type="number" id="goal-s" value="${g.saved||''}" placeholder="3000" min="0"><span>${S.base}</span>
+    <button class="btn-primary" onclick="setGoal()">${L.goalSet}</button></div>`;
+    if(g.target>0){
+    h+=`<div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+    <div class="goal-pct">${pct.toFixed(1)}% · ${L.goalNeed} ${Math.max(0,needBase-g.saved).toFixed(0)} ${S.base}</div>
+    <div class="goal-sc-grid">`;
+    [-.03,-.01,.01,.03].forEach(d=>{const r2=S.cr*(1+d),need2=g.target/r2;
+    h+=`<div class="goal-sc"><div class="goal-sc-label">${L.goalIf} ${r2.toFixed(dp)}</div><div class="goal-sc-val" style="color:${d>0?'var(--green)':'var(--red)'}">${L.goalNeed} ${Math.max(0,need2-g.saved).toFixed(0)} ${S.base}</div></div>`});
+    h+=`</div>`}
+    return h+`</div>`;
+}
+function setGoal(){
+    S.goal.target=parseFloat(document.getElementById('goal-t')?.value)||0;
+    S.goal.saved=parseFloat(document.getElementById('goal-s')?.value)||0;
+    localStorage.setItem('fx_goal',JSON.stringify(S.goal));renderContent();
+}
+
+// === ANNUAL REPORT ===
+function rAnnual(dp){
+    let h=`<div class="card"><div class="card-title">${L.annT}</div>
+    <div class="annual-form"><span>${L.annMonth}</span><input type="number" id="ann-amt" value="1000" min="0"><span>${S.base}</span>
+    <button class="btn-primary" onclick="calcAnn()">${L.annGo}</button></div>
+    <div id="ann-result">${doAnnual(1000,dp)}</div></div>`;
+    return h;
+}
+function doAnnual(monthAmt,dp){
+    if(!dp)dp=S.cr>100?2:4;
+    const yearAmt=monthAmt*12,yearTarget=yearAmt*S.cr;
+    const bestBank=bankRates()[0],spreadCost=yearAmt*(S.cr-bestBank.rate);
+    const rates=S.hist.map(h=>h.rate),mn=Math.min(...rates),mx=Math.max(...rates);
+    const timingSave=yearAmt*(mx-S.cr)*0.3;
+    const dcaSave=Math.abs(yearAmt*S.cr-yearAmt*(rates.reduce((a,b)=>a+b,0)/rates.length))*0.4;
+    const total=spreadCost+timingSave+dcaSave;
+    const coffees=Math.round(total/35);
+    return`<div class="annual-row cost"><span class="annual-label">${L.annSpread}</span><span class="annual-val" style="color:var(--red)">~${spreadCost.toFixed(0)} ${S.target}/年</span></div>
+    <div class="annual-row save"><span class="annual-label">${L.annTiming}</span><span class="annual-val" style="color:var(--green)">~${timingSave.toFixed(0)} ${S.target}/年</span></div>
+    <div class="annual-row save"><span class="annual-label">${L.annDCA}</span><span class="annual-val" style="color:var(--green)">~${dcaSave.toFixed(0)} ${S.target}/年</span></div>
+    <div class="annual-total"><div style="font-size:.82rem;color:var(--text2)">${L.annTotal}</div><div class="annual-total-num">~${total.toFixed(0)} ${S.target}/年</div><div class="annual-total-eq">${L.annEq(coffees)}</div></div>`;
+}
+function calcAnn(){const a=parseFloat(document.getElementById('ann-amt')?.value)||1000;document.getElementById('ann-result').innerHTML=doAnnual(a)}
+
+// === WHAT-IF SLIDER ===
+function updateWif(){
+    const v=parseFloat(document.getElementById('wif-range')?.value)||S.cr,dp=S.cr>100?2:4;
+    const res=S.amount*v,diff=res-S.amount*S.cr;
+    const el=document.getElementById('wif-result');if(!el)return;
+    const col=diff>1?'var(--green)':(diff<-1?'var(--red)':'var(--text2)');
+    el.innerHTML=`<div class="whatif-rate">${v.toFixed(dp)}</div><div class="whatif-amount">${res.toFixed(0)} ${S.target}</div><div class="whatif-diff" style="color:${col}">vs 当前 ${diff>=0?'+':''}${diff.toFixed(0)} ${S.target}</div>`;
+}
+
+function addBM(){const dp=S.cr>100?2:4;S.bookmarks.push({id:Date.now().toString(36),date:new Date().toLocaleDateString('zh-CN'),b:S.base,t:S.target,r:S.cr});localStorage.setItem('fx_bm',JSON.stringify(S.bookmarks));renderContent()}
+function delBM(id){S.bookmarks=S.bookmarks.filter(b=>b.id!==id);localStorage.setItem('fx_bm',JSON.stringify(S.bookmarks));renderContent()}
+
+function dlCard(){
+    const cv=document.createElement('canvas');cv.width=640;cv.height=380;const x=cv.getContext('2d');
+    const g=x.createLinearGradient(0,0,640,380);g.addColorStop(0,'#FEF7EE');g.addColorStop(1,'#FDDCB5');
+    x.beginPath();x.roundRect(0,0,640,380,24);x.fillStyle=g;x.fill();
+    const p=wIdx(),wi=p>=.8?0:p>=.6?1:p>=.4?2:p>=.2?3:4,w=L.w[wi],dp=S.cr>100?2:4;
+    x.fillStyle='#9CA3AF';x.font='500 15px sans-serif';x.textAlign='left';x.fillText('换汇天气 · '+new Date().toLocaleDateString('zh-CN'),32,36);
+    x.font='56px serif';x.textAlign='center';x.fillText(w.icon,320,110);
+    const cc=w.c==='var(--green)'?'#10B981':w.c==='var(--red)'?'#EF4444':w.c==='var(--amber)'?'#F59E0B':w.c;
+    x.fillStyle=cc;x.font='bold 26px sans-serif';x.fillText(w.label,320,152);
+    x.fillStyle='#1A1A2E';x.font='bold 30px sans-serif';x.fillText(`1 ${CN[S.base]} = ${S.cr.toFixed(dp)} ${CN[S.target]}`,320,205);
+    x.fillStyle='#6B7280';x.font='16px sans-serif';x.fillText(w.advice,320,240);
+    const th=thermo(),bx=80,by=275,bw=480;
+    const tg=x.createLinearGradient(bx,0,bx+bw,0);tg.addColorStop(0,'#3B82F6');tg.addColorStop(.5,'#F59E0B');tg.addColorStop(1,'#10B981');
+    x.beginPath();x.roundRect(bx,by,bw,14,7);x.fillStyle=tg;x.fill();
+    const mx2=bx+bw*(th.pos/100);x.beginPath();x.arc(mx2,by+7,10,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle='#1A1A2E';x.lineWidth=2.5;x.stroke();
+    x.fillStyle='#1A1A2E';x.font='bold 10px sans-serif';x.textAlign='center';x.fillText(Math.round(th.pos),mx2,by+10);
+    x.fillStyle='#9CA3AF';x.font='13px sans-serif';x.textAlign='center';x.fillText(`30天位置 ${Math.round(th.pos)}%`,320,by+50);
+    x.fillStyle='#D1D5DB';x.fillText('— 换汇天气 —',320,368);
+    cv.toBlob(blob=>{const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=`fx-weather-${new Date().toISOString().slice(0,10)}.png`;a.click();URL.revokeObjectURL(u)});
+}
+function copyTxt(){const p=wIdx(),wi=p>=.8?0:p>=.6?1:p>=.4?2:p>=.2?3:4,w=L.w[wi],dp=S.cr>100?2:4;
+navigator.clipboard.writeText(`【换汇天气】${w.icon} ${w.label}\n今天 1 ${CN[S.base]} = ${S.cr.toFixed(dp)} ${CN[S.target]}\n30天位置：${Math.round(p*100)}%\n建议：${w.advice}`).then(()=>toast(L.copied)).catch(()=>toast(L.copyFail))}
+
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000)}
+
+// === INIT ===
+async function init(){
+    if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
+    document.getElementById('sel-base').addEventListener('change',onPair);
+    document.getElementById('sel-target').addEventListener('change',onPair);
+    await fetchR();genH();QB=QB.concat(compileQuiz());renderSidebar();renderContent();
+    setInterval(()=>{if(!S.cr)return;S.cr+=(Math.random()-.5)*2*S.cr*.0002;S.hist[S.hist.length-1].rate=S.cr;renderContent()},30000);
+}
+init();
+</script>
+</body>
+</html>

@@ -57,7 +57,7 @@ taux-de-change/
 |---|---|---|
 | App shell (same-origin) | `weather.html`, `manifest.json`, `icon.svg` | Cache-first |
 | Live rate | `api.exchangerate-api.com/v4/latest/{base}` | Network-first, fall back to SW cache only. **No localStorage rate snapshot in v2.0** (see §7.2). |
-| 30-day history | `api.frankfurter.app/{start}..{end}?from={base}` | Pass-through (not intercepted). v2.1 target (see §7.3). |
+| 30-day history | `api.frankfurter.dev/v1/{start}..{end}?from={base}` | Pass-through (not intercepted). v2.1 target (see §7.3). |
 
 ---
 

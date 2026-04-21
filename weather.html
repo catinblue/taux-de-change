@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>FX Terminal Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --bg: #FFFFFF; --surface: #F2F2F7; --text: #000000; --text2: #8E8E93;
+            --line: #C6C6C8; --accent: #007AFF; --green: #34C759; --red: #FF3B30;
+            --glass: rgba(255, 255, 255, 0.8); --safe-b: env(safe-area-inset-bottom);
+        }
+        :root.dark {
+            --bg: #000000; --surface: #1C1C1E; --text: #FFFFFF; --text2: #48484A;
+            --line: #2C2C2E; --accent: #FFFFFF; --green: #00FF88; --red: #FF3366;
+            --glass: rgba(0, 0, 0, 0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+            background: var(--bg); color: var(--text); overflow-x: hidden;
+            -webkit-font-smoothing: antialiased; line-height: 1.2;
+        }
+
+        .layout { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+        .content { padding: 20px 20px calc(120px + var(--safe-b)); flex: 1; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 30px 20px 20px; }
+        .logo { font-size: 12px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; color: var(--text2); }
+
+        .persona-bar { display: flex; width: 100%; border-bottom: 1px solid var(--line); }
+        .pt-btn {
+            flex: 1; padding: 18px 0; background: none; border: none;
+            color: var(--text2); font-size: 11px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.2s;
+            min-height: 44px; font-family: inherit;
+        }
+        .pt-btn.active { color: var(--text); background: var(--surface); box-shadow: inset 0 -2px 0 var(--text); }
+
+        .pair-selector { display: flex; justify-content: center; gap: 30px; padding: 40px 0; }
+        .picker-box { position: relative; display: flex; align-items: center; gap: 6px; cursor: pointer; min-height: 44px; }
+        .picker-box select {
+            position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+            font-size: 16px;
+        }
+        .picker-label { font-size: 24px; font-weight: 900; }
+        .picker-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--text2); }
+
+        .hero { padding: 40px 0; border-bottom: 1px solid var(--line); }
+        .hero-tag { font-size: 11px; font-weight: 800; color: var(--text2); letter-spacing: 2px; margin-bottom: 20px; display: flex; align-items: center; }
+        .hero-num {
+            font-size: clamp(3rem, 18vw, 6.5rem);
+            font-weight: 900; letter-spacing: -0.06em; line-height: 1.1;
+            white-space: nowrap;
+        }
+        .hero-status { display: flex; align-items: center; gap: 12px; margin-top: 25px; flex-wrap: wrap; }
+        .badge { font-size: 10px; font-weight: 900; border: 1.5px solid var(--text); padding: 4px 10px; text-transform: uppercase; }
+        .delta { font-size: 13px; font-weight: 900; }
+
+        .terminal-block { padding: 50px 0; border-bottom: 1px solid var(--line); }
+        .t-label { font-size: 10px; font-weight: 900; color: var(--text2); letter-spacing: 2px; margin-bottom: 15px; }
+        .t-input-wrap { display: flex; justify-content: space-between; align-items: baseline; }
+        .t-input-wrap input {
+            background: none; border: none; color: var(--text);
+            font-size: clamp(2rem, 12vw, 4rem); font-weight: 900;
+            outline: none; width: 75%; letter-spacing: -0.04em;
+            font-family: inherit;
+            line-height: 1;
+            caret-color: var(--accent);
+        }
+        .t-input-wrap input::-webkit-inner-spin-button,
+        .t-input-wrap input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .t-input-wrap input { -moz-appearance: textfield; }
+        .t-code { font-size: 18px; font-weight: 900; color: var(--text2); }
+        .t-res {
+            color: var(--green);
+            max-width: 75%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.5); }
+            70%  { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+        }
+        .live-dot {
+            display: inline-block; width: 6px; height: 6px;
+            background-color: var(--green); border-radius: 50%;
+            margin-right: 8px; animation: pulse 2s infinite;
+        }
+
+        .bar-chart { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding: 30px 0; border-bottom: 1px solid var(--line); }
+        .bar { flex: 1; background: var(--text2); border-radius: 2px 2px 0 0; opacity: 0.3; transition: height 0.5s; min-width: 2px; }
+        .bar.positive { background: var(--green); opacity: 1; }
+        .bar.negative { background: var(--red); opacity: 1; }
+
+        .list-row { padding: 24px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+        .list-label { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text); }
+        .list-val { font-size: 16px; font-weight: 900; color: var(--text2); }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 30px 0; border-bottom: 1px solid var(--line); }
+        .stat-box { display: flex; flex-direction: column; gap: 8px; }
+        .stat-lbl { font-size: 9px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-val { font-size: 16px; font-weight: 900; color: var(--text); }
+
+        .verdict-box { padding: 30px 0; border-bottom: 1px solid var(--line); }
+        .verdict-text { font-size: 14px; font-weight: 800; line-height: 1.5; color: var(--text); border-left: 2px solid var(--green); padding-left: 12px; }
+        .cost-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .cost-lbl { font-size: 13px; font-weight: 800; color: var(--text2); }
+        .cost-val { font-size: 14px; font-weight: 900; color: var(--red); }
+
+        .footer { padding: 50px 0 20px; text-align: center; color: var(--text2); font-size: 11px; line-height: 1.7; letter-spacing: 0.5px; }
+        .footer-version { display: block; margin-top: 8px; font-weight: 700; letter-spacing: 2px; opacity: 0.5; }
+
+        .dock {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 500px; height: calc(84px + var(--safe-b));
+            background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--line); display: flex; justify-content: space-around;
+            padding-bottom: var(--safe-b); z-index: 9999;
+        }
+        .dock-btn { flex: 1; border: none; background: none; color: var(--text2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; min-height: 44px; font-family: inherit; }
+        .dock-btn.active { color: var(--text); }
+        .dock-icon { font-size: 20px; }
+        .dock-lbl { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .icon-btn {
+            background: none; border: none; cursor: pointer; color: var(--text);
+            font-family: inherit; font-size: 11px; font-weight: 900; letter-spacing: 1px;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+    </style>
+    <script>
+        // Pre-apply dark theme synchronously to prevent FOUC
+        if (localStorage.getItem('fx_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+<body>
+
+<div class="layout">
+    <header class="header">
+        <div class="logo" id="logo">FX Terminal v2.0</div>
+        <div style="display:flex; gap:18px; align-items:center">
+            <button onclick="toggleTheme()" id="theme-btn" class="icon-btn" style="font-size:18px">🌙</button>
+            <script>if(document.documentElement.classList.contains('dark'))document.getElementById('theme-btn').textContent='☀️';</script>
+            <button onclick="toggleLang()" id="lang-btn" class="icon-btn">EN ⇄ 中</button>
+        </div>
+    </header>
+
+    <nav class="persona-bar">
+        <button id="pt-student" class="pt-btn" onclick="setPersona('student')"></button>
+        <button id="pt-nomad" class="pt-btn" onclick="setPersona('nomad')"></button>
+        <button id="pt-seller" class="pt-btn" onclick="setPersona('seller')"></button>
+    </nav>
+
+    <div class="pair-selector">
+        <div class="picker-box">
+            <span class="picker-label" id="label-base">EUR</span>
+            <div class="picker-arrow"></div>
+            <select id="sel-base"></select>
+        </div>
+        <div style="font-size:24px; font-weight:200; opacity:0.2; align-self:center">/</div>
+        <div class="picker-box">
+            <span class="picker-label" id="label-target">CNY</span>
+            <div class="picker-arrow"></div>
+            <select id="sel-target"></select>
+        </div>
+    </div>
+
+    <main id="content" class="content"></main>
+
+    <nav class="dock" id="dock"></nav>
+</div>
+
+<script>
+    const CURS = ["EUR","USD","GBP","JPY","AUD","CAD","CHF","CNY","SGD","HKD"];
+
+    const I18N = {
+        en: {
+            logo: "FX Terminal",
+            personas: { student: "Student", nomad: "Nomad", seller: "Seller" },
+            liveSignal: "LIVE MARKET SIGNAL",
+            sourceAmount: "SOURCE AMOUNT",
+            estimate: "ESTIMATED SETTLEMENT",
+            vsPrev: "vs prev close",
+            weather: [
+                { label: "Great",  c: "#34C759" },
+                { label: "Good",   c: "#32D74B" },
+                { label: "Stable", c: "#8E8E93" },
+                { label: "Poor",   c: "#FF9F0A" },
+                { label: "Storm",  c: "#FF3B30" }
+            ],
+            dock: [
+                { id: 'today',    icon: '▣',  lbl: 'Terminal' },
+                { id: 'trends',   icon: '📈', lbl: 'Trends' },
+                { id: 'settings', icon: '⚙',  lbl: 'Setup' }
+            ],
+            pending: "MODULE PENDING",
+            trendsTag: "30-DAY VOLATILITY",
+            recent: "RECENT SETTLEMENTS",
+            awaitHistory: "Awaiting history endpoint",
+            terminalConfig: "TERMINAL CONFIGURATION",
+            setup: "Setup",
+            darkMode: "Dark Mode Interface",
+            on: "ON",
+            off: "OFF",
+            resetCache: "Reset Terminal Cache",
+            hiddenCostRadar: "HIDDEN COST RADAR",
+            estBankMarkup: "Est. bank markup",
+            markupAssume: "assumes 2.5% spread",
+            smartVerdict: "SMART VERDICT",
+            verdict: {
+                student: "Stage tuition transfers across weeks to average out volatility. Compare Wise vs bank wire before large remits.",
+                nomad: "Local-currency cards (Wise / Revolut) and in-network ATMs usually beat airport kiosks and street exchange counters.",
+                seller: "For large B2B payouts, FX brokers or multi-currency accounts often achieve narrower spreads than direct SWIFT wires."
+            },
+            slogan: "Decode Volatility, End Hidden Costs.",
+            high30d: "30D HIGH",
+            avg30d: "30D AVG",
+            low30d: "30D LOW",
+            hapticEngine: "Haptic Engine"
+        },
+        zh: {
+            logo: "FX Terminal",
+            personas: { student: "学生", nomad: "游民", seller: "卖家" },
+            liveSignal: "实时行情信号",
+            sourceAmount: "兑换金额",
+            estimate: "预计到账",
+            vsPrev: "较上一交易日",
+            weather: [
+                { label: "极好", c: "#34C759" },
+                { label: "良好", c: "#32D74B" },
+                { label: "平稳", c: "#8E8E93" },
+                { label: "偏差", c: "#FF9F0A" },
+                { label: "风暴", c: "#FF3B30" }
+            ],
+            dock: [
+                { id: 'today',    icon: '▣',  lbl: '终端' },
+                { id: 'trends',   icon: '📈', lbl: '趋势' },
+                { id: 'settings', icon: '⚙',  lbl: '设置' }
+            ],
+            pending: "模块开发中",
+            trendsTag: "30 天波动",
+            recent: "近期结算",
+            awaitHistory: "等待历史数据接口",
+            terminalConfig: "系统设置",
+            setup: "设置",
+            darkMode: "深色模式",
+            on: "开",
+            off: "关",
+            resetCache: "重置本地缓存",
+            hiddenCostRadar: "隐藏成本雷达",
+            estBankMarkup: "估算银行点差",
+            markupAssume: "按 2.5% 点差估算",
+            smartVerdict: "智能提示",
+            verdict: {
+                student: "学费汇款建议分多次摊开,避免单日波动锁死坏价;大额前对比 Wise 与银行电汇的实际到手差。",
+                nomad: "多币种卡 (Wise / Revolut) 与本地系 ATM 通常优于机场与街头兑换柜台。",
+                seller: "大额 B2B 结汇走外汇经纪商或多币账户,点差通常比直接 SWIFT 更窄。"
+            },
+            slogan: "洞悉汇率波动,终结隐形成本。",
+            high30d: "30日高",
+            avg30d: "30日均",
+            low30d: "30日低",
+            hapticEngine: "震动反馈"
+        }
+    };
+
+    const initialLang = localStorage.getItem('fx_lang')
+        || ((navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en');
+
+    let S = {
+        base: localStorage.getItem('fx_base') || 'EUR',
+        target: localStorage.getItem('fx_target') || 'CNY',
+        amount: 1000, cr: 0, hist: [],
+        persona: localStorage.getItem('fx_persona') || 'student',
+        activeTab: 'today',
+        lang: initialLang
+    };
+
+    function t() { return I18N[S.lang]; }
+
+    function haptic() {
+        if (navigator.vibrate && localStorage.getItem('fx_haptic') !== 'off') navigator.vibrate(10);
+    }
+
+    function toggleHaptic() {
+        const now = localStorage.getItem('fx_haptic') !== 'off';
+        localStorage.setItem('fx_haptic', now ? 'off' : 'on');
+        if (!now) haptic();
+        if (S.activeTab === 'settings') renderContent();
+    }
+
+    async function fetchR() {
+        try {
+            const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${S.base}`);
+            const d = await r.json();
+            S.cr = d.rates[S.target] || 0;
+            localStorage.setItem('fx_base', S.base);
+            localStorage.setItem('fx_target', S.target);
+        } catch(e) { console.error("Rate API error", e); S.cr = 0; }
+
+        try {
+            const today = new Date();
+            const end = today.toISOString().split('T')[0];
+            today.setDate(today.getDate() - 30);
+            const start = today.toISOString().split('T')[0];
+            const hr = await fetch(`https://api.frankfurter.app/${start}..${end}?from=${S.base}&to=${S.target}`);
+            const hd = await hr.json();
+            if (hd && hd.rates) {
+                S.hist = Object.keys(hd.rates).sort().map(date => ({
+                    date, rate: hd.rates[date][S.target]
+                }));
+            } else {
+                S.hist = [];
+            }
+        } catch(e) { console.error("History API error", e); S.hist = []; }
+    }
+
+    function toggleTheme() {
+        haptic();
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('fx_theme', isDark ? 'dark' : 'light');
+        document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+        if (S.activeTab === 'settings') renderContent();
+    }
+
+    function toggleLang() {
+        haptic();
+        S.lang = S.lang === 'en' ? 'zh' : 'en';
+        localStorage.setItem('fx_lang', S.lang);
+        applyI18n();
+        renderContent();
+    }
+
+    function applyI18n() {
+        const d = t();
+        document.documentElement.lang = S.lang === 'zh' ? 'zh-CN' : 'en';
+        document.title = 'FX Terminal';
+        document.getElementById('logo').textContent = d.logo;
+        document.getElementById('pt-student').textContent = d.personas.student;
+        document.getElementById('pt-nomad').textContent = d.personas.nomad;
+        document.getElementById('pt-seller').textContent = d.personas.seller;
+    }
+
+    function setPersona(p) {
+        haptic();
+        S.persona = p;
+        localStorage.setItem('fx_persona', p);
+        document.querySelectorAll('.pt-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('pt-' + p).classList.add('active');
+        renderContent();
+    }
+
+    function updateResult(val) {
+        S.amount = parseFloat(val) || 0;
+        const r = document.querySelector('.t-res');
+        if (r) r.textContent = S.cr ? Number((S.amount * S.cr).toFixed(2)).toLocaleString() : '—';
+    }
+
+    // [产品决策] 7-day MA weather bands — thresholds ±0.3% / ±0.8% are explicit product tuning (PRD §4.1). Returns null when data insufficient so UI can suppress the badge.
+    function calcWeather() {
+        if (!S.cr || S.hist.length < 7) return null;
+        const last7 = S.hist.slice(-7);
+        const ma = last7.reduce((a, b) => a + b.rate, 0) / last7.length;
+        if (ma === 0) return null;
+        const delta = (S.cr - ma) / ma * 100;
+        const w = t().weather;
+        if (delta >=  0.8) return w[0];
+        if (delta >=  0.3) return w[1];
+        if (delta >  -0.3) return w[2];
+        if (delta >  -0.8) return w[3];
+        return w[4];
+    }
+
+    function renderContent() {
+        const c = document.getElementById('content');
+        if      (S.activeTab === 'today')    c.innerHTML = vToday();
+        else if (S.activeTab === 'trends')   c.innerHTML = vTrends();
+        else if (S.activeTab === 'settings') c.innerHTML = vSettings();
+        else c.innerHTML = `<div style="padding:100px 0; text-align:center; opacity:0.3; font-weight:900; letter-spacing:2px">${S.activeTab.toUpperCase()} · ${t().pending}</div>`;
+        renderDock();
+    }
+
+    function vToday() {
+        const d = t();
+        const res = S.cr ? Number((S.amount * S.cr).toFixed(2)).toLocaleString() : '—';
+        const w = calcWeather();
+
+        // [推论] 0.025 = 2.5% midpoint for retail SWIFT spread; assumption is visible in the UI label via d.markupAssume
+        const MARKUP_RATE = 0.025;
+        const markup = S.cr ? Number((S.amount * S.cr * MARKUP_RATE).toFixed(2)).toLocaleString() : '—';
+
+        // Real delta from frankfurter history: last hist entry is the most recent published close
+        let delta = '';
+        if (S.hist.length && S.cr) {
+            const prev = S.hist[S.hist.length - 1].rate;
+            if (prev > 0) {
+                const pct = ((S.cr - prev) / prev) * 100;
+                const color = pct >= 0 ? 'var(--green)' : 'var(--red)';
+                const arrow = pct >= 0 ? '▲' : '▼';
+                delta = `<span class="delta" style="color:${color}">${arrow} ${Math.abs(pct).toFixed(2)}% ${d.vsPrev}</span>`;
+            }
+        }
+
+        return `
+            <div class="hero">
+                <div class="hero-tag"><span class="live-dot"></span>${d.liveSignal}</div>
+                <div class="hero-num">${S.cr ? S.cr.toFixed(4) : '—'}</div>
+                <div class="hero-status">
+                    ${w ? `<div class="badge" style="color:${w.c}; border-color:${w.c}">${w.label}</div>` : ''}
+                    ${delta}
+                </div>
+            </div>
+
+            <section class="terminal-block">
+                <div class="t-label">${d.sourceAmount}</div>
+                <div class="t-input-wrap">
+                    <input type="number" id="calc-in" value="${S.amount}" oninput="if(this.value.length>10)this.value=this.value.slice(0,10); updateResult(this.value)" inputmode="decimal">
+                    <span class="t-code">${S.base}</span>
+                </div>
+            </section>
+
+            <section class="terminal-block">
+                <div class="t-label">${d.estimate}</div>
+                <div class="t-input-wrap">
+                    <div class="hero-num t-res">${res}</div>
+                    <span class="t-code">${S.target}</span>
+                </div>
+            </section>
+
+            <section class="verdict-box">
+                <div class="t-label">${d.hiddenCostRadar}</div>
+                <div class="cost-line">
+                    <span class="cost-lbl">${d.estBankMarkup} <span style="opacity:.6">(${d.markupAssume})</span></span>
+                    <span class="cost-val">- ${markup} ${S.target}</span>
+                </div>
+                <div class="t-label" style="margin-bottom:10px">${d.smartVerdict} · ${d.personas[S.persona]}</div>
+                <div class="verdict-text">${d.verdict[S.persona]}</div>
+            </section>
+        `;
+    }
+
+    function vTrends() {
+        const d = t();
+        if (!S.hist || S.hist.length === 0) {
+            return `
+                <div class="hero">
+                    <div class="hero-tag">${d.trendsTag}</div>
+                    <div class="hero-num" style="font-size: 2rem">${d.awaitHistory}</div>
+                </div>`;
+        }
+
+        const rates = S.hist.map(x => x.rate);
+        const min = Math.min(...rates);
+        const max = Math.max(...rates);
+        const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+        const range = max - min || 1;
+
+        const bars = S.hist.map((row, i) => {
+            const h = Math.max(5, ((row.rate - min) / range) * 100);
+            const cls = i > 0 ? (row.rate >= S.hist[i - 1].rate ? 'positive' : 'negative') : 'positive';
+            return `<div class="bar ${cls}" style="height:${h}%"></div>`;
+        }).join('');
+
+        const list = S.hist.slice(-5).reverse().map(row => `
+            <div class="list-row">
+                <span class="list-label">${row.date}</span>
+                <span class="list-val">${row.rate.toFixed(4)}</span>
+            </div>
+        `).join('');
+
+        return `
+            <div class="hero">
+                <div class="hero-tag">${d.trendsTag}</div>
+                <div class="hero-num">${S.cr ? S.cr.toFixed(4) : '—'}</div>
+            </div>
+
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <span class="stat-lbl">${d.high30d}</span>
+                    <span class="stat-val" style="color:var(--green)">${max.toFixed(4)}</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-lbl">${d.avg30d}</span>
+                    <span class="stat-val" style="color:var(--text2)">${avg.toFixed(4)}</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-lbl">${d.low30d}</span>
+                    <span class="stat-val" style="color:var(--red)">${min.toFixed(4)}</span>
+                </div>
+            </div>
+
+            <div class="bar-chart">${bars}</div>
+            <div style="padding-top: 20px;">
+                <div class="t-label" style="margin-bottom:0">${d.recent}</div>
+                ${list}
+            </div>
+        `;
+    }
+
+    function vSettings() {
+        const d = t();
+        const isDark = document.documentElement.classList.contains('dark');
+        const hapticOn = localStorage.getItem('fx_haptic') !== 'off';
+        return `
+            <div class="hero">
+                <div class="hero-tag">${d.terminalConfig}</div>
+                <div class="hero-num" style="font-size: 3rem">${d.setup}</div>
+            </div>
+            <div class="list-row" style="cursor:pointer" onclick="toggleTheme()">
+                <span class="list-label">${d.darkMode}</span>
+                <span class="list-val">${isDark ? d.on : d.off}</span>
+            </div>
+            <div class="list-row" style="cursor:pointer" onclick="toggleHaptic()">
+                <span class="list-label">${d.hapticEngine}</span>
+                <span class="list-val">${hapticOn ? d.on : d.off}</span>
+            </div>
+            <div class="list-row" style="cursor:pointer" onclick="haptic(); localStorage.clear(); location.reload()">
+                <span class="list-label" style="color:var(--red)">${d.resetCache}</span>
+                <span class="list-val">⚠</span>
+            </div>
+            <div class="footer">
+                ${d.slogan}
+                <span class="footer-version">v2.0</span>
+            </div>
+        `;
+    }
+
+    function renderDock() {
+        document.getElementById('dock').innerHTML = t().dock.map(td => `
+            <button class="dock-btn${S.activeTab===td.id?' active':''}" onclick="haptic(); S.activeTab='${td.id}'; renderContent()">
+                <span class="dock-icon">${td.icon}</span>
+                <span class="dock-lbl">${td.lbl}</span>
+            </button>
+        `).join('');
+    }
+
+    async function init() {
+        applyI18n();
+
+        const s1 = document.getElementById('sel-base');
+        const s2 = document.getElementById('sel-target');
+        CURS.forEach(c => {
+            s1.add(new Option(c, c));
+            s2.add(new Option(c, c));
+        });
+        s1.value = S.base;
+        s2.value = S.target;
+        document.getElementById('label-base').textContent = S.base;
+        document.getElementById('label-target').textContent = S.target;
+
+        s1.onchange = async (e) => {
+            haptic();
+            S.base = e.target.value;
+            document.getElementById('label-base').textContent = S.base;
+            renderContent();
+            await fetchR();
+            renderContent();
+        };
+        s2.onchange = async (e) => {
+            haptic();
+            S.target = e.target.value;
+            document.getElementById('label-target').textContent = S.target;
+            renderContent();
+            await fetchR();
+            renderContent();
+        };
+
+        if (localStorage.getItem('fx_theme') === 'dark') {
+            document.getElementById('theme-btn').textContent = '☀️';
+        }
+
+        document.getElementById('pt-' + S.persona).classList.add('active');
+        await fetchR();
+        renderContent();
+    }
+
+    init();
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {});
+</script>
+
+</body>
+</html>

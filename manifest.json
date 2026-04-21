@@ -1,0 +1,20 @@
+{
+    "name": "FX Terminal",
+    "short_name": "FX Terminal",
+    "description": "Decode Volatility, End Hidden Costs. · 洞悉汇率波动,终结隐形成本。",
+    "start_url": "./weather.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "lang": "en",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

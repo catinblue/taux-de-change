@@ -1,13 +1,13 @@
 {
-    "name": "FX Terminal",
-    "short_name": "FX Terminal",
-    "description": "Decode Volatility, End Hidden Costs. · 洞悉汇率波动,终结隐形成本。",
+    "name": "FX Weather",
+    "short_name": "FX Weather",
+    "description": "Your pay-abroad pocket copilot. · 出境刷卡的口袋小参谋。 · Votre copilote de paiement à l'étranger.",
     "start_url": "./weather.html",
     "scope": "./",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#000000",
-    "theme_color": "#000000",
+    "background_color": "#e0c3fc",
+    "theme_color": "#667eea",
     "lang": "en",
     "icons": [
         {

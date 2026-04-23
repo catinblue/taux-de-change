@@ -5,299 +5,206 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <title>FX Weather</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#FF5A5F">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
-            --grad-1: #e0c3fc;
-            --grad-2: #8ec5fc;
-            --page-bg: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 100%);
-            --card-bg: rgba(255, 255, 255, 0.72);
-            --card-border: rgba(255, 255, 255, 0.45);
-            --shield-bg: rgba(255, 193, 7, 0.22);
-            --shield-border: rgba(255, 159, 10, 0.8);
-            --banner-bg: rgba(255, 255, 255, 0.55);
-            --text: #1a1a2e;
-            --text2: rgba(26, 26, 46, 0.62);
-            --accent: #667eea;
-            --red: #e74c3c;
-            --green: #27ae60;
-            --amber: #d4820f;
-            --line: rgba(26, 26, 46, 0.12);
-            --safe-b: env(safe-area-inset-bottom);
-            --dock-bg: rgba(255, 255, 255, 0.82);
-        }
-
-        :root.solid {
-            --page-bg: #FFFFFF;
-            --card-bg: #F2F2F7;
-            --card-border: #E5E5EA;
-            --shield-bg: #FFF4E1;
-            --shield-border: #FF9F0A;
-            --banner-bg: #F2F2F7;
+            --bg: #FFFFFF;
+            --surface: #F5F5F7;
+            --accent: #FF5A5F;
             --text: #000000;
-            --text2: #8E8E93;
-            --accent: #007AFF;
-            --red: #FF3B30;
-            --green: #34C759;
-            --amber: #FF9F0A;
-            --line: #E5E5EA;
-            --dock-bg: rgba(255, 255, 255, 0.92);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root.solid {
-                --page-bg: #000000;
-                --card-bg: #1C1C1E;
-                --card-border: #2C2C2E;
-                --shield-bg: rgba(255, 159, 10, 0.18);
-                --shield-border: #FF9F0A;
-                --banner-bg: #1C1C1E;
-                --text: #FFFFFF;
-                --text2: #8E8E93;
-                --accent: #FFFFFF;
-                --green: #00FF88;
-                --red: #FF3366;
-                --line: #2C2C2E;
-                --dock-bg: rgba(0, 0, 0, 0.82);
-            }
+            --text2: #86868B;
+            --line: #E5E5E7;
+            --green: #2EB67D;
+            --red: #D93025;
+            --amber: #E8A33D;
+            --safe-b: env(safe-area-inset-bottom);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
-            background: var(--page-bg); background-attachment: fixed;
-            color: var(--text); overflow-x: hidden; min-height: 100dvh;
-            -webkit-font-smoothing: antialiased; line-height: 1.3;
-            transition: background 1.2s ease-in-out;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "PingFang SC", sans-serif;
+            background: var(--bg); color: var(--text);
+            -webkit-font-smoothing: antialiased; line-height: 1.4;
+            overflow-x: hidden;
         }
 
         .layout { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
-        .content { padding: 12px 16px calc(120px + var(--safe-b)); flex: 1; }
+        #content { flex: 1; padding-bottom: calc(88px + var(--safe-b)); }
 
-        /* === Glass base: consolidated from v4.0 duplication === */
-        .pair-selector, .phrase-pill, .amount-card, .route-card,
-        .time-machine, .flashcard, .setting-card, .modal-sheet,
-        .anchor-strip {
-            background: var(--card-bg);
-            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--card-border);
+        /* === Editorial site header === */
+        .site-header {
+            padding: 22px 24px 6px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        :root.solid .pair-selector, :root.solid .phrase-pill,
-        :root.solid .amount-card, :root.solid .route-card,
-        :root.solid .time-machine, :root.solid .flashcard,
-        :root.solid .setting-card, :root.solid .modal-sheet,
-        :root.solid .anchor-strip {
-            backdrop-filter: none; -webkit-backdrop-filter: none;
+        .logo {
+            font-size: 13px; font-weight: 800; letter-spacing: 2.5px;
+            text-transform: uppercase; color: var(--text);
         }
+        .lang-switch {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 700; letter-spacing: 1px;
+        }
+        .lang-option {
+            color: var(--text2); padding: 4px 2px; cursor: pointer;
+            transition: color 0.15s;
+        }
+        .lang-option.active { color: var(--text); font-weight: 900; }
+        .lang-sep { color: var(--text2); opacity: 0.4; }
 
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 28px 20px 14px; }
-        .logo { font-size: 12px; font-weight: 900; letter-spacing: 3px; color: var(--text); text-transform: uppercase; }
-        .icon-btn {
-            background: none; border: none; cursor: pointer; color: var(--text);
-            font-family: inherit; font-size: 20px; font-weight: 900; letter-spacing: 1px; padding: 4px 8px;
+        /* === Weather hero (coral) === */
+        .hero {
+            background: var(--accent); color: #FFFFFF;
+            padding: 24px 24px 48px;
+            margin: 12px 0 0;
+            border-bottom-right-radius: 40px;
         }
-
         .pair-selector {
-            margin: 0 16px 14px; padding: 14px 20px;
-            border-radius: 20px;
-            display: flex; justify-content: center; align-items: center; gap: 20px;
+            display: flex; align-items: center; gap: 14px;
+            font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+            margin-bottom: 30px;
         }
-        .picker-box { display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 44px; padding: 4px 8px; border-radius: 12px; transition: background 0.15s; }
-        .picker-box:active { background: rgba(255, 255, 255, 0.3); }
-        :root.solid .picker-box:active { background: var(--line); }
-        .picker-flag { font-size: 22px; }
-        .picker-label { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; }
-        .picker-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--text2); }
-        .picker-sep { font-size: 22px; font-weight: 200; opacity: 0.3; }
+        .pair-sep { opacity: 0.55; font-weight: 500; }
+        .picker-unit {
+            cursor: pointer;
+            border-bottom: 1.5px solid rgba(255, 255, 255, 0.5);
+            padding-bottom: 3px;
+            transition: border-color 0.15s;
+        }
+        .picker-unit:active { border-bottom-color: rgba(255, 255, 255, 0.95); }
 
-        .phrase-pill {
-            margin: 0 16px 14px; padding: 10px 18px;
-            border-radius: 999px;
-            text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
-            color: var(--text);
+        .amount-wrap { display: flex; flex-direction: column; gap: 6px; }
+        .hero-amount-label {
+            font-size: 11px; font-weight: 800; letter-spacing: 1.8px;
+            color: rgba(255, 255, 255, 0.8); text-transform: uppercase;
         }
-
-        .dcc-shield {
-            padding: 14px 16px;
-            background: var(--shield-bg);
-            border-left: 3px solid var(--shield-border);
-            border-radius: 14px;
-            font-size: 12px; font-weight: 700; line-height: 1.55;
-            color: var(--text); margin-bottom: 14px;
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        .hero-amount-input {
+            background: none; border: none; color: #FFFFFF;
+            font-size: clamp(64px, 18vw, 96px); font-weight: 700;
+            letter-spacing: -0.04em; line-height: 1;
+            outline: none; width: 100%; padding: 0;
+            font-family: inherit; caret-color: rgba(255, 255, 255, 0.9);
         }
-        :root.solid .dcc-shield { backdrop-filter: none; -webkit-backdrop-filter: none; }
-
-        .first-run-banner {
-            padding: 12px 14px 12px 16px;
-            background: var(--banner-bg);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--card-border); border-radius: 14px;
-            display: flex; justify-content: space-between; align-items: center; gap: 10px;
-            font-size: 12px; font-weight: 600; color: var(--text);
-            margin-bottom: 14px; cursor: pointer;
+        .weather-label {
+            font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
+            color: rgba(255, 255, 255, 0.85); margin-top: 10px;
         }
-        :root.solid .first-run-banner { backdrop-filter: none; -webkit-backdrop-filter: none; }
-        .banner-text { flex: 1; line-height: 1.4; }
-        .banner-close {
-            background: none; border: none; color: var(--text2);
-            font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
-            font-family: inherit;
-        }
-
-        .amount-card {
-            border-radius: 24px;
-            padding: 24px 22px; margin-bottom: 14px;
-        }
-        .amount-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text2); margin-bottom: 12px; text-transform: uppercase; }
-        .amount-input-wrap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-        .amount-input-wrap input {
-            background: none; border: none; color: var(--text);
-            font-size: clamp(2.4rem, 13vw, 4rem); font-weight: 900;
-            outline: none; width: 75%; letter-spacing: -0.04em;
-            font-family: inherit; line-height: 1; caret-color: var(--accent);
-        }
-        .amount-code { font-size: 17px; font-weight: 900; color: var(--text2); }
 
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
 
+        /* === PPP bar (white, tucks under hero) === */
+        .ppp-bar {
+            background: var(--bg);
+            padding: 22px 24px 14px;
+            margin-top: -28px;
+            border-top-left-radius: 40px;
+            display: flex; flex-direction: column; gap: 6px;
+            min-height: 18px;
+        }
+        .ppp-line {
+            font-size: 13px; font-weight: 600; color: var(--text2);
+            letter-spacing: 0.2px;
+        }
+        .ppp-line strong { color: var(--text); font-weight: 800; }
+
+        /* === Routes section (gray block) === */
+        .routes-section {
+            background: var(--surface);
+            padding: 20px 20px 30px;
+            min-height: 40vh;
+        }
+        .section-label {
+            font-size: 11px; font-weight: 800; color: var(--text2);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin: 18px 4px 12px;
+        }
+
+        .dcc-shield {
+            background: #FFFFFF;
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--accent);
+            border-radius: 14px;
+            padding: 14px 16px; margin-bottom: 14px;
+            font-size: 12px; font-weight: 600; line-height: 1.55;
+            color: var(--text);
+        }
+        .dcc-shield-icon { margin-right: 6px; font-weight: 900; }
+
+        .first-run-banner {
+            background: #FFFFFF;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px 14px 12px 16px;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            font-size: 12px; font-weight: 600; color: var(--text);
+            margin-bottom: 14px; cursor: pointer;
+        }
+        .banner-text { flex: 1; line-height: 1.4; }
+        .banner-close {
+            background: none; border: none; color: var(--text2);
+            font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1;
+            font-family: inherit;
+        }
+
         .route-card {
+            background: #FFFFFF;
+            border: 1px solid var(--line);
             border-radius: 20px;
-            padding: 18px 22px; margin-bottom: 12px;
+            padding: 18px 20px;
+            margin-bottom: 10px;
             display: flex; flex-direction: column; gap: 4px;
-            transition: transform 0.2s ease;
         }
-        .route-card.best { border: 2px solid var(--green); padding: 17px 21px; }
-        .route-best-tag {
-            font-size: 10px; font-weight: 900; letter-spacing: 1.8px;
-            color: var(--green); text-transform: uppercase; margin-bottom: 4px;
+        .route-card.best { border: 2px solid var(--text); padding: 17px 19px; }
+        .route-top {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
         }
-        .route-method { font-size: 13px; font-weight: 800; letter-spacing: 0.3px; color: var(--text); }
-        .route-cost-line { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; }
+        .route-method {
+            font-size: 12px; font-weight: 800; letter-spacing: 1px;
+            color: var(--text2); text-transform: uppercase;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .route-icon {
+            width: 16px; height: 16px;
+            stroke: var(--text2); stroke-width: 1.6; fill: none;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .best-pill {
+            background: var(--accent); color: #FFFFFF;
+            font-size: 9px; font-weight: 900; letter-spacing: 0.9px;
+            padding: 4px 8px; border-radius: 6px; text-transform: uppercase;
+        }
+        .route-cost-line {
+            display: flex; justify-content: space-between; align-items: baseline;
+            gap: 8px;
+        }
         .route-cost {
-            font-size: clamp(1.7rem, 8.5vw, 2.6rem); font-weight: 900;
-            letter-spacing: -0.03em; color: var(--text);
+            font-size: 28px; font-weight: 700; color: var(--text);
+            letter-spacing: -0.02em;
             max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
             line-height: 1.1;
         }
-        .route-card.best .route-cost { color: var(--green); }
-        .route-code { font-size: 15px; font-weight: 900; color: var(--text2); }
-        .route-delta { font-size: 11px; font-weight: 700; color: var(--red); letter-spacing: 0.3px; margin-top: 2px; }
-        .route-hint { font-size: 11px; font-weight: 600; color: var(--text2); line-height: 1.4; margin-top: 2px; }
-
-        /* === v4.1 Anchor strip on Weather tab === */
-        .anchor-strip {
-            border-radius: 18px;
-            padding: 12px 18px; margin-top: 14px;
-            cursor: pointer; font-size: 13px; font-weight: 700;
-            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-            line-height: 1.4; transition: transform 0.15s;
+        .route-code { font-size: 13px; font-weight: 800; color: var(--text2); }
+        .route-hint {
+            font-size: 11px; font-weight: 600; color: var(--text2);
+            margin-top: 4px; line-height: 1.4;
         }
-        .anchor-strip:active { transform: scale(0.98); }
-        .anchor-prefix { font-size: 10px; font-weight: 900; letter-spacing: 1.2px; color: var(--text2); text-transform: uppercase; white-space: nowrap; }
-        .anchor-items { color: var(--text); font-weight: 800; }
-
-        .time-machine {
-            border-radius: 20px;
-            padding: 18px 22px; margin-top: 14px;
-        }
-        .time-machine-tag { font-size: 11px; font-weight: 900; letter-spacing: 1.5px; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; }
-        .time-machine-text { font-size: 14px; font-weight: 700; line-height: 1.55; color: var(--text); }
-        .time-machine-text .delta-save { color: var(--green); font-weight: 900; }
-        .time-machine-text .delta-cost { color: var(--red); font-weight: 900; }
-
-        .flashcard {
-            border-radius: 20px;
-            margin-bottom: 12px; overflow: hidden; cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .flashcard-header { padding: 20px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .flashcard-title { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .flashcard-emoji { font-size: 26px; }
-        .flashcard-label { font-size: 15px; font-weight: 800; color: var(--text); line-height: 1.3; }
-        .flashcard-chevron { font-size: 14px; color: var(--text2); transition: transform 0.25s ease; }
-        .flashcard.open .flashcard-chevron { transform: rotate(180deg); }
-        .flashcard-body {
-            max-height: 0; overflow: hidden;
-            padding: 0 22px; transition: all 0.3s ease;
-            font-size: 14px; font-weight: 600; line-height: 1.6; color: var(--text);
-        }
-        .flashcard.open .flashcard-body {
-            max-height: 300px; padding: 0 22px 22px 56px;
+        .route-delta {
+            font-size: 11px; font-weight: 700; color: var(--red);
+            margin-top: 4px; letter-spacing: 0.3px;
         }
 
-        .wallet-section-title { font-size: 11px; font-weight: 900; letter-spacing: 1.5px; color: var(--text); margin: 24px 4px 10px; text-transform: uppercase; opacity: 0.75; }
-        .wallet-section-hint { font-size: 11px; font-weight: 600; color: var(--text2); margin: -4px 4px 10px; line-height: 1.4; }
-        .setting-card {
-            border-radius: 16px;
-            padding: 14px 20px; margin-bottom: 8px;
-            display: flex; flex-direction: column; gap: 4px;
-        }
-        .setting-card.toggle-row { flex-direction: row; justify-content: space-between; align-items: center; cursor: pointer; padding: 16px 20px; }
-        .setting-label { font-size: 14px; font-weight: 800; color: var(--text); }
-        .setting-val { font-size: 14px; font-weight: 900; color: var(--text2); }
-        .setting-row-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .setting-input {
-            background: none; border: none; color: var(--text);
-            font-size: 17px; font-weight: 900; text-align: right;
-            width: 70px; outline: none; font-family: inherit;
-            border-bottom: 1px solid var(--line); padding: 2px 0;
-        }
-        .setting-input:focus { border-bottom-color: var(--accent); }
-        .setting-unit { font-size: 14px; font-weight: 900; color: var(--text2); margin-left: 4px; }
-        .setting-origin { font-size: 10px; font-weight: 600; color: var(--text2); line-height: 1.4; }
-        .setting-card.danger { border-color: var(--red); margin-top: 16px; }
-        .setting-card.danger .setting-label { color: var(--red); }
-
-        /* === v4.1 Anchor rows in Backpack === */
-        .anchor-row { padding: 10px 14px; }
-        .anchor-row-line {
-            display: grid;
-            grid-template-columns: 36px 1fr 72px 52px 24px;
-            gap: 6px; align-items: center;
-        }
-        .anchor-emoji-in, .anchor-label-in, .anchor-price-in {
-            background: none; border: none; color: var(--text);
-            font-weight: 700; font-size: 14px; outline: none; font-family: inherit;
-            border-bottom: 1px solid var(--line); padding: 4px 2px;
-        }
-        .anchor-emoji-in { font-size: 18px; text-align: center; }
-        .anchor-label-in { width: 100%; }
-        .anchor-price-in { text-align: right; font-weight: 900; }
-        .anchor-emoji-in:focus, .anchor-label-in:focus, .anchor-price-in:focus { border-bottom-color: var(--accent); }
-        .anchor-currency-btn {
-            background: var(--line); border: none; border-radius: 10px;
-            color: var(--text); font-weight: 900; font-size: 11px;
-            cursor: pointer; padding: 7px 4px; font-family: inherit;
-            letter-spacing: 0.3px;
-        }
-        .anchor-delete-btn {
-            background: none; border: none; color: var(--text2);
-            font-size: 16px; cursor: pointer; padding: 2px; line-height: 1;
-            font-family: inherit;
-        }
-        .anchor-add-btn {
-            background: transparent;
-            border: 1px dashed var(--card-border);
-            border-radius: 14px; padding: 14px; width: 100%;
-            color: var(--accent); font-weight: 800; font-size: 13px;
-            cursor: pointer; font-family: inherit; margin-top: 4px;
-            letter-spacing: 0.3px;
-        }
-        .anchor-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .anchor-add-btn:active:not(:disabled) { opacity: 0.7; }
-
-        /* === v4.2 ATM slider — exponential mapping + CSS gradient track === */
+        /* === ATM slider === */
         .atm-expand-btn {
-            background: none; border: none;
-            color: var(--accent); font-weight: 700; font-size: 12px;
-            cursor: pointer; font-family: inherit;
-            padding: 8px 0 2px; align-self: flex-start;
-            letter-spacing: 0.3px; margin-top: 4px;
+            background: none; border: none; color: var(--text);
+            font-weight: 800; font-size: 10px; cursor: pointer;
+            font-family: inherit; padding: 10px 0 4px;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            align-self: flex-start; border-bottom: 1px solid var(--text);
+            margin-top: 4px;
         }
         .atm-expand-btn:active { opacity: 0.6; }
         .atm-slider-panel {
@@ -305,29 +212,27 @@
             transition: max-height 0.28s ease, padding-top 0.28s ease;
             padding-top: 0;
         }
-        .atm-slider-panel.open { max-height: 260px; padding-top: 14px; }
+        .atm-slider-panel.open { max-height: 260px; padding-top: 16px; }
         .atm-slider {
             -webkit-appearance: none; appearance: none;
-            width: 100%; height: 8px; border-radius: 4px;
+            width: 100%; height: 6px; border-radius: 3px;
             background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
             outline: none; margin: 0;
         }
         .atm-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 22px; height: 22px; border-radius: 50%;
-            background: var(--card-bg); border: 2px solid var(--text);
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #FFFFFF; border: 2px solid var(--text);
+            cursor: pointer; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
         .atm-slider::-moz-range-thumb {
-            width: 22px; height: 22px; border-radius: 50%;
-            background: var(--card-bg); border: 2px solid var(--text);
-            cursor: pointer;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #FFFFFF; border: 2px solid var(--text); cursor: pointer;
         }
         .atm-readout {
             display: flex; flex-wrap: wrap; align-items: baseline;
             gap: 6px; margin-top: 14px;
-            font-size: 14px; font-weight: 700; color: var(--text);
+            font-size: 13px; font-weight: 700; color: var(--text);
         }
         .atm-readout strong { font-weight: 900; }
         .atm-arrow { opacity: 0.4; }
@@ -335,47 +240,222 @@
             font-size: 10px; color: var(--text2);
             margin-top: 10px; font-weight: 600; line-height: 1.4;
         }
-        .atm-edit-link { color: var(--accent); cursor: pointer; font-weight: 700; }
+        .atm-edit-link {
+            color: var(--text); cursor: pointer; font-weight: 700;
+            text-decoration: underline;
+        }
 
-        .footer { padding: 40px 0 16px; text-align: center; color: var(--text); font-size: 12px; line-height: 1.7; letter-spacing: 0.3px; opacity: 0.7; }
-        .footer-version { display: block; margin-top: 6px; font-weight: 700; letter-spacing: 2px; opacity: 0.7; font-size: 10px; }
+        /* === Split trigger (coral CTA) === */
+        .split-trigger-btn {
+            background: var(--accent); border: none; color: #FFFFFF;
+            font-weight: 800; font-size: 12px; cursor: pointer;
+            font-family: inherit; padding: 14px 24px;
+            border-radius: 999px; width: 100%;
+            letter-spacing: 1px; text-transform: uppercase;
+            margin-top: 16px;
+        }
+        .split-trigger-btn:active { opacity: 0.85; }
 
+        /* === Time Machine === */
+        .time-machine {
+            background: #FFFFFF;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-top: 14px;
+        }
+        .time-machine-tag {
+            font-size: 11px; font-weight: 800; color: var(--text2);
+            letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .time-machine-text {
+            font-size: 14px; font-weight: 600; line-height: 1.55; color: var(--text);
+        }
+        .time-machine-text .delta-save { color: var(--green); font-weight: 900; }
+        .time-machine-text .delta-cost { color: var(--red); font-weight: 900; }
+
+        /* === Guide / Backpack tab header === */
+        .tab-header { padding: 28px 24px 18px; }
+        .tab-title {
+            font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
+            color: var(--text); line-height: 1.1;
+        }
+        .tab-subtitle {
+            font-size: 14px; font-weight: 500; color: var(--text2);
+            margin-top: 6px; letter-spacing: 0.1px;
+        }
+        .tab-body { padding: 0 20px; }
+
+        /* === Flashcards === */
+        .flashcard {
+            background: #FFFFFF;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            margin-bottom: 10px; overflow: hidden; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .flashcard-header {
+            padding: 18px 22px;
+            display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        }
+        .flashcard-title { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .flashcard-emoji { font-size: 24px; flex-shrink: 0; }
+        .flashcard-label {
+            font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3;
+        }
+        .flashcard-chevron {
+            font-size: 11px; color: var(--text2); transition: transform 0.25s ease;
+        }
+        .flashcard.open .flashcard-chevron { transform: rotate(180deg); }
+        .flashcard-body {
+            max-height: 0; overflow: hidden;
+            padding: 0 22px; transition: all 0.3s ease;
+            font-size: 13px; font-weight: 500; line-height: 1.6; color: var(--text);
+        }
+        .flashcard.open .flashcard-body { max-height: 300px; padding: 0 22px 20px 56px; }
+
+        /* === Backpack settings === */
+        .setting-card {
+            background: #FFFFFF;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px 20px; margin-bottom: 8px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .setting-card.toggle-row {
+            flex-direction: row; justify-content: space-between; align-items: center;
+            cursor: pointer; padding: 16px 20px;
+        }
+        .setting-label { font-size: 14px; font-weight: 700; color: var(--text); }
+        .setting-val {
+            font-size: 13px; font-weight: 800; color: var(--text2);
+            letter-spacing: 0.3px;
+        }
+        .setting-row-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .setting-input {
+            background: none; border: none; color: var(--text);
+            font-size: 16px; font-weight: 800; text-align: right;
+            width: 70px; outline: none; font-family: inherit;
+            border-bottom: 1px solid var(--line); padding: 2px 0;
+        }
+        .setting-input:focus { border-bottom-color: var(--accent); }
+        .setting-unit { font-size: 13px; font-weight: 800; color: var(--text2); margin-left: 4px; }
+        .setting-origin {
+            font-size: 10px; font-weight: 500; color: var(--text2); line-height: 1.4;
+        }
+        .setting-card.danger { border-color: var(--red); margin-top: 16px; }
+        .setting-card.danger .setting-label { color: var(--red); }
+
+        .wallet-section-title {
+            font-size: 11px; font-weight: 800; color: var(--text2);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin: 24px 4px 10px;
+        }
+        .wallet-section-hint {
+            font-size: 11px; font-weight: 500; color: var(--text2);
+            margin: -4px 4px 10px; line-height: 1.4;
+        }
+
+        /* === Anchor rows === */
+        .anchor-row { padding: 10px 14px; }
+        .anchor-row-line {
+            display: grid;
+            grid-template-columns: 32px 1fr 68px 50px 22px;
+            gap: 6px; align-items: center;
+        }
+        .anchor-emoji-in, .anchor-label-in, .anchor-price-in {
+            background: none; border: none; color: var(--text);
+            font-weight: 600; font-size: 13px; outline: none; font-family: inherit;
+            border-bottom: 1px solid var(--line); padding: 4px 2px;
+        }
+        .anchor-emoji-in { font-size: 16px; text-align: center; }
+        .anchor-label-in { width: 100%; }
+        .anchor-price-in { text-align: right; font-weight: 800; }
+        .anchor-emoji-in:focus, .anchor-label-in:focus, .anchor-price-in:focus {
+            border-bottom-color: var(--accent);
+        }
+        .anchor-currency-btn {
+            background: var(--surface); border: none; border-radius: 8px;
+            color: var(--text); font-weight: 800; font-size: 11px;
+            cursor: pointer; padding: 6px 4px; font-family: inherit;
+            letter-spacing: 0.3px;
+        }
+        .anchor-delete-btn {
+            background: none; border: none; color: var(--text2);
+            font-size: 15px; cursor: pointer; padding: 2px; line-height: 1;
+            font-family: inherit;
+        }
+        .anchor-add-btn {
+            background: transparent;
+            border: 1px dashed var(--line);
+            border-radius: 12px; padding: 12px; width: 100%;
+            color: var(--text); font-weight: 700; font-size: 12px;
+            cursor: pointer; font-family: inherit; margin-top: 4px;
+            letter-spacing: 0.3px;
+        }
+        .anchor-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .anchor-add-btn:active:not(:disabled) { opacity: 0.7; }
+
+        .footer {
+            padding: 40px 0 20px; text-align: center;
+            color: var(--text); font-size: 12px; line-height: 1.7;
+            letter-spacing: 0.3px; opacity: 0.75;
+        }
+        .footer-version {
+            display: block; margin-top: 6px; font-weight: 700;
+            letter-spacing: 2px; opacity: 0.6; font-size: 10px;
+        }
+
+        /* === Dock === */
         .dock {
             position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 500px; height: calc(72px + var(--safe-b));
-            background: var(--dock-bg);
-            backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-            border-top: 1px solid var(--card-border);
+            width: 100%; max-width: 500px;
+            height: calc(64px + var(--safe-b));
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--line);
             display: flex; justify-content: space-around;
-            padding: 6px 0; padding-bottom: calc(6px + var(--safe-b)); z-index: 9999;
+            padding: 4px 0 var(--safe-b); z-index: 9999;
         }
-        :root.solid .dock { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--card-bg); }
-        .dock-btn { flex: 1; border: none; background: none; color: var(--text2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; min-height: 44px; font-family: inherit; padding: 6px; border-radius: 14px; transition: background 0.2s ease; }
-        .dock-btn.active { color: var(--text); background: rgba(255, 255, 255, 0.25); }
-        :root.solid .dock-btn.active { background: var(--line); }
-        .dock-icon { font-size: 22px; }
-        .dock-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.3px; }
+        .dock-btn {
+            flex: 1; border: none; background: none;
+            color: var(--text2);
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 4px;
+            cursor: pointer; min-height: 44px; padding: 6px;
+            font-family: inherit;
+            transition: color 0.2s ease;
+        }
+        .dock-btn.active { color: var(--text); }
+        .dock-icon {
+            width: 22px; height: 22px;
+            stroke: currentColor; stroke-width: 1.6;
+            fill: none; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .dock-lbl {
+            font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
 
-        .hero-header { padding: 4px 4px 18px; }
-        .hero-title { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; color: var(--text); }
-        .hero-subtitle { font-size: 12px; font-weight: 600; color: var(--text2); margin-top: 4px; letter-spacing: 0.2px; }
-
+        /* === Modals === */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45);
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
             z-index: 10000; display: flex; align-items: flex-end;
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-sheet {
             width: 100%; max-width: 500px; margin: 0 auto;
+            background: #FFFFFF;
             border-radius: 28px 28px 0 0;
             padding: 24px 20px calc(24px + var(--safe-b));
             transform: translateY(100%);
             transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.1);
         }
         .modal-overlay.show .modal-sheet { transform: translateY(0); }
         .modal-header {
-            font-size: 11px; font-weight: 900; text-align: center;
+            font-size: 11px; font-weight: 800; text-align: center;
             margin-bottom: 18px; color: var(--text2);
             text-transform: uppercase; letter-spacing: 1.5px;
         }
@@ -385,116 +465,81 @@
         }
         .modal-item {
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            padding: 14px; border-radius: 16px;
-            background: rgba(255, 255, 255, 0.38);
-            font-size: 16px; font-weight: 800; cursor: pointer; color: var(--text);
+            padding: 14px; border-radius: 14px;
+            background: var(--surface);
+            font-size: 15px; font-weight: 800; cursor: pointer; color: var(--text);
             border: 1px solid transparent;
             transition: background 0.15s, transform 0.12s;
             font-family: inherit;
         }
         .modal-item:active { transform: scale(0.97); }
-        :root.solid .modal-item { background: var(--line); }
-        .modal-item.active {
-            background: var(--accent); color: #fff;
-            border-color: rgba(255, 255, 255, 0.5);
-        }
-        @media (prefers-color-scheme: dark) {
-            :root.solid .modal-item.active { color: #000; }
-        }
-        .modal-flag { font-size: 20px; }
+        .modal-item.active { background: var(--text); color: #FFFFFF; }
+        .modal-flag { font-size: 18px; }
 
-        /* === v4.4 AA Splitter (stateless ephemeral modal) === */
-        .split-trigger-btn {
-            background: none; border: none;
-            color: var(--accent); font-weight: 700; font-size: 13px;
-            cursor: pointer; font-family: inherit;
-            padding: 16px 0 4px; letter-spacing: 0.3px;
-            width: 100%; text-align: center;
-        }
-        .split-trigger-btn:active { opacity: 0.6; }
+        /* === Split modal === */
         .split-sheet { padding-bottom: calc(30px + var(--safe-b)); }
         .split-bill {
             display: flex; justify-content: space-between; align-items: baseline;
             margin-bottom: 18px; padding-bottom: 14px;
             border-bottom: 1px solid var(--line);
         }
-        .split-bill-amt { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
+        .split-bill-amt { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
         .split-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .split-row-col { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-        .split-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text2); text-transform: uppercase; }
+        .split-label {
+            font-size: 11px; font-weight: 800; letter-spacing: 1px;
+            color: var(--text2); text-transform: uppercase;
+        }
         .split-stepper { display: flex; align-items: center; gap: 14px; }
         .split-step-btn {
-            width: 34px; height: 34px; border-radius: 50%;
-            border: 1px solid var(--card-border);
-            background: rgba(255, 255, 255, 0.35); color: var(--text);
-            font-size: 18px; font-weight: 900; cursor: pointer;
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1px solid var(--line);
+            background: var(--surface); color: var(--text);
+            font-size: 17px; font-weight: 700; cursor: pointer;
             font-family: inherit; line-height: 1;
             display: flex; align-items: center; justify-content: center;
         }
-        :root.solid .split-step-btn { background: var(--line); }
         .split-step-btn:active:not(:disabled) { transform: scale(0.92); }
         .split-step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .split-step-val { min-width: 30px; text-align: center; font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
+        .split-step-val { min-width: 30px; text-align: center; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
         .split-seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         .split-seg-btn {
             padding: 10px 4px; border-radius: 10px;
-            border: 1px solid var(--card-border);
-            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid var(--line); background: var(--surface);
             color: var(--text); cursor: pointer;
-            font-size: 11px; font-weight: 800; font-family: inherit;
+            font-size: 11px; font-weight: 700; font-family: inherit;
             letter-spacing: 0.2px; line-height: 1.3;
             transition: background 0.15s;
         }
-        :root.solid .split-seg-btn { background: var(--line); }
-        .split-seg-btn.active { background: var(--accent); color: #fff; border-color: rgba(255, 255, 255, 0.5); }
-        @media (prefers-color-scheme: dark) {
-            :root.solid .split-seg-btn.active { color: #000; }
-        }
+        .split-seg-btn.active { background: var(--text); color: #FFFFFF; border-color: var(--text); }
         .split-result {
-            margin-top: 20px; padding: 18px 18px;
-            background: rgba(39, 174, 96, 0.12);
-            border: 1px solid rgba(39, 174, 96, 0.35);
-            border-radius: 16px;
-            display: flex; flex-direction: column; gap: 6px;
+            margin-top: 18px; padding: 18px;
+            background: var(--surface); border-radius: 16px;
         }
-        :root.solid .split-result { background: rgba(52, 199, 89, 0.1); }
-        .split-actual { font-size: 12px; font-weight: 700; color: var(--text2); }
-        .split-per-share { font-size: 15px; font-weight: 700; line-height: 1.4; }
-        .split-per-share strong { font-size: 28px; font-weight: 900; color: var(--green); letter-spacing: -0.02em; display: block; margin-top: 2px; }
-        .split-hint { font-size: 10px; color: var(--text2); font-weight: 600; margin-top: 4px; }
-        .split-empty { padding: 30px 10px; text-align: center; color: var(--text2); font-size: 13px; font-weight: 600; line-height: 1.5; }
+        .split-actual { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+        .split-per-share { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
+        .split-per-share strong {
+            font-size: 28px; font-weight: 700; color: var(--text);
+            letter-spacing: -0.02em; display: block; margin-top: 2px;
+        }
+        .split-hint { font-size: 10px; color: var(--text2); font-weight: 500; margin-top: 6px; }
+        .split-empty {
+            padding: 30px 10px; text-align: center;
+            color: var(--text2); font-size: 13px; font-weight: 500; line-height: 1.5;
+        }
 
         ::-webkit-scrollbar { display: none; }
     </style>
-    <script>
-        if (localStorage.getItem('fx_contrast_mode') === 'solid') {
-            document.documentElement.classList.add('solid');
-        }
-    </script>
 </head>
 <body>
 
 <div class="layout">
-    <header class="header">
+    <header class="site-header">
         <div class="logo" id="logo">FX Weather</div>
-        <button onclick="cycleLang()" id="lang-btn" class="icon-btn" aria-label="Cycle language">🌍</button>
+        <div class="lang-switch" id="lang-switch"></div>
     </header>
 
-    <div class="pair-selector">
-        <div class="picker-box" onclick="openCurrencyModal('base')">
-            <span class="picker-flag" id="flag-base">🇪🇺</span>
-            <span class="picker-label" id="label-base">EUR</span>
-            <div class="picker-arrow"></div>
-        </div>
-        <div class="picker-sep">→</div>
-        <div class="picker-box" onclick="openCurrencyModal('target')">
-            <span class="picker-flag" id="flag-target">🇨🇳</span>
-            <span class="picker-label" id="label-target">CNY</span>
-            <div class="picker-arrow"></div>
-        </div>
-    </div>
-
-    <main id="content" class="content"></main>
+    <main id="content"></main>
 
     <nav class="dock" id="dock"></nav>
 </div>
@@ -520,84 +565,89 @@
         CAD: '🇨🇦', CHF: '🇨🇭', CNY: '🇨🇳', SGD: '🇸🇬', HKD: '🇭🇰'
     };
 
-    const GRADIENTS = {
-        great:  ['#4facfe', '#00f2fe'],
-        good:   ['#43e97b', '#38f9d7'],
-        stable: ['#e0c3fc', '#8ec5fc'],
-        poor:   ['#f6d365', '#fda085'],
-        storm:  ['#667eea', '#764ba2']
+    const ICONS = {
+        compass: '<svg class="dock-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+        book:    '<svg class="dock-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+        briefcase:'<svg class="dock-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+        card:    '<svg class="route-icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+        cash:    '<svg class="route-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>'
     };
 
     const MAX_ANCHORS = 5;
 
+    // === Editorial PPP seed data ===
+    // [推论] Big Mac values: The Economist Big Mac Index (publicly published semiannually, ~2024 values)
+    // [推论 · PM estimate] Coffee values: reference prices for a typical takeaway coffee in each city
+    // Cities are user-editable per anchor in Backpack
+    const PPP_DB = {
+        EUR: { bigMac: 5.80, coffee: 4.20, city: 'Paris' },
+        USD: { bigMac: 5.69, coffee: 5.00, city: 'New York' },
+        GBP: { bigMac: 4.89, coffee: 3.50, city: 'London' },
+        CNY: { bigMac: 25.0, coffee: 22.0, city: 'Shanghai' },
+        JPY: { bigMac: 480,  coffee: 450,  city: 'Tokyo' },
+        CHF: { bigMac: 6.70, coffee: 5.20, city: 'Zurich' },
+        AUD: { bigMac: 7.70, coffee: 5.50, city: 'Sydney' },
+        CAD: { bigMac: 7.00, coffee: 4.80, city: 'Toronto' },
+        SGD: { bigMac: 5.90, coffee: 5.00, city: 'Singapore' },
+        HKD: { bigMac: 23.5, coffee: 45.0, city: 'Hong Kong' }
+    };
+
     const I18N = {
         en: {
-            logo: "FX Weather",
             slogan: "Your pay-abroad pocket copilot.",
-            weatherPhrase: {
-                great:  "Rate's great today — tap away! ☀️",
-                good:   "Decent rate today 🌤️",
-                stable: "Pretty flat today ☁️",
-                poor:   "Rate's a bit off today 🌧️",
-                storm:  "Rough day for FX ⛈️",
-                loading: "Loading today's rate …"
-            },
-            dccShield: "🛡️ When the cashier asks, always pay in {BASE} — refuse the {TARGET} option (DCC). It's a hidden 3–7% extra.",
+            weatherBand: { great: "Great", good: "Good", stable: "Stable", poor: "Poor", storm: "Storm", loading: "Loading" },
+            weatherDeltaVsAvg: "vs 7-day avg",
+            dccShield: "⚠ When the cashier asks, always pay in {BASE} — refuse the {TARGET} option (DCC, a hidden 3–7% extra).",
             bannerDefault: "Using default card rates. Tap to set up your real cards.",
-            amountPrompt: "How much is this bill?",
+            heroAmountLabel: "Enter amount",
             pickerTitleBase: "Bill currency",
             pickerTitleTarget: "Card currency",
             pickerTitleAnchor: "Anchor currency",
+            routesSection: "Payment routes",
             methods: {
-                zero: { name: "💳 Zero-FX Card", hint: "Wise · Revolut · fee-waived" },
-                card: { name: "💳 Traditional Card", hint: "Visa · Mastercard · 银联" },
-                atm:  { name: "💵 ATM Cash", hint: "Withdraw with a traditional card" }
+                zero: { name: "Zero-FX", hint: "Wise · Revolut · fee-waived", icon: "card" },
+                card: { name: "Traditional", hint: "Visa · Mastercard · UnionPay", icon: "card" },
+                atm:  { name: "ATM", hint: "Withdraw with a traditional card", icon: "cash" }
             },
-            methodsAtmWorst: { name: "😅 ATM Cash", hint: "Flat fee eats small bills alive" },
-            bestTag: "👑 Best for this amount",
+            methodsAtmWorst: { name: "ATM", hint: "Flat fee eats small bills alive", icon: "cash" },
+            bestPill: "Optimal",
             deltaVsBest: "+ {delta} {TARGET} vs best",
-            timeMachineTag: "⏰ Time Machine",
-            timeMachineSave: "Withdrawing 1,000 {BASE} today saves <span class='delta-save'>{delta} {TARGET}</span> vs {date}.",
-            timeMachineCost: "Withdrawing 1,000 {BASE} today costs <span class='delta-cost'>{delta} {TARGET}</span> more than {date}.",
-            anchorsWeatherPrefix: "🧮 Also equals",
-            anchorsTitle: "MY PRICE ANCHORS",
-            anchorsHint: "Add things you know the price of — \"my daily coffee\", \"home bowl of noodles\". We never invent prices for you.",
-            anchorAdd: "+ Add an anchor",
-            anchorEmojiPh: "🍜",
-            anchorLabelPh: "Name",
-            atmSliderOpen: "📊 See withdrawal curve",
-            atmSliderClose: "▲ Hide",
+            atmSliderOpen: "See curve",
+            atmSliderClose: "Hide",
             atmSliderWithdraw: "Withdraw",
             atmSliderHint: "Based on {fee} {base} ATM fee from Backpack · ",
             atmSliderHintEdit: "edit →",
             atmTierExtreme: "🩸 Extreme",
             atmTierMeh: "🟡 Meh",
             atmTierGood: "🟢 Reasonable",
-            splitTrigger: "🧾 Split this bill",
+            splitTrigger: "Split this bill",
             splitHeader: "Split the bill",
             splitBillLabel: "Bill",
             splitPeopleLabel: "People",
             splitPayerLabel: "Who paid?",
-            splitPayerZero: "💳 Zero-FX",
-            splitPayerCard: "💳 Classic",
-            splitPayerAtm: "💵 ATM",
+            splitPayerZero: "Zero-FX",
+            splitPayerCard: "Classic",
+            splitPayerAtm: "ATM",
             splitActualPaid: "Payer actually spent {x} {TARGET}",
             splitPerShare: "Each person owes",
             splitSurchargeHint: "Includes {x} {TARGET} card-fee share per head",
             splitNoBill: "Enter a bill amount on Weather first.",
-            guideTitle: "📚 Pocket Guide",
+            timeMachineTag: "Time Machine",
+            timeMachineSave: "Withdrawing 1,000 {BASE} today saves <span class='delta-save'>{delta} {TARGET}</span> vs {date}.",
+            timeMachineCost: "Withdrawing 1,000 {BASE} today costs <span class='delta-cost'>{delta} {TARGET}</span> more than {date}.",
+            pppPrefix: "≈",
+            guideTitle: "Pocket Guide",
             guideSubtitle: "Tiny tips that keep your wallet safe abroad.",
             guideCards: [
                 { emoji: "🧛‍♂️", title: "The DCC Vampire", body: "Never pay in your home currency. Always choose the local currency on the machine!" },
                 { emoji: "🏧",    title: "The ATM Monster", body: "ATMs charge a flat fee. Withdrawing small amounts often will eat your money alive." },
-                { emoji: "🎓",    title: "Timing is Everything", body: "Big transfer coming up? Check our weather background — wait for a sunny day to send!" },
+                { emoji: "🎓",    title: "Timing is Everything", body: "Big transfer coming up? Check our weather indicator — wait for a sunny day to send!" },
                 { emoji: "💸",    title: "The Refund Counter Trap", body: "At the airport VAT desk, always take your refund in {BASE}. If you choose {TARGET}, they will skim another 5% using terrible exchange rates!" }
             ],
-            backpackTitle: "🎒 My Backpack",
+            backpackTitle: "My Backpack",
             backpackSubtitle: "Make this app feel like yours.",
-            highContrastLabel: "Plain mode (hide weather)",
             hapticLabel: "Vibration",
-            on: "ON", off: "OFF",
+            on: "On", off: "Off",
             walletRatesTitle: "My Cards",
             rateZeroLabel: "My fee-waived card",
             rateZeroOrigin: "Wise EUR-corridor reference · real rates 0.4–0.65%",
@@ -605,78 +655,71 @@
             rateCardOrigin: "Visa network baseline · issuer may add 0–3%",
             feeAtmLabel: "Local ATM fee per withdrawal",
             feeAtmOrigin: "Flat-fee model · ATM operator surcharge not included",
-            clearLabel: "🗑️ Empty my backpack",
+            anchorsTitle: "My Price Anchors",
+            anchorsHint: "Edit the seeded items or add your own. We never invent prices — delete any you disagree with.",
+            anchorAdd: "+ Add an anchor",
+            anchorEmojiPh: "🍜",
+            anchorLabelPh: "Name (City)",
+            clearLabel: "Reset (clear everything)",
             dock: [
-                { id: 'weather',  icon: '🌤️', lbl: 'Weather' },
-                { id: 'guide',    icon: '📚', lbl: 'Guide' },
-                { id: 'backpack', icon: '🎒', lbl: 'Backpack' }
+                { id: 'weather',  icon: 'compass',    lbl: 'Weather' },
+                { id: 'guide',    icon: 'book',       lbl: 'Guide' },
+                { id: 'backpack', icon: 'briefcase',  lbl: 'Backpack' }
             ]
         },
         zh: {
-            logo: "FX Weather",
             slogan: "出境刷卡的口袋小参谋。",
-            weatherPhrase: {
-                great:  "今天汇率极佳,放心刷吧 ☀️",
-                good:   "今天汇率不错 🌤️",
-                stable: "今天汇率平平 ☁️",
-                poor:   "今天汇率不太好 🌧️",
-                storm:  "今天汇率偏差 ⛈️",
-                loading: "数据加载中 …"
-            },
-            dccShield: "🛡️ 收银员问货币?大声说:选 {BASE}!拒绝 {TARGET} 结算(DCC 会多扣 3–7%)。",
+            weatherBand: { great: "极佳", good: "良好", stable: "平稳", poor: "偏弱", storm: "风暴", loading: "加载中" },
+            weatherDeltaVsAvg: "较 7 日均值",
+            dccShield: "⚠ 收银员问货币?永远选 {BASE},拒绝以 {TARGET} 结算(DCC 会多扣 3–7%)。",
             bannerDefault: "正在使用默认费率。点此配置你真实的卡片。",
-            amountPrompt: "这笔账单多少钱?",
+            heroAmountLabel: "输入金额",
             pickerTitleBase: "账单币种",
             pickerTitleTarget: "卡片币种",
             pickerTitleAnchor: "参照物币种",
+            routesSection: "支付方案",
             methods: {
-                zero: { name: "💳 免手续费卡", hint: "Wise · Revolut · 免货币转换费" },
-                card: { name: "💳 传统信用卡", hint: "Visa · Mastercard · 银联" },
-                atm:  { name: "💵 ATM 取现", hint: "用传统卡在境外 ATM 提现" }
+                zero: { name: "免手续费", hint: "Wise · Revolut · 免货币转换费", icon: "card" },
+                card: { name: "传统信用卡", hint: "Visa · Mastercard · 银联", icon: "card" },
+                atm:  { name: "ATM 取现", hint: "用传统卡在境外 ATM 提现", icon: "cash" }
             },
-            methodsAtmWorst: { name: "😅 ATM 取现", hint: "固定手续费会把小额吃光" },
-            bestTag: "👑 当前金额最优",
+            methodsAtmWorst: { name: "ATM 取现", hint: "固定手续费会把小额吃光", icon: "cash" },
+            bestPill: "最优",
             deltaVsBest: "比最优多 {delta} {TARGET}",
-            timeMachineTag: "⏰ 时间机器",
-            timeMachineSave: "今天取 1,000 {BASE},比 {date} 节省 <span class='delta-save'>{delta} {TARGET}</span>。",
-            timeMachineCost: "今天取 1,000 {BASE},比 {date} 多花 <span class='delta-cost'>{delta} {TARGET}</span>。",
-            anchorsWeatherPrefix: "🧮 相当于",
-            anchorsTitle: "我的物价参照物",
-            anchorsHint: "输入你熟悉价格的东西 — \"我的每日咖啡\"、\"老家一碗面\",随你填。我们不替你编数据。",
-            anchorAdd: "+ 添加参照物",
-            anchorEmojiPh: "🍜",
-            anchorLabelPh: "名称",
-            atmSliderOpen: "📊 看取现划算曲线",
-            atmSliderClose: "▲ 收起",
+            atmSliderOpen: "看曲线",
+            atmSliderClose: "收起",
             atmSliderWithdraw: "取",
             atmSliderHint: "按 Backpack 的 {fee} {base} 机具费 · ",
             atmSliderHintEdit: "去改 →",
             atmTierExtreme: "🩸 极亏",
             atmTierMeh: "🟡 一般",
             atmTierGood: "🟢 合理",
-            splitTrigger: "🧾 平摊这笔账单",
+            splitTrigger: "平摊这笔账单",
             splitHeader: "平摊账单",
             splitBillLabel: "账单",
             splitPeopleLabel: "人数",
             splitPayerLabel: "谁垫付了?",
-            splitPayerZero: "💳 免手续费",
-            splitPayerCard: "💳 传统卡",
-            splitPayerAtm: "💵 ATM",
+            splitPayerZero: "免手续费",
+            splitPayerCard: "传统卡",
+            splitPayerAtm: "ATM",
             splitActualPaid: "垫付人实际付了 {x} {TARGET}",
             splitPerShare: "每人该转给垫付人",
             splitSurchargeHint: "含每人 {x} {TARGET} 卡费分摊",
             splitNoBill: "请先在 Weather 页输入账单金额。",
-            guideTitle: "📚 口袋避坑指南",
+            timeMachineTag: "时间机器",
+            timeMachineSave: "今天取 1,000 {BASE},比 {date} 节省 <span class='delta-save'>{delta} {TARGET}</span>。",
+            timeMachineCost: "今天取 1,000 {BASE},比 {date} 多花 <span class='delta-cost'>{delta} {TARGET}</span>。",
+            pppPrefix: "≈",
+            guideTitle: "口袋避坑指南",
             guideSubtitle: "几条小贴士,让钱包在境外更稳。",
             guideCards: [
                 { emoji: "🧛‍♂️", title: "警惕 DCC 吸血鬼", body: "刷卡时绝对不要选人民币结算,永远选当地货币!" },
                 { emoji: "🏧",    title: "ATM 吞金兽", body: "境外取款有高昂的单笔机具费,千万别频繁去取小额现金。" },
-                { emoji: "🎓",    title: "交学费看天气", body: "准备交学费或大额汇款?看看主页是不是晴天,挑个好日子再行动!" },
+                { emoji: "🎓",    title: "交学费看天气", body: "准备交学费或大额汇款?看看主页的天气指示 — 挑个晴天再行动!" },
                 { emoji: "💸",    title: "退税柜台的暗刀", body: "机场退税时,永远要求退 {BASE}(当地货币)!如果选了 {TARGET},退税公司会用极差的汇率再偷偷割你 5% 的韭菜!" }
             ],
-            backpackTitle: "🎒 我的背包",
+            backpackTitle: "我的背包",
             backpackSubtitle: "把这个 App 调成最适合你的样子。",
-            highContrastLabel: "纯色模式(关掉天气)",
             hapticLabel: "震动反馈",
             on: "开", off: "关",
             walletRatesTitle: "我的钱包",
@@ -686,80 +729,73 @@
             rateCardOrigin: "Visa 网络基础值 · 发卡行可能叠加 0–3%",
             feeAtmLabel: "本地 ATM 每次固定费",
             feeAtmOrigin: "固定费模型 · 不含 ATM 运营商附加费",
-            clearLabel: "🗑️ 清空背包",
+            anchorsTitle: "我的物价参照物",
+            anchorsHint: "编辑默认值或添加你自己的。我们不替你编数据 — 不认可的直接删。",
+            anchorAdd: "+ 添加参照物",
+            anchorEmojiPh: "🍜",
+            anchorLabelPh: "名称(城市)",
+            clearLabel: "重置(清空所有)",
             dock: [
-                { id: 'weather',  icon: '🌤️', lbl: '天气' },
-                { id: 'guide',    icon: '📚', lbl: '攻略' },
-                { id: 'backpack', icon: '🎒', lbl: '背包' }
+                { id: 'weather',  icon: 'compass',    lbl: '天气' },
+                { id: 'guide',    icon: 'book',       lbl: '攻略' },
+                { id: 'backpack', icon: 'briefcase',  lbl: '背包' }
             ]
         },
         fr: {
-            logo: "FX Weather",
             slogan: "Votre copilote de paiement à l'étranger.",
-            weatherPhrase: {
-                great:  "Taux au top aujourd'hui ☀️",
-                good:   "Taux plutôt bon 🌤️",
-                stable: "Taux stable aujourd'hui ☁️",
-                poor:   "Taux un peu défavorable 🌧️",
-                storm:  "Journée difficile pour le change ⛈️",
-                loading: "Chargement en cours …"
-            },
-            dccShield: "🛡️ Quand on vous demande, payez toujours en {BASE} — refusez l'option {TARGET} (DCC, 3–7% caché en plus).",
+            weatherBand: { great: "Top", good: "Bon", stable: "Stable", poor: "Faible", storm: "Tempête", loading: "Chargement" },
+            weatherDeltaVsAvg: "vs moyenne 7 j",
+            dccShield: "⚠ Quand on vous demande, payez toujours en {BASE} — refusez l'option {TARGET} (DCC, 3–7% caché en plus).",
             bannerDefault: "Taux par défaut affichés. Touchez pour configurer vos vraies cartes.",
-            amountPrompt: "Montant de l'addition ?",
+            heroAmountLabel: "Montant",
             pickerTitleBase: "Devise de l'addition",
             pickerTitleTarget: "Devise de ma carte",
             pickerTitleAnchor: "Devise du repère",
+            routesSection: "Moyens de paiement",
             methods: {
-                zero: { name: "💳 Carte sans frais FX", hint: "Wise · Revolut · 0 frais de change" },
-                card: { name: "💳 Carte classique", hint: "Visa · Mastercard · UnionPay" },
-                atm:  { name: "💵 Retrait au DAB", hint: "Retrait avec une carte classique" }
+                zero: { name: "Sans frais", hint: "Wise · Revolut · 0 frais de change", icon: "card" },
+                card: { name: "Classique", hint: "Visa · Mastercard · UnionPay", icon: "card" },
+                atm:  { name: "DAB", hint: "Retrait avec une carte classique", icon: "cash" }
             },
-            methodsAtmWorst: { name: "😅 Retrait au DAB", hint: "Les frais fixes tuent les petits retraits" },
-            bestTag: "👑 Meilleur choix pour ce montant",
+            methodsAtmWorst: { name: "DAB", hint: "Les frais fixes tuent les petits retraits", icon: "cash" },
+            bestPill: "Optimal",
             deltaVsBest: "+ {delta} {TARGET} vs le meilleur",
-            timeMachineTag: "⏰ Machine à remonter le temps",
-            timeMachineSave: "Retirer 1 000 {BASE} aujourd'hui fait économiser <span class='delta-save'>{delta} {TARGET}</span> par rapport au {date}.",
-            timeMachineCost: "Retirer 1 000 {BASE} aujourd'hui coûte <span class='delta-cost'>{delta} {TARGET}</span> de plus que le {date}.",
-            anchorsWeatherPrefix: "🧮 Équivaut à",
-            anchorsTitle: "MES REPÈRES DE PRIX",
-            anchorsHint: "Ajoutez des prix que vous connaissez — « mon café », « bol de nouilles ». On n'invente jamais de prix à votre place.",
-            anchorAdd: "+ Ajouter un repère",
-            anchorEmojiPh: "🥐",
-            anchorLabelPh: "Nom",
-            atmSliderOpen: "📊 Voir la courbe des retraits",
-            atmSliderClose: "▲ Masquer",
+            atmSliderOpen: "Voir la courbe",
+            atmSliderClose: "Masquer",
             atmSliderWithdraw: "Retirer",
             atmSliderHint: "D'après {fee} {base} de frais dans Sac à Dos · ",
             atmSliderHintEdit: "modifier →",
             atmTierExtreme: "🩸 Énorme perte",
             atmTierMeh: "🟡 Bof",
             atmTierGood: "🟢 Correct",
-            splitTrigger: "🧾 Partager l'addition",
+            splitTrigger: "Partager l'addition",
             splitHeader: "Partager l'addition",
             splitBillLabel: "Addition",
             splitPeopleLabel: "Personnes",
             splitPayerLabel: "Qui a payé ?",
-            splitPayerZero: "💳 Sans frais",
-            splitPayerCard: "💳 Classique",
-            splitPayerAtm: "💵 DAB",
+            splitPayerZero: "Sans frais",
+            splitPayerCard: "Classique",
+            splitPayerAtm: "DAB",
             splitActualPaid: "Le payeur a dépensé {x} {TARGET}",
             splitPerShare: "Chacun doit au payeur",
             splitSurchargeHint: "Dont {x} {TARGET} de frais carte par tête",
             splitNoBill: "Saisissez d'abord un montant sur Météo.",
-            guideTitle: "📚 Guide de poche",
+            timeMachineTag: "Machine à remonter",
+            timeMachineSave: "Retirer 1 000 {BASE} aujourd'hui fait économiser <span class='delta-save'>{delta} {TARGET}</span> vs le {date}.",
+            timeMachineCost: "Retirer 1 000 {BASE} aujourd'hui coûte <span class='delta-cost'>{delta} {TARGET}</span> de plus que le {date}.",
+            pppPrefix: "≈",
+            guideTitle: "Guide de poche",
             guideSubtitle: "Quelques astuces pour protéger votre portefeuille.",
             guideCards: [
                 { emoji: "🧛‍♂️", title: "Le Piège DCC", body: "Ne payez jamais dans votre devise. Choisissez toujours la monnaie locale sur le terminal !" },
                 { emoji: "🏧",    title: "Le Monstre du DAB", body: "Les distributeurs prennent des frais fixes. Évitez de retirer de petites sommes trop souvent." },
-                { emoji: "🎓",    title: "Le Bon Timing", body: "Un gros transfert à faire ? Attendez une journée ensoleillée sur l'appli pour économiser !" },
+                { emoji: "🎓",    title: "Le Bon Timing", body: "Un gros transfert à faire ? Regardez l'indicateur météo — attendez une journée ensoleillée !" },
                 { emoji: "💸",    title: "Le Piège de la Détaxe", body: "Au guichet de détaxe, demandez toujours le remboursement en {BASE}. Choisir {TARGET} leur permet de voler 5% avec un taux de change catastrophique !" }
             ],
-            backpackTitle: "🎒 Mon Sac à Dos",
+            backpackTitle: "Mon Sac à Dos",
             backpackSubtitle: "Rendez cette appli vraiment vôtre.",
-            highContrastLabel: "Mode simple (sans météo)",
             hapticLabel: "Vibration",
-            on: "ON", off: "OFF",
+            on: "On", off: "Off",
             walletRatesTitle: "Mes Cartes",
             rateZeroLabel: "Ma carte sans frais",
             rateZeroOrigin: "Référence Wise corridor EUR · réel 0,4–0,65%",
@@ -767,11 +803,16 @@
             rateCardOrigin: "Base réseau Visa · la banque peut ajouter 0–3%",
             feeAtmLabel: "Frais fixe du DAB local",
             feeAtmOrigin: "Modèle à frais fixe · surtaxe opérateur non incluse",
-            clearLabel: "🗑️ Vider mon sac",
+            anchorsTitle: "Mes Repères de Prix",
+            anchorsHint: "Modifiez les valeurs de départ ou ajoutez les vôtres. On n'invente jamais — supprimez ce avec quoi vous n'êtes pas d'accord.",
+            anchorAdd: "+ Ajouter un repère",
+            anchorEmojiPh: "🥐",
+            anchorLabelPh: "Nom (Ville)",
+            clearLabel: "Réinitialiser (tout effacer)",
             dock: [
-                { id: 'weather',  icon: '🌤️', lbl: 'Météo' },
-                { id: 'guide',    icon: '📚', lbl: 'Guide' },
-                { id: 'backpack', icon: '🎒', lbl: 'Sac' }
+                { id: 'weather',  icon: 'compass',    lbl: 'Météo' },
+                { id: 'guide',    icon: 'book',       lbl: 'Guide' },
+                { id: 'backpack', icon: 'briefcase',  lbl: 'Sac' }
             ]
         }
     };
@@ -801,21 +842,19 @@
     };
 
     function t() { return I18N[S.lang]; }
-
     function haptic() {
         if (navigator.vibrate && localStorage.getItem('fx_haptic') !== 'off') navigator.vibrate(10);
     }
-
     function escapeAttr(s) {
         if (s == null) return '';
         return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
-
     function escapeHtml(s) {
         if (s == null) return '';
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    // === Wallet rates ===
     function getWalletRates() {
         return {
             zero: parseFloat(localStorage.getItem('fx_rate_zero')) || 0.0035,
@@ -823,14 +862,13 @@
             atm:  parseFloat(localStorage.getItem('fx_fee_atm'))  || 3.0
         };
     }
-
     function setWalletRate(key, value) {
         if (isNaN(value)) return;
         localStorage.setItem(key, String(value));
         localStorage.setItem('fx_banner_dismissed', 'true');
     }
 
-    // === v4.1 Anchors state ===
+    // === Anchors ===
     function getAnchors() {
         try {
             const raw = localStorage.getItem('fx_anchors');
@@ -839,11 +877,7 @@
             return Array.isArray(parsed) ? parsed : [];
         } catch (e) { return []; }
     }
-
-    function setAnchors(arr) {
-        localStorage.setItem('fx_anchors', JSON.stringify(arr));
-    }
-
+    function setAnchors(arr) { localStorage.setItem('fx_anchors', JSON.stringify(arr)); }
     function updateAnchor(idx, field, value) {
         const arr = getAnchors();
         if (!arr[idx]) return;
@@ -851,7 +885,6 @@
         arr[idx][field] = value;
         setAnchors(arr);
     }
-
     function addAnchor() {
         haptic();
         const arr = getAnchors();
@@ -860,7 +893,6 @@
         setAnchors(arr);
         renderContent();
     }
-
     function removeAnchor(idx) {
         haptic();
         const arr = getAnchors();
@@ -868,7 +900,6 @@
         setAnchors(arr);
         renderContent();
     }
-
     function calcAnchors(billInBase) {
         if (!billInBase || !S.cr) return [];
         return getAnchors()
@@ -881,6 +912,27 @@
             });
     }
 
+    // === v5.0: Seed anchors from PPP_DB on first launch ===
+    function seedAnchorsIfEmpty() {
+        if (localStorage.getItem('fx_anchors_seeded') === 'true') return;
+        if (getAnchors().length > 0) {
+            localStorage.setItem('fx_anchors_seeded', 'true');
+            return;
+        }
+        const baseData = PPP_DB[S.base];
+        const targetData = PPP_DB[S.target];
+        const seeded = [];
+        if (baseData) {
+            seeded.push({ emoji: '🍔', label: `Big Mac (${baseData.city})`, price: baseData.bigMac, currency: S.base });
+            seeded.push({ emoji: '☕', label: `Coffee (${baseData.city})`, price: baseData.coffee, currency: S.base });
+        }
+        if (targetData && S.target !== S.base) {
+            seeded.push({ emoji: '🍔', label: `Big Mac (${targetData.city})`, price: targetData.bigMac, currency: S.target });
+        }
+        if (seeded.length) setAnchors(seeded);
+        localStorage.setItem('fx_anchors_seeded', 'true');
+    }
+
     function dismissBanner(goBackpack) {
         haptic();
         localStorage.setItem('fx_banner_dismissed', 'true');
@@ -888,6 +940,7 @@
         renderContent();
     }
 
+    // === Currency picker modal ===
     let currentPickerType = 'base';
 
     function openCurrencyModal(type) {
@@ -924,15 +977,11 @@
         closeCurrencyModal();
         if (currentPickerType === 'base' && S.base !== curr) {
             S.base = curr;
-            document.getElementById('label-base').textContent = S.base;
-            document.getElementById('flag-base').textContent = FLAGS[S.base] || '🏳️';
             renderContent();
             await fetchR();
             renderContent();
         } else if (currentPickerType === 'target' && S.target !== curr) {
             S.target = curr;
-            document.getElementById('label-target').textContent = S.target;
-            document.getElementById('flag-target').textContent = FLAGS[S.target] || '🏳️';
             renderContent();
             await fetchR();
             renderContent();
@@ -947,32 +996,29 @@
         }
     }
 
-    function cycleLang() {
+    // === Language (3-state inline switcher) ===
+    function setLang(lang) {
+        if (!LANGS.includes(lang) || S.lang === lang) return;
         haptic();
-        const idx = LANGS.indexOf(S.lang);
-        S.lang = LANGS[(idx + 1) % LANGS.length];
+        S.lang = lang;
         localStorage.setItem('fx_lang', S.lang);
         applyI18n();
+        renderLangSwitch();
         renderContent();
+    }
+
+    function renderLangSwitch() {
+        const el = document.getElementById('lang-switch');
+        if (!el) return;
+        el.innerHTML = LANGS.map((lg, i) => {
+            const sep = i < LANGS.length - 1 ? '<span class="lang-sep">·</span>' : '';
+            return `<span class="lang-option${S.lang === lg ? ' active' : ''}" onclick="setLang('${lg}')">${lg.toUpperCase()}</span>${sep}`;
+        }).join('');
     }
 
     function applyI18n() {
         document.documentElement.lang = S.lang === 'zh' ? 'zh-CN' : S.lang === 'fr' ? 'fr' : 'en';
         document.title = 'FX Weather';
-        document.getElementById('logo').textContent = t().logo;
-    }
-
-    function toggleContrastMode() {
-        haptic();
-        const now = localStorage.getItem('fx_contrast_mode') === 'solid';
-        if (now) {
-            localStorage.removeItem('fx_contrast_mode');
-            document.documentElement.classList.remove('solid');
-        } else {
-            localStorage.setItem('fx_contrast_mode', 'solid');
-            document.documentElement.classList.add('solid');
-        }
-        if (S.activeTab === 'backpack') renderContent();
     }
 
     function toggleHaptic() {
@@ -1006,28 +1052,28 @@
                 S.hist = [];
             }
         } catch(e) { console.error("History API error", e); S.hist = []; }
-
-        applyWeatherGradient();
     }
 
+    // [产品决策] 7-day MA weather bands — thresholds ±0.3% / ±0.8% per PRD v4.1 (carried into v5.0)
     function calcWeatherBand() {
         if (!S.cr || S.hist.length < 7) return null;
         const last7 = S.hist.slice(-7);
         const ma = last7.reduce((a, b) => a + b.rate, 0) / last7.length;
         if (ma === 0) return null;
         const delta = (S.cr - ma) / ma * 100;
-        if (delta >=  0.8) return 'great';
-        if (delta >=  0.3) return 'good';
-        if (delta >  -0.3) return 'stable';
-        if (delta >  -0.8) return 'poor';
-        return 'storm';
+        if (delta >=  0.8) return { band: 'great',  delta };
+        if (delta >=  0.3) return { band: 'good',   delta };
+        if (delta >  -0.3) return { band: 'stable', delta };
+        if (delta >  -0.8) return { band: 'poor',   delta };
+        return { band: 'storm', delta };
     }
 
-    function applyWeatherGradient() {
-        const band = calcWeatherBand() || 'stable';
-        const [c1, c2] = GRADIENTS[band];
-        document.documentElement.style.setProperty('--grad-1', c1);
-        document.documentElement.style.setProperty('--grad-2', c2);
+    function renderHeroWeatherLabel() {
+        const w = calcWeatherBand();
+        const d = t();
+        if (!w) return d.weatherBand.loading;
+        const sign = w.delta >= 0 ? '+' : '';
+        return `${sign}${w.delta.toFixed(2)}% · ${d.weatherBand[w.band]}`;
     }
 
     function calcRouting(amount) {
@@ -1067,37 +1113,56 @@
         renderDock();
     }
 
+    // === Weather tab ===
     function vWeather() {
         const d = t();
-        const band = calcWeatherBand();
-        const phrase = d.weatherPhrase[band || 'loading'];
         const bannerShown = localStorage.getItem('fx_banner_dismissed') !== 'true';
         const dccText = d.dccShield.replace('{BASE}', S.base).replace('{TARGET}', S.target);
 
         return `
-            <div class="phrase-pill">${phrase}</div>
-            <div class="dcc-shield">${dccText}</div>
-            ${bannerShown ? `
-                <div class="first-run-banner" onclick="dismissBanner(true)">
-                    <span class="banner-text">${d.bannerDefault}</span>
-                    <button class="banner-close" onclick="event.stopPropagation(); dismissBanner(false)" aria-label="close">✕</button>
-                </div>` : ''}
-            <div class="amount-card">
-                <div class="amount-label">${d.amountPrompt}</div>
-                <div class="amount-input-wrap">
-                    <input type="number" id="calc-in" value="${S.amount}"
+            <section class="hero">
+                <div class="pair-selector">
+                    <span class="picker-unit" onclick="openCurrencyModal('base')">${S.base}</span>
+                    <span class="pair-sep">→</span>
+                    <span class="picker-unit" onclick="openCurrencyModal('target')">${S.target}</span>
+                </div>
+                <div class="amount-wrap">
+                    <span class="hero-amount-label">${d.heroAmountLabel}</span>
+                    <input type="number" id="calc-in" class="hero-amount-input" value="${S.amount}"
                         oninput="if(this.value.length>10)this.value=this.value.slice(0,10); updateRouting(this.value)"
                         inputmode="decimal">
-                    <span class="amount-code">${S.base}</span>
                 </div>
-            </div>
-            <div id="routing-panel">${renderRouting()}</div>
-            <div id="anchor-slot">${renderAnchorStrip()}</div>
-            <div id="time-machine-slot">${renderTimeMachine()}</div>
+                <div class="weather-label">${renderHeroWeatherLabel()}</div>
+            </section>
+
+            <section class="ppp-bar" id="ppp-slot">${renderPPPContent()}</section>
+
+            <section class="routes-section">
+                <div class="dcc-shield">${dccText}</div>
+                ${bannerShown ? `
+                    <div class="first-run-banner" onclick="dismissBanner(true)">
+                        <span class="banner-text">${d.bannerDefault}</span>
+                        <button class="banner-close" onclick="event.stopPropagation(); dismissBanner(false)" aria-label="close">✕</button>
+                    </div>` : ''}
+                <div class="section-label">${d.routesSection}</div>
+                <div id="routing-panel">${renderRoutes()}</div>
+                <button class="split-trigger-btn" onclick="openSplitModal()">${d.splitTrigger}</button>
+                <div id="time-machine-slot">${renderTimeMachine()}</div>
+            </section>
         `;
     }
 
-    function renderRouting() {
+    function renderPPPContent() {
+        const items = calcAnchors(S.amount);
+        if (items.length === 0) return '';
+        const d = t();
+        return items.map(a => {
+            const n = a.count >= 10 ? Math.round(a.count) : a.count.toFixed(1);
+            return `<div class="ppp-line">${d.pppPrefix} <strong>${n} ${escapeHtml(a.label)}</strong></div>`;
+        }).join('');
+    }
+
+    function renderRoutes() {
         const d = t();
         const routes = calcRouting(S.amount);
         if (!routes) {
@@ -1105,7 +1170,9 @@
                 const m = d.methods[id];
                 return `
                     <div class="route-card">
-                        <div class="route-method">${m.name}</div>
+                        <div class="route-top">
+                            <span class="route-method">${ICONS[m.icon]}<span>${m.name}</span></span>
+                        </div>
                         <div class="route-cost-line">
                             <div class="route-cost">—</div>
                             <div class="route-code">${S.target}</div>
@@ -1125,8 +1192,10 @@
             const atmExtra = (r.id === 'atm') ? renderAtmPanelControls() : '';
             return `
                 <div class="route-card${r.isBest ? ' best' : ''}">
-                    ${r.isBest ? `<div class="route-best-tag">${d.bestTag}</div>` : ''}
-                    <div class="route-method">${method.name}</div>
+                    <div class="route-top">
+                        <span class="route-method">${ICONS[method.icon]}<span>${method.name}</span></span>
+                        ${r.isBest ? `<span class="best-pill">${d.bestPill}</span>` : ''}
+                    </div>
                     <div class="route-cost-line">
                         <div class="route-cost">${costStr}</div>
                         <div class="route-code">${S.target}</div>
@@ -1136,24 +1205,7 @@
                     ${atmExtra}
                 </div>
             `;
-        }).join('') + `<button class="split-trigger-btn" onclick="openSplitModal()">${d.splitTrigger}</button>`;
-    }
-
-    function renderAnchorStrip() {
-        const items = calcAnchors(S.amount);
-        if (items.length === 0) return '';
-        const d = t();
-        const pieces = items.map(a => {
-            const n = a.count >= 10 ? Math.round(a.count) : a.count.toFixed(1);
-            const e = escapeHtml(a.emoji) || '•';
-            return `${e} ${n}`;
-        }).join(' · ');
-        return `
-            <div class="anchor-strip" onclick="haptic(); S.activeTab='backpack'; renderContent();">
-                <span class="anchor-prefix">${d.anchorsWeatherPrefix}</span>
-                <span class="anchor-items">${pieces}</span>
-            </div>
-        `;
+        }).join('');
     }
 
     function renderTimeMachine() {
@@ -1178,27 +1230,24 @@
     function updateRouting(val) {
         S.amount = parseFloat(val) || 0;
         const panel = document.getElementById('routing-panel');
-        if (panel) panel.innerHTML = renderRouting();
-        const slot = document.getElementById('anchor-slot');
-        if (slot) slot.innerHTML = renderAnchorStrip();
+        if (panel) panel.innerHTML = renderRoutes();
+        const pppSlot = document.getElementById('ppp-slot');
+        if (pppSlot) pppSlot.innerHTML = renderPPPContent();
     }
 
-    // === v4.2 ATM slider helpers ===
+    // === ATM slider ===
     function calcAtmTier(lossPct) {
         const d = t();
-        // [产品决策] tier thresholds 5% / 1.5% per PRD v4.2 §13
         if (lossPct >= 5)   return { color: 'var(--red)',   label: d.atmTierExtreme };
         if (lossPct >= 1.5) return { color: 'var(--amber)', label: d.atmTierMeh };
         return                       { color: 'var(--green)', label: d.atmTierGood };
     }
-
     function amountToSliderVal(amount, minA, maxA) {
         if (amount <= minA) return 0;
         if (amount >= maxA) return 100;
         const tv = Math.log(amount / minA) / Math.log(maxA / minA);
         return Math.round(tv * 100);
     }
-
     function atmBounds() {
         const rates = getWalletRates();
         return {
@@ -1207,7 +1256,6 @@
             maxA: Math.max(1000, 50 * rates.atm)
         };
     }
-
     function toggleAtmPanel() {
         haptic();
         const wasClosed = !S.atmOpen;
@@ -1216,7 +1264,6 @@
             S.atmSliderVal = amountToSliderVal(S.amount || b.minA, b.minA, b.maxA);
         }
         S.atmOpen = !S.atmOpen;
-
         const panel = document.querySelector('.atm-slider-panel');
         const btn = document.querySelector('.atm-expand-btn');
         const d = t();
@@ -1230,7 +1277,6 @@
             panel.classList.toggle('open', S.atmOpen);
         }
     }
-
     function updateAtmSlider(sliderVal) {
         S.atmSliderVal = parseInt(sliderVal, 10) || 0;
         const b = atmBounds();
@@ -1238,21 +1284,13 @@
         const amt = b.minA * Math.pow(b.maxA / b.minA, tv);
         const lossPct = (b.fee / amt) * 100;
         const tier = calcAtmTier(lossPct);
-
         const amtEl = document.getElementById('atm-amount');
         const lossEl = document.getElementById('atm-loss');
         const tierEl = document.getElementById('atm-tier');
         if (amtEl) amtEl.textContent = `${Math.round(amt).toLocaleString()} ${S.base}`;
-        if (lossEl) {
-            lossEl.textContent = `${lossPct.toFixed(1)}%`;
-            lossEl.style.color = tier.color;
-        }
-        if (tierEl) {
-            tierEl.textContent = tier.label;
-            tierEl.style.color = tier.color;
-        }
+        if (lossEl) { lossEl.textContent = `${lossPct.toFixed(1)}%`; lossEl.style.color = tier.color; }
+        if (tierEl) { tierEl.textContent = tier.label; tierEl.style.color = tier.color; }
     }
-
     function renderAtmPanelControls() {
         const b = atmBounds();
         if (b.fee <= 0 || !S.cr) return '';
@@ -1278,14 +1316,13 @@
             </div>
         `;
     }
-
     function goToBackpack() {
         haptic();
         S.activeTab = 'backpack';
         renderContent();
     }
 
-    // === v4.4 AA Splitter (stateless ephemeral modal) ===
+    // === AA Splitter ===
     function calcSplit(bill, n, payer) {
         if (!S.cr || !bill || bill <= 0 || n <= 0) return null;
         const r = getWalletRates();
@@ -1297,10 +1334,8 @@
         const surchargePerHead = (actualPaid - bill * S.cr) / n;
         return { actualPaid, perShare, surchargePerHead };
     }
-
     function openSplitModal() {
         haptic();
-        // Ephemeral: each open re-initializes
         const routes = calcRouting(S.amount);
         S.splitPayer = routes ? routes[0].id : 'zero';
         S.splitPeople = 2;
@@ -1311,13 +1346,11 @@
         document.getElementById('split-modal').classList.add('show');
         document.body.style.overflow = 'hidden';
     }
-
     function closeSplitModal() {
         S.splitOpen = false;
         document.getElementById('split-modal').classList.remove('show');
         document.body.style.overflow = '';
     }
-
     function incrementPeople(delta) {
         haptic();
         const next = S.splitPeople + delta;
@@ -1325,13 +1358,11 @@
         S.splitPeople = next;
         renderSplitBody();
     }
-
     function setSplitPayer(method) {
         haptic();
         S.splitPayer = method;
         renderSplitBody();
     }
-
     function renderSplitBody() {
         const d = t();
         const body = document.getElementById('split-body');
@@ -1375,6 +1406,7 @@
         `;
     }
 
+    // === Guide tab ===
     function vGuide() {
         const d = t();
         const interp = (s) => s.replace(/\{BASE\}/g, S.base).replace(/\{TARGET\}/g, S.target);
@@ -1394,23 +1426,22 @@
             `;
         }).join('');
         return `
-            <div class="hero-header">
-                <div class="hero-title">${d.guideTitle}</div>
-                <div class="hero-subtitle">${d.guideSubtitle}</div>
-            </div>
-            ${cards}
+            <section class="tab-header">
+                <h1 class="tab-title">${d.guideTitle}</h1>
+                <p class="tab-subtitle">${d.guideSubtitle}</p>
+            </section>
+            <section class="tab-body">${cards}</section>
         `;
     }
-
     function toggleCard(i) {
         haptic();
         S.openCard = (S.openCard === i) ? null : i;
         renderContent();
     }
 
+    // === Backpack tab ===
     function vBackpack() {
         const d = t();
-        const isSolid = document.documentElement.classList.contains('solid');
         const hapticOn = localStorage.getItem('fx_haptic') !== 'off';
         const r = getWalletRates();
         const anchors = getAnchors();
@@ -1419,14 +1450,14 @@
             <div class="setting-card anchor-row">
                 <div class="anchor-row-line">
                     <input class="anchor-emoji-in" type="text" maxlength="4"
-                           value="${escapeAttr(a.emoji)}" placeholder="${d.anchorEmojiPh}"
-                           onchange="updateAnchor(${idx}, 'emoji', this.value)">
-                    <input class="anchor-label-in" type="text" maxlength="24"
-                           value="${escapeAttr(a.label)}" placeholder="${d.anchorLabelPh}"
-                           onchange="updateAnchor(${idx}, 'label', this.value)">
+                        value="${escapeAttr(a.emoji)}" placeholder="${d.anchorEmojiPh}"
+                        onchange="updateAnchor(${idx}, 'emoji', this.value)">
+                    <input class="anchor-label-in" type="text" maxlength="28"
+                        value="${escapeAttr(a.label)}" placeholder="${d.anchorLabelPh}"
+                        onchange="updateAnchor(${idx}, 'label', this.value)">
                     <input class="anchor-price-in" type="number" step="0.01" min="0"
-                           value="${a.price || ''}" placeholder="0"
-                           onchange="updateAnchor(${idx}, 'price', this.value)">
+                        value="${a.price || ''}" placeholder="0"
+                        onchange="updateAnchor(${idx}, 'price', this.value)">
                     <button class="anchor-currency-btn" onclick="openCurrencyModal('anchor:${idx}')">${a.currency || S.target}</button>
                     <button class="anchor-delete-btn" onclick="removeAnchor(${idx})" aria-label="delete">✕</button>
                 </div>
@@ -1436,79 +1467,76 @@
         const atMax = anchors.length >= MAX_ANCHORS;
 
         return `
-            <div class="hero-header">
-                <div class="hero-title">${d.backpackTitle}</div>
-                <div class="hero-subtitle">${d.backpackSubtitle}</div>
-            </div>
-
-            <div class="setting-card toggle-row" onclick="toggleContrastMode()">
-                <span class="setting-label">${d.highContrastLabel}</span>
-                <span class="setting-val">${isSolid ? d.on : d.off}</span>
-            </div>
-            <div class="setting-card toggle-row" onclick="toggleHaptic()">
-                <span class="setting-label">${d.hapticLabel}</span>
-                <span class="setting-val">${hapticOn ? d.on : d.off}</span>
-            </div>
-
-            <div class="wallet-section-title">${d.walletRatesTitle}</div>
-
-            <div class="setting-card">
-                <div class="setting-row-top">
-                    <span class="setting-label">${d.rateZeroLabel}</span>
-                    <div>
-                        <input class="setting-input" type="number" step="0.01" min="0" value="${(r.zero * 100).toFixed(2)}"
-                            oninput="setWalletRate('fx_rate_zero', parseFloat(this.value) / 100)">
-                        <span class="setting-unit">%</span>
-                    </div>
+            <section class="tab-header">
+                <h1 class="tab-title">${d.backpackTitle}</h1>
+                <p class="tab-subtitle">${d.backpackSubtitle}</p>
+            </section>
+            <section class="tab-body">
+                <div class="setting-card toggle-row" onclick="toggleHaptic()">
+                    <span class="setting-label">${d.hapticLabel}</span>
+                    <span class="setting-val">${hapticOn ? d.on : d.off}</span>
                 </div>
-                <div class="setting-origin">${d.rateZeroOrigin}</div>
-            </div>
 
-            <div class="setting-card">
-                <div class="setting-row-top">
-                    <span class="setting-label">${d.rateCardLabel}</span>
-                    <div>
-                        <input class="setting-input" type="number" step="0.01" min="0" value="${(r.card * 100).toFixed(2)}"
-                            oninput="setWalletRate('fx_rate_card', parseFloat(this.value) / 100)">
-                        <span class="setting-unit">%</span>
+                <div class="wallet-section-title">${d.walletRatesTitle}</div>
+
+                <div class="setting-card">
+                    <div class="setting-row-top">
+                        <span class="setting-label">${d.rateZeroLabel}</span>
+                        <div>
+                            <input class="setting-input" type="number" step="0.01" min="0" value="${(r.zero * 100).toFixed(2)}"
+                                oninput="setWalletRate('fx_rate_zero', parseFloat(this.value) / 100)">
+                            <span class="setting-unit">%</span>
+                        </div>
                     </div>
+                    <div class="setting-origin">${d.rateZeroOrigin}</div>
                 </div>
-                <div class="setting-origin">${d.rateCardOrigin}</div>
-            </div>
 
-            <div class="setting-card">
-                <div class="setting-row-top">
-                    <span class="setting-label">${d.feeAtmLabel}</span>
-                    <div>
-                        <input class="setting-input" type="number" step="0.5" min="0" value="${r.atm}"
-                            oninput="setWalletRate('fx_fee_atm', parseFloat(this.value))">
-                        <span class="setting-unit">${S.base}</span>
+                <div class="setting-card">
+                    <div class="setting-row-top">
+                        <span class="setting-label">${d.rateCardLabel}</span>
+                        <div>
+                            <input class="setting-input" type="number" step="0.01" min="0" value="${(r.card * 100).toFixed(2)}"
+                                oninput="setWalletRate('fx_rate_card', parseFloat(this.value) / 100)">
+                            <span class="setting-unit">%</span>
+                        </div>
                     </div>
+                    <div class="setting-origin">${d.rateCardOrigin}</div>
                 </div>
-                <div class="setting-origin">${d.feeAtmOrigin}</div>
-            </div>
 
-            <div class="wallet-section-title">${d.anchorsTitle}</div>
-            <div class="wallet-section-hint">${d.anchorsHint}</div>
-            ${anchorRows}
-            <button class="anchor-add-btn" onclick="addAnchor()" ${atMax ? 'disabled' : ''}>${d.anchorAdd}</button>
+                <div class="setting-card">
+                    <div class="setting-row-top">
+                        <span class="setting-label">${d.feeAtmLabel}</span>
+                        <div>
+                            <input class="setting-input" type="number" step="0.5" min="0" value="${r.atm}"
+                                oninput="setWalletRate('fx_fee_atm', parseFloat(this.value))">
+                            <span class="setting-unit">${S.base}</span>
+                        </div>
+                    </div>
+                    <div class="setting-origin">${d.feeAtmOrigin}</div>
+                </div>
 
-            <div class="setting-card toggle-row danger" onclick="haptic(); localStorage.clear(); location.reload()">
-                <span class="setting-label">${d.clearLabel}</span>
-                <span class="setting-val">⚠</span>
-            </div>
+                <div class="wallet-section-title">${d.anchorsTitle}</div>
+                <div class="wallet-section-hint">${d.anchorsHint}</div>
+                ${anchorRows}
+                <button class="anchor-add-btn" onclick="addAnchor()" ${atMax ? 'disabled' : ''}>${d.anchorAdd}</button>
 
-            <div class="footer">
-                ${d.slogan}
-                <span class="footer-version">v4.1</span>
-            </div>
+                <div class="setting-card toggle-row danger" onclick="haptic(); localStorage.clear(); location.reload()">
+                    <span class="setting-label">${d.clearLabel}</span>
+                    <span class="setting-val">⚠</span>
+                </div>
+
+                <div class="footer">
+                    ${d.slogan}
+                    <span class="footer-version">v5.0</span>
+                </div>
+            </section>
         `;
     }
 
     function renderDock() {
         document.getElementById('dock').innerHTML = t().dock.map(td => `
-            <button class="dock-btn${S.activeTab===td.id?' active':''}" onclick="haptic(); S.activeTab='${td.id}'; S.openCard=null; renderContent()">
-                <span class="dock-icon">${td.icon}</span>
+            <button class="dock-btn${S.activeTab===td.id?' active':''}" onclick="haptic(); S.activeTab='${td.id}'; S.openCard=null; renderContent();">
+                ${ICONS[td.icon]}
                 <span class="dock-lbl">${td.lbl}</span>
             </button>
         `).join('');
@@ -1516,13 +1544,8 @@
 
     async function init() {
         applyI18n();
-        applyWeatherGradient();
-
-        document.getElementById('label-base').textContent = S.base;
-        document.getElementById('label-target').textContent = S.target;
-        document.getElementById('flag-base').textContent = FLAGS[S.base] || '🏳️';
-        document.getElementById('flag-target').textContent = FLAGS[S.target] || '🏳️';
-
+        renderLangSwitch();
+        seedAnchorsIfEmpty();
         await fetchR();
         renderContent();
     }

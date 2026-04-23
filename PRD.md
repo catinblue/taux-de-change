@@ -1,9 +1,9 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v4.1 (Custom PPP Anchors)
-**Build target:** `weather.html` · Service Worker `fx-weather-v24` · Manifest `FX Weather`
-**Status:** v4.0 shipped atomically. v4.1 (Custom Anchors) shipped in this sprint. v4.2-v4.4 remain in backlog (see §10).
-**Scope history:** v3.0 engine → v4.0 glassmorphism shell → v4.1 Custom PPP Anchors + CSS `glass-card` consolidation.
+**Version:** v4.2 (ATM Slider)
+**Build target:** `weather.html` · Service Worker `fx-weather-v25` · Manifest `FX Weather`
+**Status:** v4.0 / v4.0.1 / v4.1 shipped. v4.2 (ATM Slider) shipped in this sprint. v4.3-v4.4 pending.
+**Scope history:** v3.0 engine → v4.0 glassmorphism shell → v4.1 Custom PPP Anchors → v4.2 ATM amortization slider.
 
 ---
 
@@ -470,9 +470,21 @@ User-entered reference prices ("my daily coffee", "home bowl of noodles"). On We
 **CSS refactor:** extracted 9 glass elements into consolidated multi-selector rules (`.glass-card` pattern).
 **i18n:** 6 new keys × 3 languages (anchorsTitle, anchorsHint, anchorsWeatherPrefix, anchorAdd, anchorEmojiPh, anchorLabelPh, pickerTitleAnchor).
 
-### ⏳ v4.2 — ATM Slider (pending)
+### ✅ v4.2 — ATM Slider (shipped)
 
-Visualize ATM fixed-fee amortization as a slider. Drag withdrawal amount → see fee-as-percentage-of-total curve. Zero new data, zero state. Probably lives as a new glass card on Weather tab, toggleable inline.
+Progressive-disclosure slider embedded in the ATM route card on Weather tab. Tap `📊 See withdrawal curve` → the card expands (max-height CSS transition ~280ms) revealing a native `<input type="range">` whose track is a `red → amber → green` gradient. Dragging shows `Withdraw X {BASE} → Y.Y% 🟡 Meh` in real-time.
+
+**Mapping:** exponential `minA = max(2 × fee, 1)` to `maxA = max(1000, 50 × fee)` for fine-grained low-end (high-loss) control.
+
+**Tier thresholds `[产品决策]`:** `≥ 5%` Extreme 🩸 (red) / `≥ 1.5%` Meh 🟡 (amber) / `< 1.5%` Reasonable 🟢 (green). Three tiers = stop / caution / go.
+
+**Default position:** on open, slider seeds to match current bill amount via `amountToSliderVal()` inverse log mapping (clamped to bounds). Keeps pedagogical link between bill in focus and ATM scenario.
+
+**Fee source:** read-only from `fx_fee_atm` in Backpack. `edit →` link in hint jumps to Backpack for one-tap reconfig. No temp override (stateless discipline preserved).
+
+**Ephemeral state:** `S.atmOpen` (panel visibility), `S.atmSliderVal` (0–100). Not persisted to localStorage.
+
+**Guards:** if `fx_fee_atm <= 0` or `S.cr === 0`, expand trigger hidden (no meaningful story).
 
 ### ⏳ v4.3 — VAT Refund Shield (pending)
 
@@ -507,7 +519,17 @@ Native `<select>` replaced with custom glass bottom-sheet modal after the origin
 - 6 new i18n keys × 3 languages
 - SW cache bumped to `fx-weather-v24`
 
+### v4.2 (2026-04-23) — ATM amortization slider
+- HTML patch in `renderRouting()` → ATM card only gets `📊 expand` button
+- New functions: `calcAtmTier`, `amountToSliderVal`, `atmBounds`, `toggleAtmPanel`, `updateAtmSlider`, `renderAtmPanelControls`, `goToBackpack`
+- State additions: `S.atmOpen`, `S.atmSliderVal` (ephemeral, no localStorage)
+- CSS: native range-input styled with `linear-gradient(90deg, red, amber, green)` track + cross-browser thumb rules; `.atm-slider-panel` with `max-height` transition for smooth open/close
+- i18n: 8 new keys × 3 languages (atmSliderOpen / Close / Withdraw / Hint / HintEdit, atmTierExtreme / Meh / Good)
+- SW cache bumped to `fx-weather-v25`
+- Targeted DOM update on slider drag: patches only `#atm-amount` / `#atm-loss` / `#atm-tier`, slider focus preserved; `toggleAtmPanel` avoids `renderContent` so CSS transition fires
+
 ### Pending
 
-- Cloudflare Pages deploy (2-checkpoint protocol; commit pending push approval)
-- Frankfurter fix commit `12fcb2c` (present in git history since 2026-04-22) — to be pushed alongside or rebased into v4.1 commit
+- Cloudflare Pages project creation (manual, user-side)
+- v4.3 VAT Refund Shield (awaiting PM copy)
+- v4.4 AA Splitter modal

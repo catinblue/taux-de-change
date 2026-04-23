@@ -291,6 +291,52 @@
         .anchor-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
         .anchor-add-btn:active:not(:disabled) { opacity: 0.7; }
 
+        /* === v4.2 ATM slider — exponential mapping + CSS gradient track === */
+        .atm-expand-btn {
+            background: none; border: none;
+            color: var(--accent); font-weight: 700; font-size: 12px;
+            cursor: pointer; font-family: inherit;
+            padding: 8px 0 2px; align-self: flex-start;
+            letter-spacing: 0.3px; margin-top: 4px;
+        }
+        .atm-expand-btn:active { opacity: 0.6; }
+        .atm-slider-panel {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.28s ease, padding-top 0.28s ease;
+            padding-top: 0;
+        }
+        .atm-slider-panel.open { max-height: 260px; padding-top: 14px; }
+        .atm-slider {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 8px; border-radius: 4px;
+            background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+            outline: none; margin: 0;
+        }
+        .atm-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--card-bg); border: 2px solid var(--text);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+        .atm-slider::-moz-range-thumb {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--card-bg); border: 2px solid var(--text);
+            cursor: pointer;
+        }
+        .atm-readout {
+            display: flex; flex-wrap: wrap; align-items: baseline;
+            gap: 6px; margin-top: 14px;
+            font-size: 14px; font-weight: 700; color: var(--text);
+        }
+        .atm-readout strong { font-weight: 900; }
+        .atm-arrow { opacity: 0.4; }
+        .atm-slider-hint {
+            font-size: 10px; color: var(--text2);
+            margin-top: 10px; font-weight: 600; line-height: 1.4;
+        }
+        .atm-edit-link { color: var(--accent); cursor: pointer; font-weight: 700; }
+
         .footer { padding: 40px 0 16px; text-align: center; color: var(--text); font-size: 12px; line-height: 1.7; letter-spacing: 0.3px; opacity: 0.7; }
         .footer-version { display: block; margin-top: 6px; font-weight: 700; letter-spacing: 2px; opacity: 0.7; font-size: 10px; }
 
@@ -451,6 +497,14 @@
             anchorAdd: "+ Add an anchor",
             anchorEmojiPh: "🍜",
             anchorLabelPh: "Name",
+            atmSliderOpen: "📊 See withdrawal curve",
+            atmSliderClose: "▲ Hide",
+            atmSliderWithdraw: "Withdraw",
+            atmSliderHint: "Based on {fee} {base} ATM fee from Backpack · ",
+            atmSliderHintEdit: "edit →",
+            atmTierExtreme: "🩸 Extreme",
+            atmTierMeh: "🟡 Meh",
+            atmTierGood: "🟢 Reasonable",
             guideTitle: "📚 Pocket Guide",
             guideSubtitle: "Tiny tips that keep your wallet safe abroad.",
             guideCards: [
@@ -511,6 +565,14 @@
             anchorAdd: "+ 添加参照物",
             anchorEmojiPh: "🍜",
             anchorLabelPh: "名称",
+            atmSliderOpen: "📊 看取现划算曲线",
+            atmSliderClose: "▲ 收起",
+            atmSliderWithdraw: "取",
+            atmSliderHint: "按 Backpack 的 {fee} {base} 机具费 · ",
+            atmSliderHintEdit: "去改 →",
+            atmTierExtreme: "🩸 极亏",
+            atmTierMeh: "🟡 一般",
+            atmTierGood: "🟢 合理",
             guideTitle: "📚 口袋避坑指南",
             guideSubtitle: "几条小贴士,让钱包在境外更稳。",
             guideCards: [
@@ -571,6 +633,14 @@
             anchorAdd: "+ Ajouter un repère",
             anchorEmojiPh: "🥐",
             anchorLabelPh: "Nom",
+            atmSliderOpen: "📊 Voir la courbe des retraits",
+            atmSliderClose: "▲ Masquer",
+            atmSliderWithdraw: "Retirer",
+            atmSliderHint: "D'après {fee} {base} de frais dans Sac à Dos · ",
+            atmSliderHintEdit: "modifier →",
+            atmTierExtreme: "🩸 Énorme perte",
+            atmTierMeh: "🟡 Bof",
+            atmTierGood: "🟢 Correct",
             guideTitle: "📚 Guide de poche",
             guideSubtitle: "Quelques astuces pour protéger votre portefeuille.",
             guideCards: [
@@ -615,7 +685,9 @@
         amount: 100, cr: 0, hist: [],
         activeTab: 'weather',
         lang: initialLang,
-        openCard: null
+        openCard: null,
+        atmOpen: false,
+        atmSliderVal: 50
     };
 
     function t() { return I18N[S.lang]; }
@@ -940,6 +1012,7 @@
             const deltaStr = r.delta > 0
                 ? d.deltaVsBest.replace('{delta}', Number(r.delta.toFixed(2)).toLocaleString()).replace('{TARGET}', S.target)
                 : '';
+            const atmExtra = (r.id === 'atm') ? renderAtmPanelControls() : '';
             return `
                 <div class="route-card${r.isBest ? ' best' : ''}">
                     ${r.isBest ? `<div class="route-best-tag">${d.bestTag}</div>` : ''}
@@ -950,6 +1023,7 @@
                     </div>
                     <div class="route-hint">${method.hint}</div>
                     ${deltaStr ? `<div class="route-delta">${deltaStr}</div>` : ''}
+                    ${atmExtra}
                 </div>
             `;
         }).join('');
@@ -997,6 +1071,108 @@
         if (panel) panel.innerHTML = renderRouting();
         const slot = document.getElementById('anchor-slot');
         if (slot) slot.innerHTML = renderAnchorStrip();
+    }
+
+    // === v4.2 ATM slider helpers ===
+    function calcAtmTier(lossPct) {
+        const d = t();
+        // [产品决策] tier thresholds 5% / 1.5% per PRD v4.2 §13
+        if (lossPct >= 5)   return { color: 'var(--red)',   label: d.atmTierExtreme };
+        if (lossPct >= 1.5) return { color: 'var(--amber)', label: d.atmTierMeh };
+        return                       { color: 'var(--green)', label: d.atmTierGood };
+    }
+
+    function amountToSliderVal(amount, minA, maxA) {
+        if (amount <= minA) return 0;
+        if (amount >= maxA) return 100;
+        const tv = Math.log(amount / minA) / Math.log(maxA / minA);
+        return Math.round(tv * 100);
+    }
+
+    function atmBounds() {
+        const rates = getWalletRates();
+        return {
+            fee: rates.atm,
+            minA: Math.max(2 * rates.atm, 1),
+            maxA: Math.max(1000, 50 * rates.atm)
+        };
+    }
+
+    function toggleAtmPanel() {
+        haptic();
+        const wasClosed = !S.atmOpen;
+        if (wasClosed) {
+            const b = atmBounds();
+            S.atmSliderVal = amountToSliderVal(S.amount || b.minA, b.minA, b.maxA);
+        }
+        S.atmOpen = !S.atmOpen;
+
+        const panel = document.querySelector('.atm-slider-panel');
+        const btn = document.querySelector('.atm-expand-btn');
+        const d = t();
+        if (btn) btn.textContent = S.atmOpen ? d.atmSliderClose : d.atmSliderOpen;
+        if (panel) {
+            if (wasClosed && S.atmOpen) {
+                const slider = panel.querySelector('.atm-slider');
+                if (slider) slider.value = S.atmSliderVal;
+                updateAtmSlider(S.atmSliderVal);
+            }
+            panel.classList.toggle('open', S.atmOpen);
+        }
+    }
+
+    function updateAtmSlider(sliderVal) {
+        S.atmSliderVal = parseInt(sliderVal, 10) || 0;
+        const b = atmBounds();
+        const tv = S.atmSliderVal / 100;
+        const amt = b.minA * Math.pow(b.maxA / b.minA, tv);
+        const lossPct = (b.fee / amt) * 100;
+        const tier = calcAtmTier(lossPct);
+
+        const amtEl = document.getElementById('atm-amount');
+        const lossEl = document.getElementById('atm-loss');
+        const tierEl = document.getElementById('atm-tier');
+        if (amtEl) amtEl.textContent = `${Math.round(amt).toLocaleString()} ${S.base}`;
+        if (lossEl) {
+            lossEl.textContent = `${lossPct.toFixed(1)}%`;
+            lossEl.style.color = tier.color;
+        }
+        if (tierEl) {
+            tierEl.textContent = tier.label;
+            tierEl.style.color = tier.color;
+        }
+    }
+
+    function renderAtmPanelControls() {
+        const b = atmBounds();
+        if (b.fee <= 0 || !S.cr) return '';
+        const d = t();
+        const tv = S.atmSliderVal / 100;
+        const amt = b.minA * Math.pow(b.maxA / b.minA, tv);
+        const lossPct = (b.fee / amt) * 100;
+        const tier = calcAtmTier(lossPct);
+        const hint = d.atmSliderHint.replace('{fee}', b.fee).replace('{base}', S.base);
+        return `
+            <button class="atm-expand-btn" onclick="event.stopPropagation(); toggleAtmPanel();">${S.atmOpen ? d.atmSliderClose : d.atmSliderOpen}</button>
+            <div class="atm-slider-panel${S.atmOpen ? ' open' : ''}">
+                <input type="range" class="atm-slider" min="0" max="100" value="${S.atmSliderVal}"
+                    oninput="updateAtmSlider(this.value)">
+                <div class="atm-readout">
+                    <span>${d.atmSliderWithdraw}</span>
+                    <strong id="atm-amount">${Math.round(amt).toLocaleString()} ${S.base}</strong>
+                    <span class="atm-arrow">→</span>
+                    <strong id="atm-loss" style="color:${tier.color}">${lossPct.toFixed(1)}%</strong>
+                    <span id="atm-tier" style="color:${tier.color}">${tier.label}</span>
+                </div>
+                <div class="atm-slider-hint">${hint}<a class="atm-edit-link" onclick="event.stopPropagation(); goToBackpack();">${d.atmSliderHintEdit}</a></div>
+            </div>
+        `;
+    }
+
+    function goToBackpack() {
+        haptic();
+        S.activeTab = 'backpack';
+        renderContent();
     }
 
     function vGuide() {

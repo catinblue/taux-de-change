@@ -450,7 +450,7 @@
             border-radius: 28px 28px 0 0;
             padding: 24px 20px calc(24px + var(--safe-b));
             transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            transition: transform 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.1);
         }
         .modal-overlay.show .modal-sheet { transform: translateY(0); }
@@ -519,8 +519,9 @@
         .split-actual { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
         .split-per-share { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
         .split-per-share strong {
-            font-size: 28px; font-weight: 700; color: var(--text);
+            font-size: 28px; font-weight: 700; color: var(--accent);
             letter-spacing: -0.02em; display: block; margin-top: 2px;
+            transition: color 0.35s ease;
         }
         .split-hint { font-size: 10px; color: var(--text2); font-weight: 500; margin-top: 6px; }
         .split-empty {
@@ -529,6 +530,89 @@
         }
 
         ::-webkit-scrollbar { display: none; }
+
+        /* === v5.0.1 Interaction physics layer === */
+
+        /* Button press — universal scale feedback */
+        button, .picker-unit, .dock-btn, .modal-item, .flashcard, .anchor-add-btn,
+        .split-step-btn, .split-seg-btn, .anchor-currency-btn, .anchor-delete-btn,
+        .atm-expand-btn, .atm-edit-link, .split-trigger-btn, .banner-close,
+        .setting-card.toggle-row, .setting-card.danger {
+            transition: transform 0.12s ease-out, opacity 0.15s ease-out, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+        button:active:not(:disabled), .picker-unit:active, .dock-btn:active,
+        .flashcard:active, .anchor-add-btn:active:not(:disabled),
+        .split-trigger-btn:active, .setting-card.toggle-row:active,
+        .setting-card.danger:active {
+            transform: scale(0.97);
+        }
+
+        /* OPTIMAL pill fade-in */
+        .best-pill {
+            transition: background 0.45s ease, opacity 0.45s ease;
+            animation: pillFadeIn 0.4s ease;
+        }
+        @keyframes pillFadeIn {
+            from { opacity: 0; transform: translateX(4px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ATM color morphing (smooth transition between red/amber/green) */
+        #atm-loss, #atm-tier {
+            transition: color 0.35s ease;
+        }
+
+        /* Staggered card entry */
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .route-card, .flashcard, .setting-card, .ppp-line, .time-machine {
+            animation: cardFadeUp 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.1) backwards;
+            animation-delay: calc(var(--stagger, 0) * 50ms);
+        }
+
+        /* Tab content horizontal slide-in */
+        @keyframes tabSlideIn {
+            from { opacity: 0; transform: translateX(14px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        #content > section, #content > div {
+            animation: tabSlideIn 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+        }
+        #content > section:nth-child(1) { animation-delay: 0ms; }
+        #content > section:nth-child(2) { animation-delay: 40ms; }
+        #content > section:nth-child(3) { animation-delay: 80ms; }
+
+        /* PPP line — interactive + editing state */
+        .ppp-line {
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 2px 4px;
+            margin: 0 -4px;
+            transition: background 0.2s ease;
+        }
+        .ppp-line:active { background: var(--surface); }
+        .ppp-line.editing {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+            cursor: default;
+        }
+        .ppp-line.editing:active { background: transparent; }
+        .ppp-price-edit, .ppp-label-edit {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 8px; padding: 5px 8px;
+            font-family: inherit; font-size: 12px; font-weight: 700;
+            color: var(--text); outline: none;
+        }
+        .ppp-price-edit:focus, .ppp-label-edit:focus { border-color: var(--accent); }
+        .ppp-price-edit { width: 68px; text-align: right; }
+        .ppp-label-edit { flex: 1; min-width: 100px; }
+        .ppp-save-btn {
+            background: var(--accent); color: #FFFFFF; border: none;
+            width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+            font-family: inherit; font-size: 13px; font-weight: 900; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -845,6 +929,66 @@
     function haptic() {
         if (navigator.vibrate && localStorage.getItem('fx_haptic') !== 'off') navigator.vibrate(10);
     }
+
+    // === v5.0.1 Ticking number animation ===
+    const _tickRAF = new WeakMap();
+    const _defaultFmt = (v) => Number(v.toFixed(2)).toLocaleString();
+    function tickNumber(el, from, to, duration, formatter) {
+        if (!el) return;
+        const fmt = formatter || _defaultFmt;
+        const prior = _tickRAF.get(el);
+        if (prior) cancelAnimationFrame(prior);
+        if (Math.abs(to - from) < 0.01) {
+            el.textContent = fmt(to);
+            return;
+        }
+        const dur = duration || 380;
+        const start = performance.now();
+        function step(now) {
+            const elapsed = now - start;
+            const progress = Math.min(1, elapsed / dur);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = from + (to - from) * eased;
+            el.textContent = fmt(current);
+            if (progress < 1) {
+                _tickRAF.set(el, requestAnimationFrame(step));
+            } else {
+                _tickRAF.delete(el);
+            }
+        }
+        _tickRAF.set(el, requestAnimationFrame(step));
+    }
+
+    // Previous-value caches for ticking from last displayed number
+    const _prevCosts = { zero: 0, card: 0, atm: 0 };
+    const _prevPPP = {};  // keyed by anchor index: last displayed count
+    let _prevSplit = 0;
+
+    function tickRoutes() {
+        document.querySelectorAll('.route-cost[data-target]').forEach(el => {
+            const target = parseFloat(el.dataset.target) || 0;
+            const method = el.dataset.method;
+            const from = _prevCosts[method] || 0;
+            tickNumber(el, from, target);
+            _prevCosts[method] = target;
+        });
+    }
+    function tickPPP() {
+        document.querySelectorAll('.ppp-count[data-target]').forEach(el => {
+            const target = parseFloat(el.dataset.target) || 0;
+            const idx = el.dataset.idx;
+            const from = _prevPPP[idx] != null ? _prevPPP[idx] : 0;
+            const fmt = target >= 10
+                ? (v) => String(Math.round(v))
+                : (v) => (Math.round(v * 10) / 10).toFixed(1);
+            tickNumber(el, from, target, 380, fmt);
+            _prevPPP[idx] = target;
+        });
+    }
+    function resetCostCaches() {
+        _prevCosts.zero = 0; _prevCosts.card = 0; _prevCosts.atm = 0;
+        Object.keys(_prevPPP).forEach(k => delete _prevPPP[k]);
+    }
     function escapeAttr(s) {
         if (s == null) return '';
         return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -903,6 +1047,7 @@
     function calcAnchors(billInBase) {
         if (!billInBase || !S.cr) return [];
         return getAnchors()
+            .map((a, idx) => ({ ...a, _idx: idx }))
             .filter(a => a.price > 0 && a.label && (a.currency === S.base || a.currency === S.target))
             .map(a => {
                 const count = (a.currency === S.base)
@@ -977,11 +1122,13 @@
         closeCurrencyModal();
         if (currentPickerType === 'base' && S.base !== curr) {
             S.base = curr;
+            resetCostCaches();
             renderContent();
             await fetchR();
             renderContent();
         } else if (currentPickerType === 'target' && S.target !== curr) {
             S.target = curr;
+            resetCostCaches();
             renderContent();
             await fetchR();
             renderContent();
@@ -1111,6 +1258,7 @@
         else if (S.activeTab === 'backpack') c.innerHTML = vBackpack();
         else c.innerHTML = '';
         renderDock();
+        if (S.activeTab === 'weather') { tickRoutes(); tickPPP(); }
     }
 
     // === Weather tab ===
@@ -1156,20 +1304,71 @@
         const items = calcAnchors(S.amount);
         if (items.length === 0) return '';
         const d = t();
-        return items.map(a => {
-            const n = a.count >= 10 ? Math.round(a.count) : a.count.toFixed(1);
-            return `<div class="ppp-line">${d.pppPrefix} <strong>${n} ${escapeHtml(a.label)}</strong></div>`;
+        return items.map((a, i) => {
+            const target = a.count;
+            const fromVal = _prevPPP[a._idx] != null ? _prevPPP[a._idx] : 0;
+            const displayStart = target >= 10 ? Math.round(fromVal) : (Math.round(fromVal * 10) / 10);
+            return `
+                <div class="ppp-line" style="--stagger:${i + 1}" data-anchor-idx="${a._idx}" onclick="editPPPAnchor(${a._idx})">
+                    ${d.pppPrefix} <strong><span class="ppp-count" data-target="${target}" data-idx="${a._idx}">${displayStart}</span> ${escapeHtml(a.label)}</strong>
+                </div>
+            `;
         }).join('');
+    }
+
+    // === v5.0.1 PPP inline editing ===
+    function editPPPAnchor(idx) {
+        haptic();
+        const arr = getAnchors();
+        const a = arr[idx];
+        if (!a) return;
+        const line = document.querySelector(`.ppp-line[data-anchor-idx="${idx}"]`);
+        if (!line || line.classList.contains('editing')) return;
+        line.classList.add('editing');
+        line.onclick = null;
+        line.innerHTML = `
+            <input class="ppp-price-edit" type="number" step="0.01" min="0" value="${a.price}" placeholder="price" inputmode="decimal">
+            <input class="ppp-label-edit" type="text" value="${escapeAttr(a.label)}" placeholder="label" maxlength="28">
+            <button class="ppp-save-btn" onclick="savePPPEdit(${idx})" aria-label="save">✓</button>
+        `;
+        const priceEl = line.querySelector('.ppp-price-edit');
+        if (priceEl) { priceEl.focus(); priceEl.select(); }
+        // Save on Enter in either field
+        line.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); savePPPEdit(idx); }
+            });
+        });
+    }
+
+    function savePPPEdit(idx) {
+        const line = document.querySelector(`.ppp-line[data-anchor-idx="${idx}"]`);
+        if (!line) return;
+        const priceEl = line.querySelector('.ppp-price-edit');
+        const labelEl = line.querySelector('.ppp-label-edit');
+        if (!priceEl || !labelEl) return;
+        const newPrice = parseFloat(priceEl.value);
+        const newLabel = labelEl.value.trim();
+        const arr = getAnchors();
+        if (!arr[idx]) return;
+        if (!isNaN(newPrice) && newPrice > 0) arr[idx].price = newPrice;
+        if (newLabel) arr[idx].label = newLabel;
+        setAnchors(arr);
+        haptic();
+        // Invalidate cached count for this anchor (so next tick starts from 0 → new)
+        delete _prevPPP[idx];
+        const pppSlot = document.getElementById('ppp-slot');
+        if (pppSlot) { pppSlot.innerHTML = renderPPPContent(); tickPPP(); }
     }
 
     function renderRoutes() {
         const d = t();
         const routes = calcRouting(S.amount);
         if (!routes) {
-            return ['zero', 'card', 'atm'].map(id => {
+            return ['zero', 'card', 'atm'].map((id, i) => {
                 const m = d.methods[id];
                 return `
-                    <div class="route-card">
+                    <div class="route-card" style="--stagger:${i + 1}">
                         <div class="route-top">
                             <span class="route-method">${ICONS[m.icon]}<span>${m.name}</span></span>
                         </div>
@@ -1185,19 +1384,20 @@
         return routes.map(r => {
             const atmIsWorst = (r.id === 'atm' && r.rank === 2);
             const method = atmIsWorst ? d.methodsAtmWorst : d.methods[r.id];
-            const costStr = Number(r.cost.toFixed(2)).toLocaleString();
+            const prev = _prevCosts[r.id] || 0;
+            const startStr = Number(prev.toFixed(2)).toLocaleString();
             const deltaStr = r.delta > 0
                 ? d.deltaVsBest.replace('{delta}', Number(r.delta.toFixed(2)).toLocaleString()).replace('{TARGET}', S.target)
                 : '';
             const atmExtra = (r.id === 'atm') ? renderAtmPanelControls() : '';
             return `
-                <div class="route-card${r.isBest ? ' best' : ''}">
+                <div class="route-card${r.isBest ? ' best' : ''}" style="--stagger:${r.rank + 1}">
                     <div class="route-top">
                         <span class="route-method">${ICONS[method.icon]}<span>${method.name}</span></span>
                         ${r.isBest ? `<span class="best-pill">${d.bestPill}</span>` : ''}
                     </div>
                     <div class="route-cost-line">
-                        <div class="route-cost">${costStr}</div>
+                        <div class="route-cost" data-target="${r.cost}" data-method="${r.id}">${startStr}</div>
                         <div class="route-code">${S.target}</div>
                     </div>
                     <div class="route-hint">${method.hint}</div>
@@ -1230,9 +1430,9 @@
     function updateRouting(val) {
         S.amount = parseFloat(val) || 0;
         const panel = document.getElementById('routing-panel');
-        if (panel) panel.innerHTML = renderRoutes();
+        if (panel) { panel.innerHTML = renderRoutes(); tickRoutes(); }
         const pppSlot = document.getElementById('ppp-slot');
-        if (pppSlot) pppSlot.innerHTML = renderPPPContent();
+        if (pppSlot) { pppSlot.innerHTML = renderPPPContent(); tickPPP(); }
     }
 
     // === ATM slider ===
@@ -1340,6 +1540,7 @@
         S.splitPayer = routes ? routes[0].id : 'zero';
         S.splitPeople = 2;
         S.splitOpen = true;
+        _prevSplit = 0; // Reset tick origin on each fresh open (ephemeral)
         const d = t();
         document.getElementById('split-title').textContent = d.splitHeader;
         renderSplitBody();
@@ -1348,6 +1549,7 @@
     }
     function closeSplitModal() {
         S.splitOpen = false;
+        _prevSplit = 0;
         document.getElementById('split-modal').classList.remove('show');
         document.body.style.overflow = '';
     }
@@ -1377,6 +1579,7 @@
         const surchargeStr = Number(split.surchargePerHead.toFixed(2)).toLocaleString();
         const actualCopy = d.splitActualPaid.replace('{x}', actualStr).replace('{TARGET}', S.target);
         const surchargeCopy = d.splitSurchargeHint.replace('{x}', surchargeStr).replace('{TARGET}', S.target);
+        const startStr = `${Number((_prevSplit || 0).toFixed(2)).toLocaleString()} ${S.target}`;
         body.innerHTML = `
             <div class="split-bill">
                 <span class="split-label">${d.splitBillLabel}</span>
@@ -1400,10 +1603,19 @@
             </div>
             <div class="split-result">
                 <div class="split-actual">${actualCopy}</div>
-                <div class="split-per-share">${d.splitPerShare}<strong>${shareStr} ${S.target}</strong></div>
+                <div class="split-per-share">${d.splitPerShare}<strong data-target="${split.perShare}">${startStr}</strong></div>
                 ${split.surchargePerHead > 0.01 ? `<div class="split-hint">${surchargeCopy}</div>` : ''}
             </div>
         `;
+        // Tick the per-share number smoothly
+        const shareEl = body.querySelector('.split-per-share strong[data-target]');
+        if (shareEl) {
+            const target = split.perShare;
+            const from = _prevSplit || 0;
+            const targetCode = S.target;
+            tickNumber(shareEl, from, target, 350, (v) => `${Number(v.toFixed(2)).toLocaleString()} ${targetCode}`);
+            _prevSplit = target;
+        }
     }
 
     // === Guide tab ===
@@ -1413,7 +1625,7 @@
         const cards = d.guideCards.map((c, i) => {
             const open = S.openCard === i;
             return `
-                <div class="flashcard${open ? ' open' : ''}" onclick="toggleCard(${i})">
+                <div class="flashcard${open ? ' open' : ''}" style="--stagger:${i + 1}" onclick="toggleCard(${i})">
                     <div class="flashcard-header">
                         <div class="flashcard-title">
                             <span class="flashcard-emoji">${c.emoji}</span>

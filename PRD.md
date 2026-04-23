@@ -1,8 +1,8 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v5.0 (Editorial Fintech Reskin)
-**Build target:** `weather.html` · Service Worker `fx-weather-v28` · Manifest `FX Weather`
-**Status:** PRD locked 2026-04-23 (all §9 decisions signed). Code shipped as atomic commit.
+**Version:** v5.0.1 (Editorial + Interaction polish)
+**Build target:** `weather.html` · Service Worker `fx-weather-v29` · Manifest `FX Weather`
+**Status:** v5.0 shipped (skin). v5.0.1 interaction polish shipped on top (physics, ticking numbers, PPP inline edit).
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
 
 ---
@@ -336,6 +336,28 @@ Shipped atomically as a single commit. Delta vs v4.4:
 - **Seeded anchor labels:** `"Big Mac (Paris)"` / `"Coffee (Paris)"` / etc., editable by user.
 - **Coral accent footprint:** hero background, best-route pill, Split trigger CTA. Nothing else.
 - **Service Worker cache:** `fx-weather-v27` → `fx-weather-v28`.
+
+## 10.1 v5.0.1 Interaction polish (shipped)
+
+Added on top of v5.0 without touching any business logic. All changes are visual/interaction layer.
+
+- **Spring physics:** modal bezier overshoot raised `(0.175, 0.885, 0.32, 1.1)` → `(0.175, 0.885, 0.32, 1.275)` for jelly bottom-sheet entry. Duration 0.35s → 0.42s.
+- **Universal button press:** `scale(0.97)` on `:active` for every interactive element (buttons, cards, pickers, toggles, flashcards). 0.12s ease-out transition.
+- **OPTIMAL pill fade-in:** new `pillFadeIn` keyframe (opacity + tiny translateX) animates when the best-route tag appears after a sort change.
+- **ATM color morphing:** `transition: color 0.35s ease` on `#atm-loss` and `#atm-tier`. Smooth interpolation between red/amber/green tiers as the user drags the slider.
+- **Staggered card entry:** new `cardFadeUp` keyframe driven by `--stagger` CSS var. Route cards (rank 1-3) and Guide flashcards (index 1-4) enter with 50ms increments.
+- **Tab content horizontal slide:** `tabSlideIn` keyframe on direct children of `#content` with per-section 40ms increments — eliminates the instant-switch flash between Weather/Guide/Backpack.
+- **Ticking numbers:**
+  - `tickNumber(el, from, to, duration, formatter)` helper with `requestAnimationFrame` + easeOutCubic. Formatter parameter preserves per-caller formatting (locale string vs rounded int vs currency suffix).
+  - Three tick consumers: route costs (per-method prev cache), PPP counts (per-anchor-index cache), Split per-share result (single global cache).
+  - 380ms default duration, cancellable on rapid re-invocation via `WeakMap<el, RAF>`.
+  - `resetCostCaches()` called on currency pair change to prevent incorrect prev-value interpolation.
+- **PPP inline editing:** tap any `.ppp-line` on Weather tab → inline form with price + label inputs + ✓ save button. Enter-key saves. Save writes to `fx_anchors` anchor at index, invalidates the per-anchor tick cache, re-renders `#ppp-slot` with tick. Outer onclick self-disables via `editing` class check so double-tap doesn't re-enter edit mode.
+- **Split per-share color:** `color: var(--text)` → `color: var(--accent)` per PM extension of §9.5 (coral footprint grows from 3 touch points to 4).
+
+Sprint size: ~250 lines of code (CSS + JS).
+weather.html: 71,556 → 81,166 bytes (+9.6 KB).
+Service Worker: `v28` → `v29`.
 
 ## 11. v5.0 final state — preserved disciplines
 

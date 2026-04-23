@@ -5,175 +5,230 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <title>FX Weather</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FF5A5F">
+    <meta name="theme-color" content="#0D1213">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
-            --bg: #FFFFFF;
-            --surface: #F5F5F7;
-            --accent: #FF5A5F;
-            --text: #000000;
-            --text2: #86868B;
-            --line: #E5E5E7;
-            --green: #2EB67D;
-            --red: #D93025;
-            --amber: #E8A33D;
+            /* === Lumina Palette === */
+            --black-base: #0D1213;
+            --forest-dark: #2D3934;
+            --sage-light: #D2DCD5;
+            --sage-mid: #BECCC2;
+            --accent-green: #5A9374;
+            --card-bg: #FFFFFF;
+            --text-main: var(--black-base);
+            --text-inverse: var(--sage-light);
             --safe-b: env(safe-area-inset-bottom);
+
+            /* === Compat aliases so existing JS var() references still evaluate
+                   (calcAtmTier hardcodes var(--red), var(--amber), var(--green); kept
+                   intentionally stable so the business logic isn't touched)    === */
+            --text: var(--text-main);
+            --text2: var(--sage-mid);
+            --accent: var(--accent-green);
+            --green: var(--accent-green);
+            --red: var(--forest-dark);   /* No red alerts in Lumina — "bad" reads as deep forest */
+            --amber: var(--sage-mid);    /* "caution" reads as muted sage */
+            --line: rgba(13, 18, 19, 0.1);
+            --bg: var(--sage-light);
+            --surface: var(--sage-light);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "PingFang SC", sans-serif;
-            background: var(--bg); color: var(--text);
+            background: var(--sage-light); color: var(--text-main);
             -webkit-font-smoothing: antialiased; line-height: 1.4;
             overflow-x: hidden;
         }
 
         .layout { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
-        #content { flex: 1; padding-bottom: calc(88px + var(--safe-b)); }
+        #content { flex: 1; padding-bottom: calc(96px + var(--safe-b)); }
 
-        /* === Editorial site header === */
+        /* === Lumina site header (black, merges with hero) === */
         .site-header {
-            padding: 22px 24px 6px;
+            background: var(--black-base);
+            color: var(--text-inverse);
+            padding: 22px 24px 8px;
             display: flex; justify-content: space-between; align-items: center;
         }
         .logo {
             font-size: 13px; font-weight: 800; letter-spacing: 2.5px;
-            text-transform: uppercase; color: var(--text);
+            text-transform: uppercase; color: var(--text-inverse);
         }
         .lang-switch {
             display: flex; align-items: center; gap: 6px;
             font-size: 12px; font-weight: 700; letter-spacing: 1px;
         }
         .lang-option {
-            color: var(--text2); padding: 4px 2px; cursor: pointer;
-            transition: color 0.15s;
+            color: var(--sage-mid); padding: 4px 2px; cursor: pointer;
+            transition: color 0.2s ease;
         }
-        .lang-option.active { color: var(--text); font-weight: 900; }
-        .lang-sep { color: var(--text2); opacity: 0.4; }
+        .lang-option.active { color: var(--accent-green); font-weight: 900; }
+        .lang-sep { color: var(--sage-mid); opacity: 0.4; }
 
-        /* === Weather hero (coral) === */
+        /* === Lumina hero (black, rounded bottom-LEFT) === */
         .hero {
-            background: var(--accent); color: #FFFFFF;
-            padding: 24px 24px 48px;
-            margin: 12px 0 0;
-            border-bottom-right-radius: 40px;
+            background: var(--black-base);
+            color: var(--text-inverse);
+            padding: 8px 24px 52px;
+            margin: 0;
+            border-bottom-left-radius: 36px;
+            box-shadow: 0 10px 24px rgba(13, 18, 19, 0.18);
+            position: relative; z-index: 2;
         }
-        .pair-selector {
-            display: flex; align-items: center; gap: 14px;
-            font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
-            margin-bottom: 30px;
-        }
-        .pair-sep { opacity: 0.55; font-weight: 500; }
-        .picker-unit {
-            cursor: pointer;
-            border-bottom: 1.5px solid rgba(255, 255, 255, 0.5);
-            padding-bottom: 3px;
-            transition: border-color 0.15s;
-        }
-        .picker-unit:active { border-bottom-color: rgba(255, 255, 255, 0.95); }
 
-        .amount-wrap { display: flex; flex-direction: column; gap: 6px; }
-        .hero-amount-label {
-            font-size: 11px; font-weight: 800; letter-spacing: 1.8px;
-            color: rgba(255, 255, 255, 0.8); text-transform: uppercase;
+        /* Pair selector as forest-dark pill */
+        .pair-selector {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: var(--forest-dark);
+            border-radius: 999px;
+            padding: 9px 18px;
+            font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
+            margin-bottom: 28px;
+            color: #FFFFFF;
+        }
+        .pair-sep { color: var(--accent-green); font-weight: 500; opacity: 0.95; }
+        .picker-unit {
+            cursor: pointer; padding: 2px 2px;
+            color: #FFFFFF; transition: opacity 0.15s ease;
+        }
+        .picker-unit:active { opacity: 0.65; }
+
+        .amount-wrap {
+            display: flex; flex-direction: column; gap: 6px;
+            align-items: flex-start;
         }
         .hero-amount-input {
-            background: none; border: none; color: #FFFFFF;
-            font-size: clamp(64px, 18vw, 96px); font-weight: 700;
+            background: none; border: none;
+            color: var(--accent-green);
+            font-size: clamp(64px, 19vw, 96px); font-weight: 600;
             letter-spacing: -0.04em; line-height: 1;
             outline: none; width: 100%; padding: 0;
-            font-family: inherit; caret-color: rgba(255, 255, 255, 0.9);
+            font-family: inherit; caret-color: var(--accent-green);
+        }
+        .hero-amount-label {
+            font-size: 10px; font-weight: 800; letter-spacing: 2.4px;
+            color: var(--sage-mid); text-transform: uppercase;
+            opacity: 0.85; margin-top: 2px;
         }
         .weather-label {
-            font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
-            color: rgba(255, 255, 255, 0.85); margin-top: 10px;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.4px;
+            color: var(--sage-mid); margin-top: 14px;
         }
 
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
 
-        /* === PPP bar (white, tucks under hero) === */
+        /* === Lumina PPP bar (white floating card bridging black to sage) === */
         .ppp-bar {
-            background: var(--bg);
-            padding: 22px 24px 14px;
-            margin-top: -28px;
-            border-top-left-radius: 40px;
+            background: var(--card-bg);
+            border-radius: 22px;
+            padding: 16px 20px;
+            margin: -28px 16px 20px;
+            box-shadow: 0 6px 20px rgba(45, 57, 52, 0.14);
             display: flex; flex-direction: column; gap: 6px;
-            min-height: 18px;
+            position: relative; z-index: 3;
         }
         .ppp-line {
-            font-size: 13px; font-weight: 600; color: var(--text2);
+            font-size: 13px; font-weight: 600; color: var(--text-main);
             letter-spacing: 0.2px;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 2px 4px; margin: 0 -4px;
+            transition: background 0.2s ease;
         }
-        .ppp-line strong { color: var(--text); font-weight: 800; }
+        .ppp-line:active { background: var(--sage-light); }
+        .ppp-line strong { color: var(--accent-green); font-weight: 800; }
+        .ppp-line.editing {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+            cursor: default;
+        }
+        .ppp-line.editing:active { background: transparent; }
+        .ppp-price-edit, .ppp-label-edit {
+            background: var(--sage-light); border: 1px solid var(--line);
+            border-radius: 8px; padding: 5px 8px;
+            font-family: inherit; font-size: 12px; font-weight: 700;
+            color: var(--text-main); outline: none;
+        }
+        .ppp-price-edit:focus, .ppp-label-edit:focus { border-color: var(--accent-green); }
+        .ppp-price-edit { width: 68px; text-align: right; }
+        .ppp-label-edit { flex: 1; min-width: 100px; }
+        .ppp-save-btn {
+            background: var(--accent-green); color: #FFFFFF; border: none;
+            width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+            font-family: inherit; font-size: 13px; font-weight: 900; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+        }
 
-        /* === Routes section (gray block) === */
+        /* === Routes area (sage-light via body bg) === */
         .routes-section {
-            background: var(--surface);
-            padding: 20px 20px 30px;
+            padding: 4px 20px 32px;
             min-height: 40vh;
         }
         .section-label {
-            font-size: 11px; font-weight: 800; color: var(--text2);
+            font-size: 11px; font-weight: 800; color: var(--forest-dark);
             text-transform: uppercase; letter-spacing: 1.5px;
-            margin: 18px 4px 12px;
+            margin: 20px 4px 12px;
+            opacity: 0.7;
         }
 
         .dcc-shield {
-            background: #FFFFFF;
+            background: var(--card-bg);
             border: 1px solid var(--line);
-            border-left: 3px solid var(--accent);
+            border-left: 3px solid var(--accent-green);
             border-radius: 14px;
             padding: 14px 16px; margin-bottom: 14px;
             font-size: 12px; font-weight: 600; line-height: 1.55;
-            color: var(--text);
+            color: var(--text-main);
         }
         .dcc-shield-icon { margin-right: 6px; font-weight: 900; }
 
         .first-run-banner {
-            background: #FFFFFF;
+            background: var(--card-bg);
             border: 1px solid var(--line);
             border-radius: 14px;
             padding: 12px 14px 12px 16px;
             display: flex; justify-content: space-between; align-items: center; gap: 10px;
-            font-size: 12px; font-weight: 600; color: var(--text);
+            font-size: 12px; font-weight: 600; color: var(--text-main);
             margin-bottom: 14px; cursor: pointer;
         }
         .banner-text { flex: 1; line-height: 1.4; }
         .banner-close {
-            background: none; border: none; color: var(--text2);
+            background: none; border: none; color: var(--sage-mid);
             font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1;
             font-family: inherit;
         }
 
         .route-card {
-            background: #FFFFFF;
+            background: var(--card-bg);
             border: 1px solid var(--line);
             border-radius: 20px;
             padding: 18px 20px;
             margin-bottom: 10px;
             display: flex; flex-direction: column; gap: 4px;
         }
-        .route-card.best { border: 2px solid var(--text); padding: 17px 19px; }
+        .route-card.best { border: 2px solid var(--accent-green); padding: 17px 19px; }
         .route-top {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 8px;
         }
         .route-method {
             font-size: 12px; font-weight: 800; letter-spacing: 1px;
-            color: var(--text2); text-transform: uppercase;
+            color: var(--forest-dark); text-transform: uppercase;
             display: flex; align-items: center; gap: 8px;
+            opacity: 0.72;
         }
         .route-icon {
             width: 16px; height: 16px;
-            stroke: var(--text2); stroke-width: 1.6; fill: none;
+            stroke: var(--forest-dark); stroke-width: 1.6; fill: none;
             stroke-linecap: round; stroke-linejoin: round;
+            opacity: 0.72;
         }
         .best-pill {
-            background: var(--accent); color: #FFFFFF;
+            background: var(--accent-green); color: #FFFFFF;
             font-size: 9px; font-weight: 900; letter-spacing: 0.9px;
             padding: 4px 8px; border-radius: 6px; text-transform: uppercase;
         }
@@ -182,31 +237,32 @@
             gap: 8px;
         }
         .route-cost {
-            font-size: 28px; font-weight: 700; color: var(--text);
+            font-size: 28px; font-weight: 700; color: var(--text-main);
             letter-spacing: -0.02em;
             max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
             line-height: 1.1;
         }
-        .route-code { font-size: 13px; font-weight: 800; color: var(--text2); }
+        .route-code { font-size: 13px; font-weight: 800; color: var(--sage-mid); }
         .route-hint {
-            font-size: 11px; font-weight: 600; color: var(--text2);
+            font-size: 11px; font-weight: 600; color: var(--forest-dark);
+            opacity: 0.6;
             margin-top: 4px; line-height: 1.4;
         }
         .route-delta {
-            font-size: 11px; font-weight: 700; color: var(--red);
+            font-size: 11px; font-weight: 700; color: var(--forest-dark);
+            opacity: 0.7;
             margin-top: 4px; letter-spacing: 0.3px;
         }
 
-        /* === ATM slider === */
+        /* === ATM slider (mono green track) === */
         .atm-expand-btn {
-            background: none; border: none; color: var(--text);
+            background: none; border: none; color: var(--text-main);
             font-weight: 800; font-size: 10px; cursor: pointer;
             font-family: inherit; padding: 10px 0 4px;
             letter-spacing: 1.2px; text-transform: uppercase;
-            align-self: flex-start; border-bottom: 1px solid var(--text);
-            margin-top: 4px;
+            align-self: flex-start; border-bottom: 1px solid var(--text-main);
+            margin-top: 6px;
         }
-        .atm-expand-btn:active { opacity: 0.6; }
         .atm-slider-panel {
             max-height: 0; overflow: hidden;
             transition: max-height 0.28s ease, padding-top 0.28s ease;
@@ -216,79 +272,81 @@
         .atm-slider {
             -webkit-appearance: none; appearance: none;
             width: 100%; height: 6px; border-radius: 3px;
-            background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+            background: linear-gradient(90deg, var(--sage-mid), var(--accent-green));
             outline: none; margin: 0;
         }
         .atm-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 20px; height: 20px; border-radius: 50%;
-            background: #FFFFFF; border: 2px solid var(--text);
-            cursor: pointer; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            background: var(--card-bg); border: 2px solid var(--accent-green);
+            cursor: pointer; box-shadow: 0 2px 6px rgba(13, 18, 19, 0.22);
         }
         .atm-slider::-moz-range-thumb {
             width: 20px; height: 20px; border-radius: 50%;
-            background: #FFFFFF; border: 2px solid var(--text); cursor: pointer;
+            background: var(--card-bg); border: 2px solid var(--accent-green); cursor: pointer;
         }
         .atm-readout {
             display: flex; flex-wrap: wrap; align-items: baseline;
             gap: 6px; margin-top: 14px;
-            font-size: 13px; font-weight: 700; color: var(--text);
+            font-size: 13px; font-weight: 700; color: var(--text-main);
         }
         .atm-readout strong { font-weight: 900; }
         .atm-arrow { opacity: 0.4; }
         .atm-slider-hint {
-            font-size: 10px; color: var(--text2);
+            font-size: 10px; color: var(--forest-dark);
+            opacity: 0.7;
             margin-top: 10px; font-weight: 600; line-height: 1.4;
         }
         .atm-edit-link {
-            color: var(--text); cursor: pointer; font-weight: 700;
+            color: var(--accent-green); cursor: pointer; font-weight: 700;
             text-decoration: underline;
         }
 
-        /* === Split trigger (coral CTA) === */
+        /* === Split CTA (accent-green) === */
         .split-trigger-btn {
-            background: var(--accent); border: none; color: #FFFFFF;
+            background: var(--accent-green); border: none; color: #FFFFFF;
             font-weight: 800; font-size: 12px; cursor: pointer;
             font-family: inherit; padding: 14px 24px;
             border-radius: 999px; width: 100%;
             letter-spacing: 1px; text-transform: uppercase;
-            margin-top: 16px;
+            margin-top: 18px;
         }
-        .split-trigger-btn:active { opacity: 0.85; }
 
         /* === Time Machine === */
         .time-machine {
-            background: #FFFFFF;
+            background: var(--card-bg);
             border: 1px solid var(--line);
             border-radius: 20px;
             padding: 18px 20px;
             margin-top: 14px;
         }
         .time-machine-tag {
-            font-size: 11px; font-weight: 800; color: var(--text2);
+            font-size: 11px; font-weight: 800; color: var(--forest-dark);
             letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;
+            opacity: 0.72;
         }
         .time-machine-text {
-            font-size: 14px; font-weight: 600; line-height: 1.55; color: var(--text);
+            font-size: 14px; font-weight: 600; line-height: 1.55; color: var(--text-main);
         }
-        .time-machine-text .delta-save { color: var(--green); font-weight: 900; }
-        .time-machine-text .delta-cost { color: var(--red); font-weight: 900; }
+        .time-machine-text .delta-save { color: var(--accent-green); font-weight: 900; }
+        .time-machine-text .delta-cost { color: var(--forest-dark); font-weight: 900; }
 
         /* === Guide / Backpack tab header === */
         .tab-header { padding: 28px 24px 18px; }
         .tab-title {
             font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
-            color: var(--text); line-height: 1.1;
+            color: var(--text-main); line-height: 1.1;
         }
         .tab-subtitle {
-            font-size: 14px; font-weight: 500; color: var(--text2);
+            font-size: 14px; font-weight: 500; color: var(--forest-dark);
+            opacity: 0.75;
             margin-top: 6px; letter-spacing: 0.1px;
         }
         .tab-body { padding: 0 20px; }
 
         /* === Flashcards === */
         .flashcard {
-            background: #FFFFFF;
+            background: var(--card-bg);
             border: 1px solid var(--line);
             border-radius: 20px;
             margin-bottom: 10px; overflow: hidden; cursor: pointer;
@@ -301,22 +359,22 @@
         .flashcard-title { display: flex; align-items: center; gap: 12px; flex: 1; }
         .flashcard-emoji { font-size: 24px; flex-shrink: 0; }
         .flashcard-label {
-            font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3;
+            font-size: 14px; font-weight: 700; color: var(--text-main); line-height: 1.3;
         }
         .flashcard-chevron {
-            font-size: 11px; color: var(--text2); transition: transform 0.25s ease;
+            font-size: 11px; color: var(--sage-mid); transition: transform 0.25s ease;
         }
         .flashcard.open .flashcard-chevron { transform: rotate(180deg); }
         .flashcard-body {
             max-height: 0; overflow: hidden;
             padding: 0 22px; transition: all 0.3s ease;
-            font-size: 13px; font-weight: 500; line-height: 1.6; color: var(--text);
+            font-size: 13px; font-weight: 500; line-height: 1.6; color: var(--text-main);
         }
         .flashcard.open .flashcard-body { max-height: 300px; padding: 0 22px 20px 56px; }
 
         /* === Backpack settings === */
         .setting-card {
-            background: #FFFFFF;
+            background: var(--card-bg);
             border: 1px solid var(--line);
             border-radius: 14px;
             padding: 14px 20px; margin-bottom: 8px;
@@ -326,33 +384,38 @@
             flex-direction: row; justify-content: space-between; align-items: center;
             cursor: pointer; padding: 16px 20px;
         }
-        .setting-label { font-size: 14px; font-weight: 700; color: var(--text); }
+        .setting-label { font-size: 14px; font-weight: 700; color: var(--text-main); }
         .setting-val {
-            font-size: 13px; font-weight: 800; color: var(--text2);
+            font-size: 13px; font-weight: 800; color: var(--forest-dark);
+            opacity: 0.75;
             letter-spacing: 0.3px;
         }
         .setting-row-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
         .setting-input {
-            background: none; border: none; color: var(--text);
+            background: none; border: none; color: var(--text-main);
             font-size: 16px; font-weight: 800; text-align: right;
             width: 70px; outline: none; font-family: inherit;
             border-bottom: 1px solid var(--line); padding: 2px 0;
         }
-        .setting-input:focus { border-bottom-color: var(--accent); }
-        .setting-unit { font-size: 13px; font-weight: 800; color: var(--text2); margin-left: 4px; }
+        .setting-input:focus { border-bottom-color: var(--accent-green); }
+        .setting-unit { font-size: 13px; font-weight: 800; color: var(--sage-mid); margin-left: 4px; }
         .setting-origin {
-            font-size: 10px; font-weight: 500; color: var(--text2); line-height: 1.4;
+            font-size: 10px; font-weight: 500; color: var(--forest-dark);
+            opacity: 0.72;
+            line-height: 1.4;
         }
-        .setting-card.danger { border-color: var(--red); margin-top: 16px; }
-        .setting-card.danger .setting-label { color: var(--red); }
+        .setting-card.danger { border-color: var(--forest-dark); margin-top: 16px; }
+        .setting-card.danger .setting-label { color: var(--forest-dark); }
 
         .wallet-section-title {
-            font-size: 11px; font-weight: 800; color: var(--text2);
+            font-size: 11px; font-weight: 800; color: var(--forest-dark);
+            opacity: 0.72;
             text-transform: uppercase; letter-spacing: 1.5px;
             margin: 24px 4px 10px;
         }
         .wallet-section-hint {
-            font-size: 11px; font-weight: 500; color: var(--text2);
+            font-size: 11px; font-weight: 500; color: var(--forest-dark);
+            opacity: 0.72;
             margin: -4px 4px 10px; line-height: 1.4;
         }
 
@@ -364,7 +427,7 @@
             gap: 6px; align-items: center;
         }
         .anchor-emoji-in, .anchor-label-in, .anchor-price-in {
-            background: none; border: none; color: var(--text);
+            background: none; border: none; color: var(--text-main);
             font-weight: 600; font-size: 13px; outline: none; font-family: inherit;
             border-bottom: 1px solid var(--line); padding: 4px 2px;
         }
@@ -372,61 +435,62 @@
         .anchor-label-in { width: 100%; }
         .anchor-price-in { text-align: right; font-weight: 800; }
         .anchor-emoji-in:focus, .anchor-label-in:focus, .anchor-price-in:focus {
-            border-bottom-color: var(--accent);
+            border-bottom-color: var(--accent-green);
         }
         .anchor-currency-btn {
-            background: var(--surface); border: none; border-radius: 8px;
-            color: var(--text); font-weight: 800; font-size: 11px;
+            background: var(--sage-light); border: none; border-radius: 8px;
+            color: var(--text-main); font-weight: 800; font-size: 11px;
             cursor: pointer; padding: 6px 4px; font-family: inherit;
             letter-spacing: 0.3px;
         }
         .anchor-delete-btn {
-            background: none; border: none; color: var(--text2);
+            background: none; border: none; color: var(--sage-mid);
             font-size: 15px; cursor: pointer; padding: 2px; line-height: 1;
             font-family: inherit;
         }
         .anchor-add-btn {
             background: transparent;
-            border: 1px dashed var(--line);
+            border: 1px dashed var(--sage-mid);
             border-radius: 12px; padding: 12px; width: 100%;
-            color: var(--text); font-weight: 700; font-size: 12px;
+            color: var(--forest-dark); font-weight: 700; font-size: 12px;
             cursor: pointer; font-family: inherit; margin-top: 4px;
             letter-spacing: 0.3px;
         }
         .anchor-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .anchor-add-btn:active:not(:disabled) { opacity: 0.7; }
 
         .footer {
-            padding: 40px 0 20px; text-align: center;
-            color: var(--text); font-size: 12px; line-height: 1.7;
-            letter-spacing: 0.3px; opacity: 0.75;
+            padding: 40px 0 24px; text-align: center;
+            color: var(--forest-dark); font-size: 12px; line-height: 1.7;
+            letter-spacing: 0.3px; opacity: 0.72;
         }
         .footer-version {
             display: block; margin-top: 6px; font-weight: 700;
             letter-spacing: 2px; opacity: 0.6; font-size: 10px;
         }
 
-        /* === Dock === */
+        /* === Lumina dock (black, top-rounded both corners) === */
         .dock {
             position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
             width: 100%; max-width: 500px;
-            height: calc(64px + var(--safe-b));
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border-top: 1px solid var(--line);
+            height: calc(72px + var(--safe-b));
+            background: var(--black-base);
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
             display: flex; justify-content: space-around;
-            padding: 4px 0 var(--safe-b); z-index: 9999;
+            padding: 8px 0 var(--safe-b);
+            z-index: 9999;
+            box-shadow: 0 -4px 20px rgba(13, 18, 19, 0.22);
         }
         .dock-btn {
             flex: 1; border: none; background: none;
-            color: var(--text2);
+            color: var(--sage-mid);
             display: flex; flex-direction: column; align-items: center;
             justify-content: center; gap: 4px;
             cursor: pointer; min-height: 44px; padding: 6px;
             font-family: inherit;
             transition: color 0.2s ease;
         }
-        .dock-btn.active { color: var(--text); }
+        .dock-btn.active { color: var(--accent-green); }
         .dock-icon {
             width: 22px; height: 22px;
             stroke: currentColor; stroke-width: 1.6;
@@ -439,24 +503,25 @@
 
         /* === Modals === */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
+            position: fixed; inset: 0; background: rgba(13, 18, 19, 0.62);
             z-index: 10000; display: flex; align-items: flex-end;
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-sheet {
             width: 100%; max-width: 500px; margin: 0 auto;
-            background: #FFFFFF;
+            background: var(--card-bg);
             border-radius: 28px 28px 0 0;
             padding: 24px 20px calc(24px + var(--safe-b));
             transform: translateY(100%);
             transition: transform 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 -8px 24px rgba(13, 18, 19, 0.18);
         }
         .modal-overlay.show .modal-sheet { transform: translateY(0); }
         .modal-header {
             font-size: 11px; font-weight: 800; text-align: center;
-            margin-bottom: 18px; color: var(--text2);
+            margin-bottom: 18px; color: var(--forest-dark);
+            opacity: 0.75;
             text-transform: uppercase; letter-spacing: 1.5px;
         }
         .modal-list {
@@ -466,14 +531,13 @@
         .modal-item {
             display: flex; align-items: center; justify-content: center; gap: 10px;
             padding: 14px; border-radius: 14px;
-            background: var(--surface);
-            font-size: 15px; font-weight: 800; cursor: pointer; color: var(--text);
+            background: var(--sage-light);
+            font-size: 15px; font-weight: 800; cursor: pointer; color: var(--text-main);
             border: 1px solid transparent;
             transition: background 0.15s, transform 0.12s;
             font-family: inherit;
         }
-        .modal-item:active { transform: scale(0.97); }
-        .modal-item.active { background: var(--text); color: #FFFFFF; }
+        .modal-item.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); }
         .modal-flag { font-size: 18px; }
 
         /* === Split modal === */
@@ -483,57 +547,54 @@
             margin-bottom: 18px; padding-bottom: 14px;
             border-bottom: 1px solid var(--line);
         }
-        .split-bill-amt { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+        .split-bill-amt { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); }
         .split-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .split-row-col { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
         .split-label {
             font-size: 11px; font-weight: 800; letter-spacing: 1px;
-            color: var(--text2); text-transform: uppercase;
+            color: var(--forest-dark); opacity: 0.75; text-transform: uppercase;
         }
         .split-stepper { display: flex; align-items: center; gap: 14px; }
         .split-step-btn {
             width: 32px; height: 32px; border-radius: 50%;
             border: 1px solid var(--line);
-            background: var(--surface); color: var(--text);
+            background: var(--sage-light); color: var(--text-main);
             font-size: 17px; font-weight: 700; cursor: pointer;
             font-family: inherit; line-height: 1;
             display: flex; align-items: center; justify-content: center;
         }
-        .split-step-btn:active:not(:disabled) { transform: scale(0.92); }
         .split-step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .split-step-val { min-width: 30px; text-align: center; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+        .split-step-val { min-width: 30px; text-align: center; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--text-main); }
         .split-seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         .split-seg-btn {
             padding: 10px 4px; border-radius: 10px;
-            border: 1px solid var(--line); background: var(--surface);
-            color: var(--text); cursor: pointer;
+            border: 1px solid var(--line); background: var(--sage-light);
+            color: var(--text-main); cursor: pointer;
             font-size: 11px; font-weight: 700; font-family: inherit;
             letter-spacing: 0.2px; line-height: 1.3;
             transition: background 0.15s;
         }
-        .split-seg-btn.active { background: var(--text); color: #FFFFFF; border-color: var(--text); }
+        .split-seg-btn.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); }
         .split-result {
             margin-top: 18px; padding: 18px;
-            background: var(--surface); border-radius: 16px;
+            background: var(--sage-light); border-radius: 16px;
         }
-        .split-actual { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
-        .split-per-share { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
+        .split-actual { font-size: 12px; font-weight: 600; color: var(--forest-dark); opacity: 0.75; margin-bottom: 6px; }
+        .split-per-share { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-main); }
         .split-per-share strong {
-            font-size: 28px; font-weight: 700; color: var(--accent);
+            font-size: 28px; font-weight: 700; color: var(--accent-green);
             letter-spacing: -0.02em; display: block; margin-top: 2px;
             transition: color 0.35s ease;
         }
-        .split-hint { font-size: 10px; color: var(--text2); font-weight: 500; margin-top: 6px; }
+        .split-hint { font-size: 10px; color: var(--forest-dark); opacity: 0.75; font-weight: 500; margin-top: 6px; }
         .split-empty {
             padding: 30px 10px; text-align: center;
-            color: var(--text2); font-size: 13px; font-weight: 500; line-height: 1.5;
+            color: var(--forest-dark); opacity: 0.8; font-size: 13px; font-weight: 500; line-height: 1.5;
         }
 
         ::-webkit-scrollbar { display: none; }
 
-        /* === v5.0.1 Interaction physics layer === */
-
-        /* Button press — universal scale feedback */
+        /* === Interaction physics layer (inherited from v5.0.1) === */
         button, .picker-unit, .dock-btn, .modal-item, .flashcard, .anchor-add-btn,
         .split-step-btn, .split-seg-btn, .anchor-currency-btn, .anchor-delete-btn,
         .atm-expand-btn, .atm-edit-link, .split-trigger-btn, .banner-close,
@@ -547,7 +608,6 @@
             transform: scale(0.97);
         }
 
-        /* OPTIMAL pill fade-in */
         .best-pill {
             transition: background 0.45s ease, opacity 0.45s ease;
             animation: pillFadeIn 0.4s ease;
@@ -557,12 +617,8 @@
             to   { opacity: 1; transform: translateX(0); }
         }
 
-        /* ATM color morphing (smooth transition between red/amber/green) */
-        #atm-loss, #atm-tier {
-            transition: color 0.35s ease;
-        }
+        #atm-loss, #atm-tier { transition: color 0.35s ease; }
 
-        /* Staggered card entry */
         @keyframes cardFadeUp {
             from { opacity: 0; transform: translateY(12px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -572,7 +628,6 @@
             animation-delay: calc(var(--stagger, 0) * 50ms);
         }
 
-        /* Tab content horizontal slide-in */
         @keyframes tabSlideIn {
             from { opacity: 0; transform: translateX(14px); }
             to   { opacity: 1; transform: translateX(0); }
@@ -583,36 +638,6 @@
         #content > section:nth-child(1) { animation-delay: 0ms; }
         #content > section:nth-child(2) { animation-delay: 40ms; }
         #content > section:nth-child(3) { animation-delay: 80ms; }
-
-        /* PPP line — interactive + editing state */
-        .ppp-line {
-            cursor: pointer;
-            border-radius: 6px;
-            padding: 2px 4px;
-            margin: 0 -4px;
-            transition: background 0.2s ease;
-        }
-        .ppp-line:active { background: var(--surface); }
-        .ppp-line.editing {
-            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-            cursor: default;
-        }
-        .ppp-line.editing:active { background: transparent; }
-        .ppp-price-edit, .ppp-label-edit {
-            background: var(--surface); border: 1px solid var(--line);
-            border-radius: 8px; padding: 5px 8px;
-            font-family: inherit; font-size: 12px; font-weight: 700;
-            color: var(--text); outline: none;
-        }
-        .ppp-price-edit:focus, .ppp-label-edit:focus { border-color: var(--accent); }
-        .ppp-price-edit { width: 68px; text-align: right; }
-        .ppp-label-edit { flex: 1; min-width: 100px; }
-        .ppp-save-btn {
-            background: var(--accent); color: #FFFFFF; border: none;
-            width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
-            font-family: inherit; font-size: 13px; font-weight: 900; line-height: 1;
-            display: flex; align-items: center; justify-content: center;
-        }
     </style>
 </head>
 <body>
@@ -683,7 +708,7 @@
             weatherDeltaVsAvg: "vs 7-day avg",
             dccShield: "⚠ When the cashier asks, always pay in {BASE} — refuse the {TARGET} option (DCC, a hidden 3–7% extra).",
             bannerDefault: "Using default card rates. Tap to set up your real cards.",
-            heroAmountLabel: "Enter amount",
+            heroAmountLabel: "Current amount",
             pickerTitleBase: "Bill currency",
             pickerTitleTarget: "Card currency",
             pickerTitleAnchor: "Anchor currency",
@@ -757,7 +782,7 @@
             weatherDeltaVsAvg: "较 7 日均值",
             dccShield: "⚠ 收银员问货币?永远选 {BASE},拒绝以 {TARGET} 结算(DCC 会多扣 3–7%)。",
             bannerDefault: "正在使用默认费率。点此配置你真实的卡片。",
-            heroAmountLabel: "输入金额",
+            heroAmountLabel: "当前金额",
             pickerTitleBase: "账单币种",
             pickerTitleTarget: "卡片币种",
             pickerTitleAnchor: "参照物币种",
@@ -831,7 +856,7 @@
             weatherDeltaVsAvg: "vs moyenne 7 j",
             dccShield: "⚠ Quand on vous demande, payez toujours en {BASE} — refusez l'option {TARGET} (DCC, 3–7% caché en plus).",
             bannerDefault: "Taux par défaut affichés. Touchez pour configurer vos vraies cartes.",
-            heroAmountLabel: "Montant",
+            heroAmountLabel: "Montant actuel",
             pickerTitleBase: "Devise de l'addition",
             pickerTitleTarget: "Devise de ma carte",
             pickerTitleAnchor: "Devise du repère",
@@ -1275,10 +1300,10 @@
                     <span class="picker-unit" onclick="openCurrencyModal('target')">${S.target}</span>
                 </div>
                 <div class="amount-wrap">
-                    <span class="hero-amount-label">${d.heroAmountLabel}</span>
                     <input type="number" id="calc-in" class="hero-amount-input" value="${S.amount}"
                         oninput="if(this.value.length>10)this.value=this.value.slice(0,10); updateRouting(this.value)"
                         inputmode="decimal">
+                    <span class="hero-amount-label">${d.heroAmountLabel}</span>
                 </div>
                 <div class="weather-label">${renderHeroWeatherLabel()}</div>
             </section>
@@ -1739,7 +1764,7 @@
 
                 <div class="footer">
                     ${d.slogan}
-                    <span class="footer-version">v5.0</span>
+                    <span class="footer-version">v6.0</span>
                 </div>
             </section>
         `;

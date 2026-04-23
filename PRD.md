@@ -1,8 +1,8 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v5.0.1 (Editorial + Interaction polish)
-**Build target:** `weather.html` · Service Worker `fx-weather-v29` · Manifest `FX Weather`
-**Status:** v5.0 shipped (skin). v5.0.1 interaction polish shipped on top (physics, ticking numbers, PPP inline edit).
+**Version:** v6.0 (Lumina — Morandi Forest + Extreme Black)
+**Build target:** `weather.html` · Service Worker `fx-weather-v30` · Manifest `FX Weather`
+**Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina visual reskin. Zero JS / business-logic changes; pure CSS + minor HTML/i18n layer.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
 
 ---
@@ -358,6 +358,38 @@ Added on top of v5.0 without touching any business logic. All changes are visual
 Sprint size: ~250 lines of code (CSS + JS).
 weather.html: 71,556 → 81,166 bytes (+9.6 KB).
 Service Worker: `v28` → `v29`.
+
+## 10.2 v6.0 Lumina reskin (shipped)
+
+Visual pivot from Editorial Fintech (coral on white) to Lumina (Morandi forest green + extreme black). PM directive: CSS + minor HTML/i18n only; **JS business logic frozen** (calcRouting / calcAnchors / I18N engine / AA Splitter / ATM Slider / localStorage scheme all untouched).
+
+**Palette (Lumina):**
+- `--black-base: #0D1213` — hero + dock (extreme night black)
+- `--forest-dark: #2D3934` — currency picker pill, deprecated "warning" color
+- `--sage-light: #D2DCD5` — page background, modal items, split result
+- `--sage-mid: #BECCC2` — secondary text, borders, inactive lang/dock
+- `--accent-green: #5A9374` — CTAs, optimal pill, dock active, amount text (THE color)
+- `--card-bg: #FFFFFF` — all content cards
+
+**Compat aliases retained** so existing JS that references `var(--red)` / `var(--amber)` / `var(--green)` / `var(--accent)` still evaluates without JS changes. `var(--red)` now resolves to `--forest-dark` (muted "bad"), `var(--amber)` to `--sage-mid` (soft caution). No red alerts anywhere in the UI — the "severity" language lives only in the retained ATM tier emoji 🩸 🟡 🟢 which carry semantic weight without chrome color.
+
+**Inverted space architecture (black · green · white · black):**
+1. Top — site-header merges into hero; black bg; border-bottom-left-radius 36px; drop shadow onto body.
+2. Hero contents — forest-dark pill currency picker; hero amount in accent-green 80px weight 600; `CURRENT AMOUNT` label beneath.
+3. PPP bar — white card floating across hero's bottom edge via `margin-top: -28px`; soft forest-dark shadow; anchor counts in accent-green.
+4. Routes section — sage-light (body) bg; white cards with 1px `rgba(13,18,19,0.1)` border; OPTIMAL card gets 2px accent-green border + coral-replacement pill.
+5. Dock — black bg, both top corners rounded 32px; SVG icons in sage-mid (inactive) / accent-green (active).
+
+**Editorial copy tweak:**
+- Hero amount label moved BELOW input (was above in v5.0) and re-labeled "Current amount" / "当前金额" / "Montant actuel" (was "Enter amount").
+
+**Layer cleanups:**
+- `backdrop-filter: blur` removed from every surface (zero remaining).
+- Coral footprint (v5.0.1 had 4 touch points) mapped onto accent-green, repositioned per PM spec.
+- `theme-color` meta flipped `#FF5A5F` → `#0D1213` to match status-bar expectation.
+- Service Worker cache bump `v29` → `v30`.
+
+**File size:** 81,166 → 82,968 bytes (+1.8 KB net; no JS diff).
 
 ## 11. v5.0 final state — preserved disciplines
 

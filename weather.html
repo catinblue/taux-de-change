@@ -510,7 +510,8 @@
             guideCards: [
                 { emoji: "🧛‍♂️", title: "The DCC Vampire", body: "Never pay in your home currency. Always choose the local currency on the machine!" },
                 { emoji: "🏧",    title: "The ATM Monster", body: "ATMs charge a flat fee. Withdrawing small amounts often will eat your money alive." },
-                { emoji: "🎓",    title: "Timing is Everything", body: "Big transfer coming up? Check our weather background — wait for a sunny day to send!" }
+                { emoji: "🎓",    title: "Timing is Everything", body: "Big transfer coming up? Check our weather background — wait for a sunny day to send!" },
+                { emoji: "💸",    title: "The Refund Counter Trap", body: "At the airport VAT desk, always take your refund in {BASE}. If you choose {TARGET}, they will skim another 5% using terrible exchange rates!" }
             ],
             backpackTitle: "🎒 My Backpack",
             backpackSubtitle: "Make this app feel like yours.",
@@ -578,7 +579,8 @@
             guideCards: [
                 { emoji: "🧛‍♂️", title: "警惕 DCC 吸血鬼", body: "刷卡时绝对不要选人民币结算,永远选当地货币!" },
                 { emoji: "🏧",    title: "ATM 吞金兽", body: "境外取款有高昂的单笔机具费,千万别频繁去取小额现金。" },
-                { emoji: "🎓",    title: "交学费看天气", body: "准备交学费或大额汇款?看看主页是不是晴天,挑个好日子再行动!" }
+                { emoji: "🎓",    title: "交学费看天气", body: "准备交学费或大额汇款?看看主页是不是晴天,挑个好日子再行动!" },
+                { emoji: "💸",    title: "退税柜台的暗刀", body: "机场退税时,永远要求退 {BASE}(当地货币)!如果选了 {TARGET},退税公司会用极差的汇率再偷偷割你 5% 的韭菜!" }
             ],
             backpackTitle: "🎒 我的背包",
             backpackSubtitle: "把这个 App 调成最适合你的样子。",
@@ -646,7 +648,8 @@
             guideCards: [
                 { emoji: "🧛‍♂️", title: "Le Piège DCC", body: "Ne payez jamais dans votre devise. Choisissez toujours la monnaie locale sur le terminal !" },
                 { emoji: "🏧",    title: "Le Monstre du DAB", body: "Les distributeurs prennent des frais fixes. Évitez de retirer de petites sommes trop souvent." },
-                { emoji: "🎓",    title: "Le Bon Timing", body: "Un gros transfert à faire ? Attendez une journée ensoleillée sur l'appli pour économiser !" }
+                { emoji: "🎓",    title: "Le Bon Timing", body: "Un gros transfert à faire ? Attendez une journée ensoleillée sur l'appli pour économiser !" },
+                { emoji: "💸",    title: "Le Piège de la Détaxe", body: "Au guichet de détaxe, demandez toujours le remboursement en {BASE}. Choisir {TARGET} leur permet de voler 5% avec un taux de change catastrophique !" }
             ],
             backpackTitle: "🎒 Mon Sac à Dos",
             backpackSubtitle: "Rendez cette appli vraiment vôtre.",
@@ -1177,6 +1180,7 @@
 
     function vGuide() {
         const d = t();
+        const interp = (s) => s.replace(/\{BASE\}/g, S.base).replace(/\{TARGET\}/g, S.target);
         const cards = d.guideCards.map((c, i) => {
             const open = S.openCard === i;
             return `
@@ -1184,11 +1188,11 @@
                     <div class="flashcard-header">
                         <div class="flashcard-title">
                             <span class="flashcard-emoji">${c.emoji}</span>
-                            <span class="flashcard-label">${c.title}</span>
+                            <span class="flashcard-label">${interp(c.title)}</span>
                         </div>
                         <span class="flashcard-chevron">▼</span>
                     </div>
-                    <div class="flashcard-body">${c.body}</div>
+                    <div class="flashcard-body">${interp(c.body)}</div>
                 </div>
             `;
         }).join('');

@@ -1,9 +1,9 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v4.2 (ATM Slider)
-**Build target:** `weather.html` · Service Worker `fx-weather-v25` · Manifest `FX Weather`
-**Status:** v4.0 / v4.0.1 / v4.1 shipped. v4.2 (ATM Slider) shipped in this sprint. v4.3-v4.4 pending.
-**Scope history:** v3.0 engine → v4.0 glassmorphism shell → v4.1 Custom PPP Anchors → v4.2 ATM amortization slider.
+**Version:** v4.3 (VAT Refund Shield)
+**Build target:** `weather.html` · Service Worker `fx-weather-v26` · Manifest `FX Weather`
+**Status:** v4.0 / v4.0.1 / v4.1 / v4.2 shipped. v4.3 (VAT Refund Shield) shipped in this sprint. v4.4 pending.
+**Scope history:** v3.0 engine → v4.0 glassmorphism shell → v4.1 Custom PPP Anchors → v4.2 ATM amortization slider → v4.3 VAT Refund flashcard + Guide interpolation.
 
 ---
 
@@ -486,9 +486,18 @@ Progressive-disclosure slider embedded in the ATM route card on Weather tab. Tap
 
 **Guards:** if `fx_fee_atm <= 0` or `S.cr === 0`, expand trigger hidden (no meaningful story).
 
-### ⏳ v4.3 — VAT Refund Shield (pending)
+### ✅ v4.3 — VAT Refund Shield (shipped)
 
-Second always-visible warning (pattern identical to DCC Shield) for the airport VAT-refund desk. Same directional advice: always choose `{BASE}` (local currency refund), never `{TARGET}` (home-currency DCC'd refund). Copy authored by PM before coding.
+**Placement pivot:** originally scoped as a second always-visible Shield on Weather tab. PM revised during sprint planning: stacking two shields on Weather would double the top-of-screen warning noise at the expense of the amount-input focal point. Since VAT refund is a low-frequency scenario (airport exit, 1-2 times/year per Nomad) vs DCC which is high-frequency (every bill), the VAT warning was moved to the Guide tab as a 4th flashcard.
+
+**Implementation:**
+- `guideCards` array gets a 4th entry per language with `emoji: "💸"`, title, and body containing `{BASE}` / `{TARGET}` placeholders
+- `vGuide()` gains an `interp(s)` helper that applies `.replace(/\{BASE\}/g, S.base).replace(/\{TARGET\}/g, S.target)` to both title and body before rendering
+- Interpolation is defensive for all 4 cards (future-proofing; DCC/ATM/Tuition cards have no placeholders today but can adopt them without code change)
+
+**Copy (PM-authored):** EN "The Refund Counter Trap" / ZH "退税柜台的暗刀" / FR "Le Piège de la Détaxe". Severity level is one step higher than DCC Shield (uses words like "skim", "割韭菜", "voler ... catastrophique") to match the "you've already spent the money, don't lose the refund too" emotional register.
+
+**Known divergence:** body copy cites a flat `5%` DCC markup for refund operators, where the v4.0 DCC Shield cites a `3–7%` range. This is PM copy choice, not a code issue. Documented here for future consistency review.
 
 ### ⏳ v4.4 — AA Splitter (pending)
 
@@ -528,8 +537,14 @@ Native `<select>` replaced with custom glass bottom-sheet modal after the origin
 - SW cache bumped to `fx-weather-v25`
 - Targeted DOM update on slider drag: patches only `#atm-amount` / `#atm-loss` / `#atm-tier`, slider focus preserved; `toggleAtmPanel` avoids `renderContent` so CSS transition fires
 
+### v4.3 (2026-04-23) — VAT Refund Shield
+- Scope pivot: "always-visible Weather shield" → "4th Guide flashcard" to respect screen economy and scenario frequency
+- `guideCards` extended with `{emoji: "💸", title, body}` entry in en/zh/fr dicts
+- `vGuide()` now runs `interp(s)` on title + body for `{BASE}` / `{TARGET}` substitution at render time
+- Keeps Guide flashcard system pattern-pure; zero new CSS; zero new state
+- SW cache bumped to `fx-weather-v26`
+
 ### Pending
 
 - Cloudflare Pages project creation (manual, user-side)
-- v4.3 VAT Refund Shield (awaiting PM copy)
-- v4.4 AA Splitter modal
+- v4.4 AA Splitter modal (final phase of v4.x roadmap)

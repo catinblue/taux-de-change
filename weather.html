@@ -403,6 +403,67 @@
         }
         .modal-flag { font-size: 20px; }
 
+        /* === v4.4 AA Splitter (stateless ephemeral modal) === */
+        .split-trigger-btn {
+            background: none; border: none;
+            color: var(--accent); font-weight: 700; font-size: 13px;
+            cursor: pointer; font-family: inherit;
+            padding: 16px 0 4px; letter-spacing: 0.3px;
+            width: 100%; text-align: center;
+        }
+        .split-trigger-btn:active { opacity: 0.6; }
+        .split-sheet { padding-bottom: calc(30px + var(--safe-b)); }
+        .split-bill {
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-bottom: 18px; padding-bottom: 14px;
+            border-bottom: 1px solid var(--line);
+        }
+        .split-bill-amt { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
+        .split-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .split-row-col { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        .split-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text2); text-transform: uppercase; }
+        .split-stepper { display: flex; align-items: center; gap: 14px; }
+        .split-step-btn {
+            width: 34px; height: 34px; border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.35); color: var(--text);
+            font-size: 18px; font-weight: 900; cursor: pointer;
+            font-family: inherit; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+        }
+        :root.solid .split-step-btn { background: var(--line); }
+        .split-step-btn:active:not(:disabled) { transform: scale(0.92); }
+        .split-step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .split-step-val { min-width: 30px; text-align: center; font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
+        .split-seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+        .split-seg-btn {
+            padding: 10px 4px; border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.35);
+            color: var(--text); cursor: pointer;
+            font-size: 11px; font-weight: 800; font-family: inherit;
+            letter-spacing: 0.2px; line-height: 1.3;
+            transition: background 0.15s;
+        }
+        :root.solid .split-seg-btn { background: var(--line); }
+        .split-seg-btn.active { background: var(--accent); color: #fff; border-color: rgba(255, 255, 255, 0.5); }
+        @media (prefers-color-scheme: dark) {
+            :root.solid .split-seg-btn.active { color: #000; }
+        }
+        .split-result {
+            margin-top: 20px; padding: 18px 18px;
+            background: rgba(39, 174, 96, 0.12);
+            border: 1px solid rgba(39, 174, 96, 0.35);
+            border-radius: 16px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        :root.solid .split-result { background: rgba(52, 199, 89, 0.1); }
+        .split-actual { font-size: 12px; font-weight: 700; color: var(--text2); }
+        .split-per-share { font-size: 15px; font-weight: 700; line-height: 1.4; }
+        .split-per-share strong { font-size: 28px; font-weight: 900; color: var(--green); letter-spacing: -0.02em; display: block; margin-top: 2px; }
+        .split-hint { font-size: 10px; color: var(--text2); font-weight: 600; margin-top: 4px; }
+        .split-empty { padding: 30px 10px; text-align: center; color: var(--text2); font-size: 13px; font-weight: 600; line-height: 1.5; }
+
         ::-webkit-scrollbar { display: none; }
     </style>
     <script>
@@ -442,6 +503,13 @@
     <div class="modal-sheet" onclick="event.stopPropagation()">
         <div class="modal-header" id="modal-title"></div>
         <div class="modal-list" id="modal-list"></div>
+    </div>
+</div>
+
+<div id="split-modal" class="modal-overlay" onclick="closeSplitModal()">
+    <div class="modal-sheet split-sheet" onclick="event.stopPropagation()">
+        <div class="modal-header" id="split-title"></div>
+        <div id="split-body"></div>
     </div>
 </div>
 
@@ -505,6 +573,18 @@
             atmTierExtreme: "🩸 Extreme",
             atmTierMeh: "🟡 Meh",
             atmTierGood: "🟢 Reasonable",
+            splitTrigger: "🧾 Split this bill",
+            splitHeader: "Split the bill",
+            splitBillLabel: "Bill",
+            splitPeopleLabel: "People",
+            splitPayerLabel: "Who paid?",
+            splitPayerZero: "💳 Zero-FX",
+            splitPayerCard: "💳 Classic",
+            splitPayerAtm: "💵 ATM",
+            splitActualPaid: "Payer actually spent {x} {TARGET}",
+            splitPerShare: "Each person owes",
+            splitSurchargeHint: "Includes {x} {TARGET} card-fee share per head",
+            splitNoBill: "Enter a bill amount on Weather first.",
             guideTitle: "📚 Pocket Guide",
             guideSubtitle: "Tiny tips that keep your wallet safe abroad.",
             guideCards: [
@@ -574,6 +654,18 @@
             atmTierExtreme: "🩸 极亏",
             atmTierMeh: "🟡 一般",
             atmTierGood: "🟢 合理",
+            splitTrigger: "🧾 平摊这笔账单",
+            splitHeader: "平摊账单",
+            splitBillLabel: "账单",
+            splitPeopleLabel: "人数",
+            splitPayerLabel: "谁垫付了?",
+            splitPayerZero: "💳 免手续费",
+            splitPayerCard: "💳 传统卡",
+            splitPayerAtm: "💵 ATM",
+            splitActualPaid: "垫付人实际付了 {x} {TARGET}",
+            splitPerShare: "每人该转给垫付人",
+            splitSurchargeHint: "含每人 {x} {TARGET} 卡费分摊",
+            splitNoBill: "请先在 Weather 页输入账单金额。",
             guideTitle: "📚 口袋避坑指南",
             guideSubtitle: "几条小贴士,让钱包在境外更稳。",
             guideCards: [
@@ -643,6 +735,18 @@
             atmTierExtreme: "🩸 Énorme perte",
             atmTierMeh: "🟡 Bof",
             atmTierGood: "🟢 Correct",
+            splitTrigger: "🧾 Partager l'addition",
+            splitHeader: "Partager l'addition",
+            splitBillLabel: "Addition",
+            splitPeopleLabel: "Personnes",
+            splitPayerLabel: "Qui a payé ?",
+            splitPayerZero: "💳 Sans frais",
+            splitPayerCard: "💳 Classique",
+            splitPayerAtm: "💵 DAB",
+            splitActualPaid: "Le payeur a dépensé {x} {TARGET}",
+            splitPerShare: "Chacun doit au payeur",
+            splitSurchargeHint: "Dont {x} {TARGET} de frais carte par tête",
+            splitNoBill: "Saisissez d'abord un montant sur Météo.",
             guideTitle: "📚 Guide de poche",
             guideSubtitle: "Quelques astuces pour protéger votre portefeuille.",
             guideCards: [
@@ -690,7 +794,10 @@
         lang: initialLang,
         openCard: null,
         atmOpen: false,
-        atmSliderVal: 50
+        atmSliderVal: 50,
+        splitOpen: false,
+        splitPeople: 2,
+        splitPayer: 'zero'
     };
 
     function t() { return I18N[S.lang]; }
@@ -1029,7 +1136,7 @@
                     ${atmExtra}
                 </div>
             `;
-        }).join('');
+        }).join('') + `<button class="split-trigger-btn" onclick="openSplitModal()">${d.splitTrigger}</button>`;
     }
 
     function renderAnchorStrip() {
@@ -1176,6 +1283,96 @@
         haptic();
         S.activeTab = 'backpack';
         renderContent();
+    }
+
+    // === v4.4 AA Splitter (stateless ephemeral modal) ===
+    function calcSplit(bill, n, payer) {
+        if (!S.cr || !bill || bill <= 0 || n <= 0) return null;
+        const r = getWalletRates();
+        let actualPaid;
+        if (payer === 'zero')      actualPaid = bill * S.cr * (1 + r.zero);
+        else if (payer === 'card') actualPaid = bill * S.cr * (1 + r.card);
+        else                       actualPaid = bill * S.cr * (1 + r.card) + r.atm * S.cr;
+        const perShare = actualPaid / n;
+        const surchargePerHead = (actualPaid - bill * S.cr) / n;
+        return { actualPaid, perShare, surchargePerHead };
+    }
+
+    function openSplitModal() {
+        haptic();
+        // Ephemeral: each open re-initializes
+        const routes = calcRouting(S.amount);
+        S.splitPayer = routes ? routes[0].id : 'zero';
+        S.splitPeople = 2;
+        S.splitOpen = true;
+        const d = t();
+        document.getElementById('split-title').textContent = d.splitHeader;
+        renderSplitBody();
+        document.getElementById('split-modal').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSplitModal() {
+        S.splitOpen = false;
+        document.getElementById('split-modal').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    function incrementPeople(delta) {
+        haptic();
+        const next = S.splitPeople + delta;
+        if (next < 2 || next > 10) return;
+        S.splitPeople = next;
+        renderSplitBody();
+    }
+
+    function setSplitPayer(method) {
+        haptic();
+        S.splitPayer = method;
+        renderSplitBody();
+    }
+
+    function renderSplitBody() {
+        const d = t();
+        const body = document.getElementById('split-body');
+        if (!body) return;
+        if (!S.cr || !S.amount || S.amount <= 0) {
+            body.innerHTML = `<div class="split-empty">${d.splitNoBill}</div>`;
+            return;
+        }
+        const split = calcSplit(S.amount, S.splitPeople, S.splitPayer);
+        const actualStr = Number(split.actualPaid.toFixed(2)).toLocaleString();
+        const shareStr = Number(split.perShare.toFixed(2)).toLocaleString();
+        const surchargeStr = Number(split.surchargePerHead.toFixed(2)).toLocaleString();
+        const actualCopy = d.splitActualPaid.replace('{x}', actualStr).replace('{TARGET}', S.target);
+        const surchargeCopy = d.splitSurchargeHint.replace('{x}', surchargeStr).replace('{TARGET}', S.target);
+        body.innerHTML = `
+            <div class="split-bill">
+                <span class="split-label">${d.splitBillLabel}</span>
+                <span class="split-bill-amt">${Number(S.amount).toLocaleString()} ${S.base}</span>
+            </div>
+            <div class="split-row">
+                <span class="split-label">${d.splitPeopleLabel}</span>
+                <div class="split-stepper">
+                    <button class="split-step-btn" onclick="incrementPeople(-1)" ${S.splitPeople <= 2 ? 'disabled' : ''}>−</button>
+                    <span class="split-step-val">${S.splitPeople}</span>
+                    <button class="split-step-btn" onclick="incrementPeople(1)" ${S.splitPeople >= 10 ? 'disabled' : ''}>+</button>
+                </div>
+            </div>
+            <div class="split-row-col">
+                <span class="split-label">${d.splitPayerLabel}</span>
+                <div class="split-seg">
+                    <button class="split-seg-btn${S.splitPayer==='zero'?' active':''}" onclick="setSplitPayer('zero')">${d.splitPayerZero}</button>
+                    <button class="split-seg-btn${S.splitPayer==='card'?' active':''}" onclick="setSplitPayer('card')">${d.splitPayerCard}</button>
+                    <button class="split-seg-btn${S.splitPayer==='atm' ?' active':''}" onclick="setSplitPayer('atm')">${d.splitPayerAtm}</button>
+                </div>
+            </div>
+            <div class="split-result">
+                <div class="split-actual">${actualCopy}</div>
+                <div class="split-per-share">${d.splitPerShare}<strong>${shareStr} ${S.target}</strong></div>
+                ${split.surchargePerHead > 0.01 ? `<div class="split-hint">${surchargeCopy}</div>` : ''}
+            </div>
+        `;
     }
 
     function vGuide() {

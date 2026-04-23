@@ -1,9 +1,9 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v4.3 (VAT Refund Shield)
-**Build target:** `weather.html` · Service Worker `fx-weather-v26` · Manifest `FX Weather`
-**Status:** v4.0 / v4.0.1 / v4.1 / v4.2 shipped. v4.3 (VAT Refund Shield) shipped in this sprint. v4.4 pending.
-**Scope history:** v3.0 engine → v4.0 glassmorphism shell → v4.1 Custom PPP Anchors → v4.2 ATM amortization slider → v4.3 VAT Refund flashcard + Guide interpolation.
+**Version:** v4.4 (AA Splitter — v4.x roadmap complete)
+**Build target:** `weather.html` · Service Worker `fx-weather-v27` · Manifest `FX Weather`
+**Status:** v4.x roadmap complete. All four approved phases (Anchors / ATM Slider / VAT Shield / AA Splitter) shipped. Project now enters post-deploy dogfooding mode per PM discretion.
+**Scope history:** v3.0 engine → v4.0 glassmorphism shell → v4.1 Custom PPP Anchors → v4.2 ATM amortization slider → v4.3 VAT Refund flashcard + Guide interpolation → v4.4 stateless AA Splitter modal.
 
 ---
 
@@ -499,9 +499,31 @@ Progressive-disclosure slider embedded in the ATM route card on Weather tab. Tap
 
 **Known divergence:** body copy cites a flat `5%` DCC markup for refund operators, where the v4.0 DCC Shield cites a `3–7%` range. This is PM copy choice, not a code issue. Documented here for future consistency review.
 
-### ⏳ v4.4 — AA Splitter (pending)
+### ✅ v4.4 — AA Splitter (shipped — v4.x roadmap complete)
 
-Inline ephemeral expense-split modal. Input bill total + number of people + each person's card fee. Output per-person fair share. No persistence — close = forget. Opens from a small button on the Weather tab routing panel.
+Inline ephemeral expense-split modal triggered from the Weather tab's routing panel. Solves the "who owes the payer what" problem for cross-currency group dinners, explicitly accounting for the payer's card-fee sunk cost (so the payer isn't silently eating the 1.5% Visa markup for the whole table).
+
+**Core math:**
+```
+actualPaid = bill × cr × (1 + payerRate) [ + atmFee × cr if payer='atm' ]
+perShare   = actualPaid / N
+surchargeTotal = actualPaid - bill × cr
+surchargePerHead = surchargeTotal / N
+```
+
+**Inputs (all stateless, reset on each open):**
+- Bill: read-only mirror of `S.amount` from Weather tab (no duplicate input)
+- People (`N`): stepper, clamped 2–10
+- Payer's card: 3-way segmented control (Zero-FX / Traditional / ATM). Default seeds from `calcRouting()[0].id` (current best-for-amount)
+
+**Output:**
+- Large green per-head share in `{TARGET}`
+- Payer's actual total cost (small grey)
+- Conditional hint `Includes {x} {TARGET} card-fee share per head` — only renders when surcharge > 0.01 (no noise when Zero-FX at near-zero markup)
+
+**Guard:** if no bill or no rate, modal shows a neutral empty-state prompting the user to enter a bill on Weather first.
+
+**DOM separation:** independent `#split-modal` element, not multiplexed with `#currency-modal`. Per PM decision: architectural clarity > byte savings.
 
 ### ❌ Rejected
 
@@ -544,7 +566,20 @@ Native `<select>` replaced with custom glass bottom-sheet modal after the origin
 - Keeps Guide flashcard system pattern-pure; zero new CSS; zero new state
 - SW cache bumped to `fx-weather-v26`
 
-### Pending
+### v4.4 (2026-04-23) — AA Splitter modal
+- Independent `#split-modal` DOM element (reuses `.modal-overlay` / `.modal-sheet` CSS base)
+- New functions: `calcSplit`, `openSplitModal`, `closeSplitModal`, `incrementPeople`, `setSplitPayer`, `renderSplitBody`
+- Trigger button appended to `renderRouting()` output (only when routes are valid, i.e., `S.amount > 0` and `S.cr > 0`)
+- State additions: `S.splitOpen`, `S.splitPeople`, `S.splitPayer` — all ephemeral, reset on every open, never written to localStorage
+- Stepper with ±1 clamped to [2, 10]; segmented control for payer method
+- Conditional surcharge hint (only if surcharge > 0.01 per head)
+- SW cache bumped to `fx-weather-v27`
+
+### v4.x roadmap: COMPLETE
+
+All four approved phases shipped between 2026-04-22 and 2026-04-23. No outstanding v4.x work.
+
+### Pending (outside v4.x scope)
 
 - Cloudflare Pages project creation (manual, user-side)
-- v4.4 AA Splitter modal (final phase of v4.x roadmap)
+- Any v4.5+ work requires a new formal scope revision per `memory/project_v4_final_commitment.md` guidance

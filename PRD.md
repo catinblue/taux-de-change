@@ -1,6 +1,6 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v6.3 (Lumina Elite — dynamic weather + built-in keypad + Smart Discovery)
+**Version:** v7.0 (True Lumina — full-bleed gradient shell + white bottom sheet + ghost numpad)
 **Build target:** `weather.html` · Service Worker `fx-weather-v32` · Manifest `FX Weather`
 **Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina reskin → v6.1 De-cardification → v6.3 Lumina Elite (feature release). Atomic CSS + HTML + JS additions; `calcRouting` / `calcAnchors` / `calcSplit` / business-logic untouched.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
@@ -515,6 +515,128 @@ Over 100 KB for a single-file PWA — still well within acceptable PWA shell siz
 ### Service Worker cache
 
 `v31` → `v32`.
+
+## 10.5 v6.4 Infinite Anchor Engine (shipped)
+
+### Motivation
+
+v6.3 Smart Discovery shipped a **closed** set: 11 currencies × 4 categories × 3 items = 132 hardcoded anchors. Useful as a first-run seed, useless the moment a user asks about an item we didn't pre-curate (PS5 in Japan, a croissant in Lisbon, a Shinkansen ticket). v6.4 replaces the closed pill-picker with an **open search bar** that round-trips to an LLM via a Cloudflare Edge Worker and caches the result directly into the user's `fx_anchors`.
+
+Design intent: keep the app offline-first and instant for the calculator path; only hit the network on an explicit search. `calcRouting`, `calcWeatherBand`, `calcSplit`, and every anchor read/write stay untouched.
+
+### Architecture
+
+**Frontend (weather.html)**
+
+- `openDiscovery()` now shows a text input + Go button + popular-in-city chip list (sourced from local `GLOBAL_PPP_DB`).
+- `searchAnchor()` — `POST` to `LLM_SEARCH_ENDPOINT = 'https://api.ourdomain.com/search-ppp'` with `{query, currency: S.base}`. Expected response `{emoji, label, price, currency}` validated client-side; `price` must be a finite number, `currency` must match the request shape. Response appended to `getAnchors()` via `setAnchors(arr)`.
+- `addSuggestedAnchor(cat, idx)` — zero-network fast-path: pulls the first item per category from `GLOBAL_PPP_DB[S.base]` and adds it to anchors. Used for the popular-in-city chip strip so users with `MAX_ANCHORS == 0` can still seed their wallet without burning an LLM call.
+- Status UI: `searching…` while in-flight, red `searchError` copy on failure, non-blocking `maxAnchors` warning when `getAnchors().length >= 5`.
+
+**Backend (worker.js — Cloudflare Worker, module format)**
+
+- Endpoint: `POST /search-ppp`, CORS open (`*`), JSON only.
+- Calls OpenAI `gpt-4o-mini` with `response_format: {type: 'json_object'}`, `temperature: 0.2`, `max_tokens: 120`. System prompt forces the 4-field schema + realistic city-inferred price in target currency.
+- Server-side validation before returning: emoji length ≤4, label truncated to 64 chars, price coerced to finite non-negative number, currency matches `^[A-Z]{3}$` or falls back to the request currency.
+- `env.OPENAI_API_KEY` read from Wrangler secrets — never shipped to the frontend.
+- Query length capped at 200 chars to bound prompt cost.
+
+### Epistemic discipline
+
+- Disclaimer copy updated in all 3 langs: `"AI-estimated reference values — actuals vary. Edit after adding."` Anchors added by LLM are explicitly marked as estimates, not facts. User can edit any anchor post-add via the Backpack tab.
+- Local `GLOBAL_PPP_DB` retained as a fallback seed + suggestion source. Its existing `[推论]` tagging in comments is unchanged.
+
+### Removed (vs v6.3)
+
+- Discovery category pills (`.discovery-pills`, `.discovery-pill`) and their click handler (`selectCategory`)
+- `renderDiscoveryBody()`, `addAnchorFromPPP()`, `fetchSmartPPP()` stub
+- `_discoveryCategory` state, `DISCOVERY_CATS` constant
+- i18n keys: `pppCategory`, `pppNoData` across EN/ZH/FR
+
+### Added (vs v6.3)
+
+- i18n keys: `searchPlaceholder`, `searchSubmit`, `searching`, `searchError`, `maxAnchors`, `suggestionsLabel` × 3 langs
+- CSS rules: `.search-bar`, `.search-input`, `.search-submit`, `.search-status`, `.suggestions-label`, `.suggestions-list`, `.suggestion-chip`, `.suggestion-emoji`, `.suggestion-label`, `.suggestion-price`
+- JS: `LLM_SEARCH_ENDPOINT`, `LOCAL_CATS`, `renderSuggestions()`, `addSuggestedAnchor()`, `searchAnchor()`
+- File: `worker.js` at project root (new)
+
+### Deployment
+
+`worker.js` will **404/CORS-fail** until it is actually deployed to a domain resolving at `api.ourdomain.com`. This is expected scaffolding state — the frontend is ready; the backend endpoint is PM's to provision.
+
+Deploy flow:
+1. `npm i -g wrangler && wrangler login`
+2. `wrangler secret put OPENAI_API_KEY`
+3. `wrangler deploy` (route `api.ourdomain.com/search-ppp` → this worker)
+
+Until deployed, the search box fails gracefully: error status shown, no crash, no anchor added. The popular-chip fast-path works offline regardless.
+
+### Service Worker cache
+
+`v33` → `v34`. Same-origin assets still cache-first; `api.exchangerate-api.com` still network-first; cross-origin `api.ourdomain.com` is pass-through (no interception).
+
+## 10.6 v7.0 True Lumina visual overhaul (shipped)
+
+### Motivation
+
+The v6.x "Lumina" line (sage-light background, forest-dark accents, de-cardified rows) missed the intended visual identity. v7.0 is a ground-up reskin toward a spatial, full-bleed dark gradient shell with a white bottom sheet and ultra-thin typography — emphasising hero contrast, geometric font (Outfit), and the numpad-as-ghost aesthetic.
+
+### What changes (visual)
+
+**Typography** — Outfit (Google Fonts, weights 200/300/400/600) replaces system fonts. Massive numbers render at `font-weight: 200` (ultra-thin). All utility labels are `font-size: 10px`, `font-weight: 600`, `letter-spacing: 1.5px`, `text-transform: uppercase`. The "rule of contrast" between hairline numbers and tiny uppercase captions is the core visual identity.
+
+**Shell** — `body` is now `height: 100dvh; overflow: hidden` with a full-bleed `linear-gradient(160deg, var(--hero-grad-1), var(--hero-grad-2))`. The existing `HERO_GRADIENTS` table drives body color via `--hero-grad-1/--hero-grad-2` (set on `documentElement`), so weather bands still modulate the whole background, not just a rectangle.
+
+**Hero (Weather tab)** — two floating currency blocks directly on the dark gradient:
+- Block 1 (base): tiny uppercase label `${BASE} · ${full name}` → 80px weight-200 transparent input (right-aligned, white).
+- Hairline divider (1px `rgba(255,255,255,0.12)`) with a swap icon button that calls the new `swapCurrencies()`.
+- Block 2 (target): tiny uppercase label `${TARGET} · ${full name}` → 70px weight-200 converted amount at `color: rgba(255,255,255,0.82)`.
+- Action pills row: glass chips (`backdrop-filter: blur(10px); background: rgba(0,0,0,0.22)`) hosting the weather-band label and a split trigger.
+
+**Bottom sheet** — a `.bottom-sheet` div (pure white, `border-top-{left,right}-radius: 32px`, `box-shadow: 0 -10px 40px rgba(0,0,0,0.28)`) that `flex: 1` inside `#content`. It holds PPP anchors, DCC shield, first-run banner, route list, time machine. A 36×4 gray drag handle sits at the top. Internal content scrolls; padding-bottom reserves space for the dock.
+
+Guide and Backpack tabs use `.bottom-sheet.full` — same white sheet, no hero above it.
+
+**Ghost numpad** — restructured from 4×4 colored buttons to a strict 3×4 transparent grid. No backgrounds, no borders, just Outfit-300 numbers. `:active` paints a subtle `rgba(13,18,19,0.06)`. Secondary bar below the grid holds `C` / `+` / `Done`; Done stays the accent-green pill.
+
+**Routes as minimalist list** — `.route-card` rows are black text on white, separated by `#F0F0F0` hairlines. The "best" route is rendered in bold `#5A9374` accent-green (weight 600 on both the method label and the 26px cost). Non-best rows use `weight: 300` (tabular-nums).
+
+**Dock** — repositioned from black to pure white (matches the sheet), bordered top by `#F0F0F0`. Active = `--accent-green`, inactive = 40% black.
+
+**Modals** — same transform-up behavior; internal surfaces restyled from `sage-light` to `#F5F5F7` for consistency with the new neutral palette.
+
+### What stays (unchanged)
+
+- All JS renderer class names preserved — `vWeather/vGuide/vBackpack` wrap content in `.bottom-sheet` but every inner class (`route-card`, `flashcard`, `setting-card`, `anchor-row-line`, etc.) still matches the JS outputs.
+- All JS business logic untouched — `calcRouting`, `calcWeatherBand`, `calcSplit`, `calcAnchors`, `fetchR`, `safeEval`, i18n dicts, `LLM_SEARCH_ENDPOINT` proxy, keypad state machine.
+- `HERO_GRADIENTS` table and `applyHeroGradient()` unchanged — now drives body instead of hero rectangle.
+- Service Worker strategy unchanged.
+- Epistemic rules, `[推论]` tagging, real APIs, trilingual EN/ZH/FR — all preserved.
+
+### Added JS
+
+- `CURS_NAMES` (EN/ZH/FR full currency names) + `currencyName(code)` lookup.
+- `swapCurrencies()` — swaps `S.base ↔ S.target`, resets cost caches, re-fetches rate.
+- `updateKeypad()` now also updates `#hero-target-amount` live on every digit.
+
+### Removed
+
+- `--forest-dark` as a visible surface color (still defined as a var for the `--red` alias compat, used internally by `calcAtmTier` only).
+- `.pair-selector` pill chrome — the pair is now the two separate hero labels.
+- `.split-trigger-btn` call-to-action strip inside the sheet — moved to the hero action-pills row for a higher-contrast entry.
+- The Lumina 4×4 colored keypad — replaced by the 3×4 ghost grid + separate action row.
+
+### Deployment
+
+No new endpoint work. The `worker.js` + `LLM_SEARCH_ENDPOINT = 'https://api.ourdomain.com/search-ppp'` scaffolding from v6.4 is unchanged and still awaits real deployment.
+
+### Service Worker cache
+
+`v34` → `v35`. Asset hash changed substantially (CSS fully rewritten, DOM structure of Weather/Guide/Backpack tabs restructured, keypad HTML restructured).
+
+### Caveats
+
+- Browser testing from inside the authoring session was blocked (Playwright MCP failed to initialise). Full visual regression should be done manually on-device before any push to `origin/main`.
 
 ## 11. v5.0 final state — preserved disciplines
 

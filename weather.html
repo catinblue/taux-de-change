@@ -8,6 +8,9 @@
     <meta name="theme-color" content="#0D1213">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             /* === Lumina Palette === */
@@ -36,123 +39,226 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "PingFang SC", sans-serif;
-            background: var(--sage-light); color: var(--text-main);
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "PingFang SC", system-ui, sans-serif;
+            background: linear-gradient(160deg,
+                var(--hero-grad-1, var(--black-base)) 0%,
+                var(--hero-grad-2, var(--black-base)) 100%);
+            color: #FFFFFF;
             -webkit-font-smoothing: antialiased; line-height: 1.4;
-            overflow-x: hidden;
-        }
-
-        .layout { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
-        #content { flex: 1; padding-bottom: calc(96px + var(--safe-b)); }
-
-        /* === Lumina site header (dynamic weather-tinted dark) === */
-        .site-header {
-            background: var(--hero-grad-1, var(--black-base));
-            color: var(--text-inverse);
-            padding: 22px 24px 8px;
-            display: flex; justify-content: space-between; align-items: center;
+            overflow: hidden;
+            height: 100dvh;
             transition: background 1.2s ease;
         }
+
+        .layout {
+            width: 100%; max-width: 500px; margin: 0 auto;
+            height: 100dvh;
+            display: flex; flex-direction: column;
+            position: relative;
+        }
+        #content {
+            flex: 1; min-height: 0;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+
+        /* === v7.0 Site header: transparent, over dynamic dark gradient === */
+        .site-header {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.9);
+            padding: calc(14px + env(safe-area-inset-top)) 26px 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
         .logo {
-            font-size: 13px; font-weight: 800; letter-spacing: 2.5px;
-            text-transform: uppercase; color: var(--text-inverse);
+            font-size: 11px; font-weight: 600; letter-spacing: 2.5px;
+            text-transform: uppercase; color: rgba(255, 255, 255, 0.85);
         }
         .lang-switch {
             display: flex; align-items: center; gap: 6px;
-            font-size: 12px; font-weight: 700; letter-spacing: 1px;
+            font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
         .lang-option {
-            color: var(--sage-mid); padding: 4px 2px; cursor: pointer;
+            color: rgba(255, 255, 255, 0.45); padding: 4px 2px; cursor: pointer;
             transition: color 0.2s ease;
         }
-        .lang-option.active { color: var(--accent-green); font-weight: 900; }
-        .lang-sep { color: var(--sage-mid); opacity: 0.4; }
+        .lang-option.active { color: #FFFFFF; font-weight: 600; }
+        .lang-sep { color: rgba(255, 255, 255, 0.2); }
 
-        /* === Lumina hero (dynamic weather gradient, rounded bottom-LEFT) === */
+        /* === v7.0 Hero — floating blocks on dark gradient === */
         .hero {
-            background: linear-gradient(135deg,
-                var(--hero-grad-1, var(--black-base)) 0%,
-                var(--hero-grad-2, var(--black-base)) 100%);
-            color: var(--text-inverse);
-            padding: 8px 24px 52px;
+            background: transparent;
+            color: #FFFFFF;
+            padding: 10px 26px 22px;
             margin: 0;
-            border-bottom-left-radius: 36px;
-            box-shadow: 0 10px 24px rgba(13, 18, 19, 0.18);
+            flex-shrink: 0;
             position: relative; z-index: 2;
-            transition: background 1.2s ease;
+            display: flex; flex-direction: column;
+            gap: 14px;
         }
 
-        /* Pair selector as forest-dark pill */
-        .pair-selector {
-            display: inline-flex; align-items: center; gap: 10px;
-            background: var(--forest-dark);
-            border-radius: 999px;
-            padding: 9px 18px;
-            font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
-            margin-bottom: 28px;
-            color: #FFFFFF;
+        .hero-block { display: flex; flex-direction: column; gap: 4px; }
+        .hero-row {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            gap: 12px;
         }
-        .pair-sep { color: var(--accent-green); font-weight: 500; opacity: 0.95; }
+        .hero-label {
+            font-size: 10px; font-weight: 600; letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.55);
+        }
+        .pair-selector {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: transparent; padding: 0;
+            font-size: 10px; font-weight: 600; letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.55);
+        }
+        .pair-sep { color: rgba(255, 255, 255, 0.3); font-weight: 400; }
         .picker-unit {
             cursor: pointer; padding: 2px 2px;
-            color: #FFFFFF; transition: opacity 0.15s ease;
+            color: rgba(255, 255, 255, 0.85);
+            letter-spacing: 1.8px;
+            transition: opacity 0.15s ease;
         }
-        .picker-unit:active { opacity: 0.65; }
+        .picker-unit:active { opacity: 0.55; }
 
         .amount-wrap {
-            display: flex; flex-direction: column; gap: 6px;
-            align-items: flex-start;
+            display: flex; flex-direction: column; gap: 0;
+            align-items: stretch;
         }
         .hero-amount-input {
             background: none; border: none;
-            color: var(--accent-green);
-            font-size: clamp(64px, 19vw, 96px); font-weight: 600;
-            letter-spacing: -0.04em; line-height: 1;
+            color: #FFFFFF;
+            font-size: clamp(64px, 18vw, 92px); font-weight: 200;
+            letter-spacing: -0.03em; line-height: 1;
             outline: none; width: 100%; padding: 0;
-            font-family: inherit; caret-color: var(--accent-green);
+            font-family: inherit;
+            text-align: right;
+            caret-color: #FFFFFF;
         }
+        .hero-target-amount {
+            color: rgba(255, 255, 255, 0.82);
+            font-size: clamp(52px, 14vw, 74px); font-weight: 200;
+            letter-spacing: -0.02em; line-height: 1;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Hairline divider with swap icon */
+        .hero-divider {
+            display: flex; align-items: center; gap: 10px;
+            padding: 2px 0;
+        }
+        .hero-swap-btn {
+            background: transparent; border: none; color: rgba(255,255,255,0.7);
+            width: 24px; height: 24px; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-family: inherit;
+            flex-shrink: 0;
+        }
+        .hero-swap-btn:active { opacity: 0.5; }
+        .hero-swap-icon {
+            width: 14px; height: 14px; stroke: currentColor; stroke-width: 1.6;
+            fill: none; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .hero-divider-line {
+            flex: 1; height: 1px; background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Label row above amount (e.g. EUR · Euro) */
         .hero-amount-label {
-            font-size: 10px; font-weight: 800; letter-spacing: 2.4px;
-            color: var(--sage-mid); text-transform: uppercase;
-            opacity: 0.85; margin-top: 2px;
+            font-size: 10px; font-weight: 600; letter-spacing: 1.8px;
+            color: rgba(255, 255, 255, 0.55); text-transform: uppercase;
+            margin-top: 4px;
         }
+
+        /* Action pills row (glass) */
+        .action-pills {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            padding: 4px 0 0;
+        }
+        .action-pill {
+            background: rgba(0, 0, 0, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 20px;
+            padding: 7px 14px;
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 10px; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            font-family: inherit; cursor: pointer;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            transition: background 0.2s ease, opacity 0.15s ease;
+        }
+        .action-pill:active { background: rgba(0, 0, 0, 0.35); }
+        .action-pill-icon { opacity: 0.85; margin-right: 5px; }
+
         .weather-label {
-            font-size: 12px; font-weight: 700; letter-spacing: 0.4px;
-            color: var(--sage-mid); margin-top: 14px;
+            font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
         }
 
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
 
-        /* === De-cardified PPP: naked lines on body bg === */
+        /* === v7.0 Bottom Sheet: pure white, rounded top, holds routes/ppp/split === */
+        .bottom-sheet {
+            background: #FFFFFF;
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.28);
+            flex: 1; min-height: 0;
+            overflow-y: auto;
+            padding: 0 22px calc(96px + var(--safe-b));
+            color: var(--text-main);
+            position: relative;
+            display: flex; flex-direction: column;
+            -webkit-overflow-scrolling: touch;
+        }
+        .bottom-sheet.full {
+            /* Guide / Backpack tabs — sheet eats most of the viewport */
+            margin-top: 8px;
+        }
+        .sheet-handle {
+            width: 36px; height: 4px;
+            background: #E0E0E0; border-radius: 2px;
+            margin: 10px auto 6px;
+            flex-shrink: 0;
+        }
+
+        /* === v7.0 PPP inside the sheet (anchors = minimalist rows) === */
         .ppp-bar {
             background: none;
             border-radius: 0;
-            padding: 18px 20px 4px;
+            padding: 10px 0 4px;
             margin: 0;
-            display: flex; flex-direction: column; gap: 10px;
+            display: flex; flex-direction: column; gap: 8px;
             position: relative;
         }
         .ppp-line {
-            font-size: 14px; font-weight: 600; color: var(--text-main);
-            letter-spacing: 0.2px;
+            font-size: 13px; font-weight: 400; color: var(--text-main);
+            letter-spacing: 0.1px;
             cursor: pointer;
-            padding: 2px 0;
+            padding: 6px 0;
             transition: opacity 0.2s ease;
         }
         .ppp-line:active { opacity: 0.55; background: transparent; }
-        .ppp-line strong { color: var(--accent-green); font-weight: 800; }
+        .ppp-line strong { color: var(--accent-green); font-weight: 600; }
         .ppp-line.editing {
             display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
             cursor: default;
         }
         .ppp-line.editing:active { background: transparent; }
         .ppp-price-edit, .ppp-label-edit {
-            background: var(--sage-light); border: 1px solid var(--line);
+            background: #F5F5F7; border: 1px solid #EEEEEE;
             border-radius: 8px; padding: 5px 8px;
-            font-family: inherit; font-size: 12px; font-weight: 700;
+            font-family: inherit; font-size: 12px; font-weight: 500;
             color: var(--text-main); outline: none;
         }
         .ppp-price-edit:focus, .ppp-label-edit:focus { border-color: var(--accent-green); }
@@ -161,69 +267,67 @@
         .ppp-save-btn {
             background: var(--accent-green); color: #FFFFFF; border: none;
             width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
-            font-family: inherit; font-size: 13px; font-weight: 900; line-height: 1;
+            font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1;
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* === De-cardified routes area === */
+        /* === v7.0 Routes: minimalist list on white === */
         .routes-section {
-            padding: 0 20px 32px;
-            min-height: 40vh;
+            padding: 0;
+            min-height: 0;
         }
         .section-label {
-            font-size: 11px; font-weight: 800; color: var(--forest-dark);
+            font-size: 10px; font-weight: 600; color: var(--text-main);
+            opacity: 0.55;
             text-transform: uppercase; letter-spacing: 1.5px;
-            margin: 24px 0 4px;
-            opacity: 0.7;
+            margin: 18px 0 2px;
         }
 
-        /* DCC shield: keep accent-green left bar as the only chrome */
+        /* DCC shield: thin left accent, black text */
         .dcc-shield {
             background: none;
             border: none;
-            border-left: 3px solid var(--accent-green);
+            border-left: 2px solid var(--accent-green);
             border-radius: 0;
-            padding: 10px 0 10px 14px;
-            margin: 18px 0 4px;
-            font-size: 12px; font-weight: 600; line-height: 1.55;
+            padding: 8px 0 8px 12px;
+            margin: 14px 0 4px;
+            font-size: 11px; font-weight: 400; line-height: 1.55;
             color: var(--text-main);
         }
-        .dcc-shield-icon { margin-right: 6px; font-weight: 900; }
+        .dcc-shield-icon { margin-right: 6px; font-weight: 600; color: var(--accent-green); }
 
-        /* First-run banner: naked, minimal */
+        /* First-run banner: thin divider, minimal */
         .first-run-banner {
             background: none;
             border: none;
             border-radius: 0;
             padding: 12px 0;
             display: flex; justify-content: space-between; align-items: center; gap: 10px;
-            font-size: 12px; font-weight: 600; color: var(--forest-dark);
+            font-size: 11px; font-weight: 400; color: var(--text-main);
             margin: 0;
             cursor: pointer;
-            border-top: 1px solid rgba(13, 18, 19, 0.08);
+            border-top: 1px solid #F0F0F0;
         }
         .banner-text { flex: 1; line-height: 1.4; }
         .banner-close {
-            background: none; border: none; color: var(--sage-mid);
-            font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1;
+            background: none; border: none; color: #BBBBBB;
+            font-size: 15px; cursor: pointer; padding: 0 4px; line-height: 1;
             font-family: inherit;
         }
 
-        /* === De-cardified routes: stacked rows with hairline dividers === */
+        /* === v7.0 Route rows: black-on-white, faint dividers, best = bold green === */
         .route-card {
             background: none;
             border: none;
             border-radius: 0;
-            padding: 22px 0;
+            padding: 16px 0;
             margin: 0;
-            display: flex; flex-direction: column; gap: 6px;
-            border-top: 1px solid rgba(13, 18, 19, 0.1);
+            display: flex; flex-direction: column; gap: 4px;
+            border-top: 1px solid #F0F0F0;
             transition: opacity 0.3s ease;
         }
-        #routing-panel .route-card:first-child { border-top: 0; padding-top: 10px; }
-        /* Non-optimal cards: dim to bring focus to the best one */
-        .route-card:not(.best) { opacity: 0.52; }
-        .route-card.best { padding: 22px 0; border-top: 1px solid rgba(13, 18, 19, 0.1); }
+        #routing-panel .route-card:first-child { border-top: 0; padding-top: 8px; }
+        .route-card.best { padding: 16px 0; border-top: 1px solid #F0F0F0; }
         #routing-panel .route-card.best:first-child { border-top: 0; }
 
         .route-top {
@@ -231,21 +335,23 @@
             margin-bottom: 2px;
         }
         .route-method {
-            font-size: 12px; font-weight: 800; letter-spacing: 1px;
-            color: var(--forest-dark); text-transform: uppercase;
+            font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+            color: var(--text-main); text-transform: uppercase;
             display: flex; align-items: center; gap: 8px;
+            opacity: 0.72;
         }
-        .route-card.best .route-method { color: var(--accent-green); }
+        .route-card.best .route-method {
+            color: var(--accent-green); opacity: 1; font-weight: 600;
+        }
         .route-icon {
-            width: 16px; height: 16px;
+            width: 14px; height: 14px;
             stroke: currentColor; stroke-width: 1.6; fill: none;
             stroke-linecap: round; stroke-linejoin: round;
         }
-        /* OPTIMAL label: text-only, no pill chrome */
         .best-pill {
             background: none;
             color: var(--accent-green);
-            font-size: 10px; font-weight: 900; letter-spacing: 1.4px;
+            font-size: 9px; font-weight: 600; letter-spacing: 1.4px;
             padding: 0; border-radius: 0;
             text-transform: uppercase;
         }
@@ -254,32 +360,38 @@
             gap: 8px;
         }
         .route-cost {
-            font-size: 30px; font-weight: 700; color: var(--text-main);
+            font-size: 26px; font-weight: 300; color: var(--text-main);
             letter-spacing: -0.02em;
             max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
             line-height: 1.1;
+            font-variant-numeric: tabular-nums;
         }
-        .route-card.best .route-cost { color: var(--accent-green); }
-        .route-code { font-size: 13px; font-weight: 800; color: var(--sage-mid); }
+        .route-card.best .route-cost { color: var(--accent-green); font-weight: 600; }
+        .route-code {
+            font-size: 11px; font-weight: 600; color: var(--text-main); opacity: 0.4;
+            letter-spacing: 1px;
+        }
         .route-hint {
-            font-size: 11px; font-weight: 600; color: var(--forest-dark);
-            opacity: 0.7;
+            font-size: 11px; font-weight: 400; color: var(--text-main);
+            opacity: 0.62;
             margin-top: 2px; line-height: 1.4;
         }
         .route-delta {
-            font-size: 11px; font-weight: 700; color: var(--forest-dark);
-            opacity: 0.7;
+            font-size: 10px; font-weight: 500; color: var(--text-main);
+            opacity: 0.55;
             margin-top: 2px; letter-spacing: 0.3px;
         }
 
-        /* === ATM slider (mono green track) === */
+        /* === ATM slider (inside white sheet) === */
         .atm-expand-btn {
             background: none; border: none; color: var(--text-main);
-            font-weight: 800; font-size: 10px; cursor: pointer;
-            font-family: inherit; padding: 10px 0 4px;
-            letter-spacing: 1.2px; text-transform: uppercase;
-            align-self: flex-start; border-bottom: 1px solid var(--text-main);
-            margin-top: 6px;
+            font-weight: 600; font-size: 10px; cursor: pointer;
+            font-family: inherit; padding: 8px 0 4px;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            align-self: flex-start;
+            border-bottom: 1px solid var(--text-main);
+            margin-top: 4px;
+            opacity: 0.72;
         }
         .atm-slider-panel {
             max-height: 0; overflow: hidden;
@@ -289,163 +401,161 @@
         .atm-slider-panel.open { max-height: 260px; padding-top: 16px; }
         .atm-slider {
             -webkit-appearance: none; appearance: none;
-            width: 100%; height: 6px; border-radius: 3px;
-            background: linear-gradient(90deg, var(--sage-mid), var(--accent-green));
+            width: 100%; height: 4px; border-radius: 3px;
+            background: linear-gradient(90deg, #E8E8E8, var(--accent-green));
             outline: none; margin: 0;
         }
         .atm-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 20px; height: 20px; border-radius: 50%;
-            background: var(--card-bg); border: 2px solid var(--accent-green);
-            cursor: pointer; box-shadow: 0 2px 6px rgba(13, 18, 19, 0.22);
+            background: #FFFFFF; border: 2px solid var(--accent-green);
+            cursor: pointer; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
         }
         .atm-slider::-moz-range-thumb {
             width: 20px; height: 20px; border-radius: 50%;
-            background: var(--card-bg); border: 2px solid var(--accent-green); cursor: pointer;
+            background: #FFFFFF; border: 2px solid var(--accent-green); cursor: pointer;
         }
         .atm-readout {
             display: flex; flex-wrap: wrap; align-items: baseline;
             gap: 6px; margin-top: 14px;
-            font-size: 13px; font-weight: 700; color: var(--text-main);
+            font-size: 12px; font-weight: 400; color: var(--text-main);
         }
-        .atm-readout strong { font-weight: 900; }
+        .atm-readout strong { font-weight: 600; }
         .atm-arrow { opacity: 0.4; }
         .atm-slider-hint {
-            font-size: 10px; color: var(--forest-dark);
-            opacity: 0.7;
-            margin-top: 10px; font-weight: 600; line-height: 1.4;
+            font-size: 10px; color: var(--text-main);
+            opacity: 0.6;
+            margin-top: 10px; font-weight: 400; line-height: 1.4;
         }
         .atm-edit-link {
-            color: var(--accent-green); cursor: pointer; font-weight: 700;
+            color: var(--accent-green); cursor: pointer; font-weight: 600;
             text-decoration: underline;
         }
 
-        /* === Split CTA (accent-green) === */
+        /* === Split CTA (accent-green pill inside sheet) === */
         .split-trigger-btn {
             background: var(--accent-green); border: none; color: #FFFFFF;
-            font-weight: 800; font-size: 12px; cursor: pointer;
+            font-weight: 600; font-size: 11px; cursor: pointer;
             font-family: inherit; padding: 14px 24px;
             border-radius: 999px; width: 100%;
-            letter-spacing: 1px; text-transform: uppercase;
+            letter-spacing: 1.5px; text-transform: uppercase;
             margin-top: 18px;
         }
 
-        /* === De-cardified Time Machine === */
+        /* === Time Machine (inside white sheet) === */
         .time-machine {
             background: none;
             border: none;
             border-radius: 0;
             padding: 22px 0 8px;
             margin-top: 22px;
-            border-top: 1px solid rgba(13, 18, 19, 0.1);
+            border-top: 1px solid #F0F0F0;
         }
         .time-machine-tag {
-            font-size: 11px; font-weight: 800; color: var(--forest-dark);
+            font-size: 10px; font-weight: 600; color: var(--text-main); opacity: 0.55;
             letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;
-            opacity: 0.72;
         }
         .time-machine-text {
-            font-size: 14px; font-weight: 600; line-height: 1.55; color: var(--text-main);
+            font-size: 13px; font-weight: 400; line-height: 1.55; color: var(--text-main);
         }
-        .time-machine-text .delta-save { color: var(--accent-green); font-weight: 900; }
-        .time-machine-text .delta-cost { color: var(--forest-dark); font-weight: 900; }
+        .time-machine-text .delta-save { color: var(--accent-green); font-weight: 600; }
+        .time-machine-text .delta-cost { color: var(--text-main); font-weight: 600; }
 
-        /* === Guide / Backpack tab header === */
-        .tab-header { padding: 28px 24px 18px; }
+        /* === v7.0 Guide / Backpack tab header === */
+        .tab-header { padding: 14px 2px 12px; }
         .tab-title {
-            font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
+            font-size: 28px; font-weight: 300; letter-spacing: -0.02em;
             color: var(--text-main); line-height: 1.1;
         }
         .tab-subtitle {
-            font-size: 14px; font-weight: 500; color: var(--forest-dark);
-            opacity: 0.75;
+            font-size: 12px; font-weight: 400; color: var(--text-main);
+            opacity: 0.62;
             margin-top: 6px; letter-spacing: 0.1px;
         }
-        .tab-body { padding: 0 20px; }
+        .tab-body { padding: 0; }
 
-        /* === De-cardified Flashcards: accordion rows === */
+        /* === v7.0 Flashcards: minimalist accordion rows on white === */
         .flashcard {
             background: none;
             border: none;
             border-radius: 0;
             margin: 0;
             overflow: hidden; cursor: pointer;
-            border-top: 1px solid rgba(13, 18, 19, 0.1);
+            border-top: 1px solid #F0F0F0;
             transition: all 0.3s ease;
         }
         .tab-body > .flashcard:first-child { border-top: 0; }
         .flashcard-header {
-            padding: 22px 0;
+            padding: 20px 0;
             display: flex; justify-content: space-between; align-items: center; gap: 12px;
         }
         .flashcard-title { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .flashcard-emoji { font-size: 24px; flex-shrink: 0; }
+        .flashcard-emoji { font-size: 22px; flex-shrink: 0; }
         .flashcard-label {
-            font-size: 14px; font-weight: 700; color: var(--text-main); line-height: 1.3;
+            font-size: 13px; font-weight: 500; color: var(--text-main); line-height: 1.3;
         }
         .flashcard-chevron {
-            font-size: 11px; color: var(--sage-mid); transition: transform 0.25s ease;
+            font-size: 10px; color: #BBBBBB; transition: transform 0.25s ease;
         }
         .flashcard.open .flashcard-chevron { transform: rotate(180deg); }
         .flashcard-body {
             max-height: 0; overflow: hidden;
             padding: 0; transition: all 0.3s ease;
-            font-size: 13px; font-weight: 500; line-height: 1.6; color: var(--text-main);
+            font-size: 12px; font-weight: 400; line-height: 1.6; color: var(--text-main);
+            opacity: 0.78;
         }
-        .flashcard.open .flashcard-body { max-height: 300px; padding: 0 0 22px 36px; }
+        .flashcard.open .flashcard-body { max-height: 320px; padding: 0 0 20px 34px; }
 
-        /* === De-cardified Backpack settings: rows with dividers === */
+        /* === v7.0 Backpack settings: minimalist rows on white === */
         .setting-card {
             background: none;
             border: none;
             border-radius: 0;
-            padding: 18px 0; margin: 0;
+            padding: 16px 0; margin: 0;
             display: flex; flex-direction: column; gap: 6px;
-            border-top: 1px solid rgba(13, 18, 19, 0.08);
+            border-top: 1px solid #F0F0F0;
         }
         .tab-body > .setting-card:first-of-type { border-top: 0; }
         .setting-card.toggle-row {
             flex-direction: row; justify-content: space-between; align-items: center;
-            cursor: pointer; padding: 20px 0;
+            cursor: pointer; padding: 18px 0;
         }
-        .setting-label { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        .setting-label { font-size: 13px; font-weight: 500; color: var(--text-main); }
         .setting-val {
-            font-size: 13px; font-weight: 800; color: var(--forest-dark);
-            opacity: 0.75;
+            font-size: 12px; font-weight: 600; color: var(--text-main); opacity: 0.72;
             letter-spacing: 0.3px;
         }
         .setting-row-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
         .setting-input {
             background: none; border: none; color: var(--text-main);
-            font-size: 16px; font-weight: 800; text-align: right;
+            font-size: 16px; font-weight: 400; text-align: right;
             width: 70px; outline: none; font-family: inherit;
-            border-bottom: 1px solid var(--line); padding: 2px 0;
+            border-bottom: 1px solid #EEEEEE; padding: 2px 0;
+            font-variant-numeric: tabular-nums;
         }
         .setting-input:focus { border-bottom-color: var(--accent-green); }
-        .setting-unit { font-size: 13px; font-weight: 800; color: var(--sage-mid); margin-left: 4px; }
+        .setting-unit { font-size: 12px; font-weight: 600; color: var(--text-main); opacity: 0.5; margin-left: 4px; }
         .setting-origin {
-            font-size: 10px; font-weight: 500; color: var(--forest-dark);
-            opacity: 0.72;
+            font-size: 10px; font-weight: 400; color: var(--text-main);
+            opacity: 0.55;
             line-height: 1.4;
         }
-        /* Danger row: communicate via typography only (no border color chrome) */
-        .setting-card.danger { margin-top: 24px; border-top: 1px solid rgba(13, 18, 19, 0.1); }
-        .setting-card.danger .setting-label { color: var(--forest-dark); font-weight: 800; letter-spacing: 0.3px; }
+        .setting-card.danger { margin-top: 24px; border-top: 1px solid #F0F0F0; }
+        .setting-card.danger .setting-label { color: var(--text-main); font-weight: 600; letter-spacing: 0.3px; opacity: 0.85; }
 
         .wallet-section-title {
-            font-size: 11px; font-weight: 800; color: var(--forest-dark);
-            opacity: 0.72;
+            font-size: 10px; font-weight: 600; color: var(--text-main); opacity: 0.55;
             text-transform: uppercase; letter-spacing: 1.5px;
-            margin: 24px 4px 10px;
+            margin: 22px 2px 8px;
         }
         .wallet-section-hint {
-            font-size: 11px; font-weight: 500; color: var(--forest-dark);
-            opacity: 0.72;
-            margin: -4px 4px 10px; line-height: 1.4;
+            font-size: 11px; font-weight: 400; color: var(--text-main);
+            opacity: 0.62;
+            margin: -4px 2px 10px; line-height: 1.4;
         }
 
-        /* === De-cardified Anchor rows === */
-        .anchor-row { padding: 14px 0; }
+        /* === v7.0 Anchor rows (minimalist on white) === */
+        .anchor-row { padding: 12px 0; }
         .anchor-row-line {
             display: grid;
             grid-template-columns: 32px 1fr 68px 50px 22px;
@@ -453,269 +563,304 @@
         }
         .anchor-emoji-in, .anchor-label-in, .anchor-price-in {
             background: none; border: none; color: var(--text-main);
-            font-weight: 600; font-size: 13px; outline: none; font-family: inherit;
-            border-bottom: 1px solid var(--line); padding: 4px 2px;
+            font-weight: 400; font-size: 13px; outline: none; font-family: inherit;
+            border-bottom: 1px solid #EEEEEE; padding: 4px 2px;
         }
         .anchor-emoji-in { font-size: 16px; text-align: center; }
         .anchor-label-in { width: 100%; }
-        .anchor-price-in { text-align: right; font-weight: 800; }
+        .anchor-price-in { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
         .anchor-emoji-in:focus, .anchor-label-in:focus, .anchor-price-in:focus {
             border-bottom-color: var(--accent-green);
         }
         .anchor-currency-btn {
-            background: var(--sage-light); border: none; border-radius: 8px;
-            color: var(--text-main); font-weight: 800; font-size: 11px;
+            background: #F5F5F7; border: none; border-radius: 8px;
+            color: var(--text-main); font-weight: 600; font-size: 11px;
             cursor: pointer; padding: 6px 4px; font-family: inherit;
             letter-spacing: 0.3px;
         }
         .anchor-delete-btn {
-            background: none; border: none; color: var(--sage-mid);
+            background: none; border: none; color: #CCCCCC;
             font-size: 15px; cursor: pointer; padding: 2px; line-height: 1;
             font-family: inherit;
         }
         .anchor-add-btn {
             background: transparent;
             border: none;
-            padding: 18px 0; width: 100%;
-            color: var(--accent-green); font-weight: 800; font-size: 12px;
+            padding: 16px 0; width: 100%;
+            color: var(--accent-green); font-weight: 600; font-size: 11px;
             cursor: pointer; font-family: inherit; margin-top: 4px;
-            letter-spacing: 0.8px; text-transform: uppercase;
+            letter-spacing: 1.5px; text-transform: uppercase;
             text-align: left;
-            border-top: 1px solid rgba(13, 18, 19, 0.08);
+            border-top: 1px solid #F0F0F0;
         }
         .anchor-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .footer {
-            padding: 40px 0 24px; text-align: center;
-            color: var(--forest-dark); font-size: 12px; line-height: 1.7;
-            letter-spacing: 0.3px; opacity: 0.72;
-        }
-        .footer-version {
-            display: block; margin-top: 6px; font-weight: 700;
-            letter-spacing: 2px; opacity: 0.6; font-size: 10px;
+            padding: 30px 0 14px; text-align: center;
+            color: var(--text-main); font-size: 11px; line-height: 1.7;
+            letter-spacing: 0.3px; opacity: 0.45;
+            font-weight: 400;
         }
 
-        /* === Lumina dock (black, top-rounded both corners) === */
+        /* === v7.0 Dock — sits flush on white sheet === */
         .dock {
             position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
             width: 100%; max-width: 500px;
-            height: calc(72px + var(--safe-b));
-            background: var(--black-base);
-            border-top-left-radius: 32px;
-            border-top-right-radius: 32px;
+            height: calc(66px + var(--safe-b));
+            background: #FFFFFF;
+            border-top: 1px solid #F0F0F0;
             display: flex; justify-content: space-around;
-            padding: 8px 0 var(--safe-b);
+            padding: 4px 0 var(--safe-b);
             z-index: 9999;
-            box-shadow: 0 -4px 20px rgba(13, 18, 19, 0.22);
         }
         .dock-btn {
             flex: 1; border: none; background: none;
-            color: var(--sage-mid);
+            color: rgba(13, 18, 19, 0.4);
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 4px;
+            justify-content: center; gap: 3px;
             cursor: pointer; min-height: 44px; padding: 6px;
             font-family: inherit;
             transition: color 0.2s ease;
         }
         .dock-btn.active { color: var(--accent-green); }
         .dock-icon {
-            width: 22px; height: 22px;
+            width: 20px; height: 20px;
             stroke: currentColor; stroke-width: 1.6;
             fill: none; stroke-linecap: round; stroke-linejoin: round;
         }
         .dock-lbl {
-            font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+            font-size: 9px; font-weight: 600; letter-spacing: 1.2px;
             text-transform: uppercase;
         }
 
-        /* === Modals === */
+        /* === Modals — v7.0 white sheets on dim backdrop === */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(13, 18, 19, 0.62);
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55);
             z-index: 10000; display: flex; align-items: flex-end;
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-sheet {
             width: 100%; max-width: 500px; margin: 0 auto;
-            background: var(--card-bg);
-            border-radius: 28px 28px 0 0;
-            padding: 24px 20px calc(24px + var(--safe-b));
+            background: #FFFFFF;
+            border-top-left-radius: 32px; border-top-right-radius: 32px;
+            padding: 24px 22px calc(24px + var(--safe-b));
             transform: translateY(100%);
             transition: transform 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 -8px 24px rgba(13, 18, 19, 0.18);
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
         }
         .modal-overlay.show .modal-sheet { transform: translateY(0); }
         .modal-header {
-            font-size: 11px; font-weight: 800; text-align: center;
-            margin-bottom: 18px; color: var(--forest-dark);
-            opacity: 0.75;
-            text-transform: uppercase; letter-spacing: 1.5px;
+            font-size: 10px; font-weight: 600; text-align: center;
+            margin-bottom: 18px; color: var(--text-main);
+            text-transform: uppercase; letter-spacing: 1.8px;
+            opacity: 0.7;
         }
         .modal-list {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
             max-height: 50vh; overflow-y: auto; padding-bottom: 4px;
         }
         .modal-item {
             display: flex; align-items: center; justify-content: center; gap: 10px;
             padding: 14px; border-radius: 14px;
-            background: var(--sage-light);
-            font-size: 15px; font-weight: 800; cursor: pointer; color: var(--text-main);
+            background: #F5F5F7;
+            font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text-main);
             border: 1px solid transparent;
             transition: background 0.15s, transform 0.12s;
             font-family: inherit;
+            letter-spacing: 0.3px;
         }
-        .modal-item.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); }
+        .modal-item.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); font-weight: 600; }
         .modal-flag { font-size: 18px; }
 
-        /* === Split modal === */
+        /* === v7.0 Split modal === */
         .split-sheet { padding-bottom: calc(30px + var(--safe-b)); }
         .split-bill {
             display: flex; justify-content: space-between; align-items: baseline;
             margin-bottom: 18px; padding-bottom: 14px;
-            border-bottom: 1px solid var(--line);
+            border-bottom: 1px solid #F0F0F0;
         }
-        .split-bill-amt { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); }
+        .split-bill-amt { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--text-main); font-variant-numeric: tabular-nums; }
         .split-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .split-row-col { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
         .split-label {
-            font-size: 11px; font-weight: 800; letter-spacing: 1px;
-            color: var(--forest-dark); opacity: 0.75; text-transform: uppercase;
+            font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+            color: var(--text-main); opacity: 0.62;
+            text-transform: uppercase;
         }
         .split-stepper { display: flex; align-items: center; gap: 14px; }
         .split-step-btn {
             width: 32px; height: 32px; border-radius: 50%;
-            border: 1px solid var(--line);
-            background: var(--sage-light); color: var(--text-main);
-            font-size: 17px; font-weight: 700; cursor: pointer;
+            border: 1px solid #EEEEEE;
+            background: #F5F5F7; color: var(--text-main);
+            font-size: 16px; font-weight: 400; cursor: pointer;
             font-family: inherit; line-height: 1;
             display: flex; align-items: center; justify-content: center;
         }
         .split-step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .split-step-val { min-width: 30px; text-align: center; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--text-main); }
+        .split-step-val { min-width: 30px; text-align: center; font-size: 20px; font-weight: 300; letter-spacing: -0.01em; color: var(--text-main); font-variant-numeric: tabular-nums; }
         .split-seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         .split-seg-btn {
             padding: 10px 4px; border-radius: 10px;
-            border: 1px solid var(--line); background: var(--sage-light);
+            border: 1px solid #EEEEEE; background: #F5F5F7;
             color: var(--text-main); cursor: pointer;
-            font-size: 11px; font-weight: 700; font-family: inherit;
-            letter-spacing: 0.2px; line-height: 1.3;
+            font-size: 11px; font-weight: 500; font-family: inherit;
+            letter-spacing: 0.3px; line-height: 1.3;
             transition: background 0.15s;
         }
-        .split-seg-btn.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); }
+        .split-seg-btn.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); font-weight: 600; }
         .split-result {
             margin-top: 18px; padding: 18px;
-            background: var(--sage-light); border-radius: 16px;
+            background: #F5F5F7; border-radius: 16px;
         }
-        .split-actual { font-size: 12px; font-weight: 600; color: var(--forest-dark); opacity: 0.75; margin-bottom: 6px; }
-        .split-per-share { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-main); }
+        .split-actual { font-size: 11px; font-weight: 500; color: var(--text-main); opacity: 0.6; margin-bottom: 6px; letter-spacing: 0.3px; }
+        .split-per-share { font-size: 13px; font-weight: 500; line-height: 1.4; color: var(--text-main); }
         .split-per-share strong {
-            font-size: 28px; font-weight: 700; color: var(--accent-green);
+            font-size: 28px; font-weight: 300; color: var(--accent-green);
             letter-spacing: -0.02em; display: block; margin-top: 2px;
             transition: color 0.35s ease;
+            font-variant-numeric: tabular-nums;
         }
-        .split-hint { font-size: 10px; color: var(--forest-dark); opacity: 0.75; font-weight: 500; margin-top: 6px; }
+        .split-hint { font-size: 10px; color: var(--text-main); opacity: 0.55; font-weight: 400; margin-top: 6px; }
         .split-empty {
             padding: 30px 10px; text-align: center;
-            color: var(--forest-dark); opacity: 0.8; font-size: 13px; font-weight: 500; line-height: 1.5;
+            color: var(--text-main); opacity: 0.55; font-size: 12px; font-weight: 400; line-height: 1.5;
         }
 
         ::-webkit-scrollbar { display: none; }
 
-        /* === v6.3 Lumina Calculatrice keypad === */
-        .keypad-sheet { padding: 12px 16px calc(24px + var(--safe-b)); max-height: 72vh; }
+        /* === v7.0 Ghost numpad — 3x4 grid, no bg, no borders === */
+        .keypad-sheet {
+            padding: 0 18px calc(18px + var(--safe-b));
+            max-height: 72vh;
+            background: #FFFFFF;
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.28);
+        }
         .keypad-display {
-            padding: 14px 14px 18px;
-            font-size: 30px; font-weight: 700; color: var(--accent-green);
+            padding: 14px 8px 14px;
+            font-size: 26px; font-weight: 300; color: var(--text-main);
             text-align: right; letter-spacing: -0.02em;
-            min-height: 52px;
+            min-height: 50px;
             word-break: break-all; overflow-wrap: break-word;
-            border-bottom: 1px solid var(--line);
-            margin-bottom: 14px;
+            border-bottom: 1px solid #F0F0F0;
+            margin-bottom: 6px;
+            font-variant-numeric: tabular-nums;
         }
         .keypad-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            padding: 4px 0;
         }
         .keypad-btn {
-            aspect-ratio: 1.35 / 1;
-            background: var(--sage-light);
+            aspect-ratio: 1.55 / 1;
+            background: transparent;
             border: none; border-radius: 16px;
             color: var(--text-main);
-            font-family: inherit; font-size: 22px; font-weight: 600;
+            font-family: inherit; font-size: 28px; font-weight: 400;
             cursor: pointer; letter-spacing: -0.01em;
             display: flex; align-items: center; justify-content: center;
             transition: background 0.15s ease, transform 0.1s ease;
         }
-        .keypad-btn:active:not(:disabled) { transform: scale(0.94); background: #C2CEC7; }
-        .keypad-btn.keypad-op {
-            background: var(--forest-dark);
-            color: var(--accent-green);
-            font-weight: 700;
+        .keypad-btn:active:not(:disabled) {
+            background: rgba(13, 18, 19, 0.06);
+            transform: scale(0.96);
         }
-        .keypad-btn.keypad-op:active { background: #1F2A25; }
-        .keypad-btn.keypad-done {
-            grid-column: span 2;
-            aspect-ratio: auto;
+        .keypad-btn.keypad-alt {
+            color: rgba(13, 18, 19, 0.55);
+            font-weight: 300;
+        }
+        .keypad-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+            gap: 6px;
+            padding: 8px 0 0;
+            margin-top: 6px;
+            border-top: 1px solid #F0F0F0;
+        }
+        .keypad-action {
+            background: transparent; border: none;
+            color: var(--text-main);
+            font-family: inherit; font-size: 13px; font-weight: 600;
+            padding: 14px 0; cursor: pointer;
+            border-radius: 14px;
+            letter-spacing: 0.6px;
+            transition: background 0.15s ease;
+        }
+        .keypad-action:active { background: rgba(13, 18, 19, 0.06); }
+        .keypad-action.keypad-done {
             background: var(--accent-green); color: #FFFFFF;
-            font-weight: 800; font-size: 14px; letter-spacing: 1.2px;
-            text-transform: uppercase;
-            padding: 18px 0;
+            font-weight: 600; letter-spacing: 1.5px;
+            text-transform: uppercase; font-size: 11px;
         }
-        .keypad-btn.keypad-done:active { background: #4A7E63; }
+        .keypad-action.keypad-done:active { background: #4A7E63; }
 
-        /* === v6.3 Smart PPP Discovery === */
-        .discovery-sheet { padding: 24px 20px calc(30px + var(--safe-b)); max-height: 82vh; display: flex; flex-direction: column; }
-        .discovery-pills {
-            display: flex; gap: 8px; padding: 0 0 16px;
-            overflow-x: auto; -webkit-overflow-scrolling: touch;
+        /* === v7.0 Infinite Anchor Search === */
+        .discovery-sheet { padding: 22px 22px calc(28px + var(--safe-b)); max-height: 82vh; display: flex; flex-direction: column; }
+        .search-bar {
+            display: flex; gap: 8px; align-items: center;
+            padding: 6px 0 16px;
         }
-        .discovery-pill {
-            flex-shrink: 0;
-            padding: 8px 14px; border-radius: 999px;
-            border: 1px solid var(--line); background: var(--sage-light);
-            color: var(--text-main); cursor: pointer;
-            font-family: inherit; font-size: 12px; font-weight: 700;
-            letter-spacing: 0.3px;
-            transition: background 0.15s ease, color 0.15s ease;
+        .search-input {
+            flex: 1;
+            background: #F5F5F7;
+            border: 1px solid #EEEEEE; border-radius: 12px;
+            padding: 12px 14px;
+            font-family: inherit; font-size: 13px; font-weight: 400;
+            color: var(--text-main); outline: none;
+            -webkit-appearance: none;
         }
-        .discovery-pill.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); }
-        .discovery-list {
+        .search-input:focus { border-color: var(--accent-green); background: #FFFFFF; }
+        .search-input::placeholder { color: var(--text-main); opacity: 0.42; }
+        .search-submit {
+            background: var(--accent-green); color: #FFFFFF; border: none;
+            border-radius: 12px; padding: 12px 18px;
+            font-family: inherit; font-size: 11px; font-weight: 600;
+            cursor: pointer; letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+        .search-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+        .search-status {
+            padding: 18px 4px;
+            font-size: 12px; font-weight: 400;
+            color: var(--text-main); opacity: 0.7;
+            text-align: center; line-height: 1.5;
+        }
+        .search-status.error { color: var(--accent-green); opacity: 1; font-weight: 600; }
+        .suggestions-label {
+            font-size: 10px; font-weight: 600; color: var(--text-main);
+            opacity: 0.55; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 0 2px 8px;
+        }
+        .suggestions-list {
             flex: 1; overflow-y: auto;
             display: flex; flex-direction: column;
         }
-        .discovery-item {
+        .suggestion-chip {
             display: grid;
-            grid-template-columns: 28px 1fr auto 32px;
+            grid-template-columns: 28px 1fr auto;
             gap: 12px; align-items: center;
-            padding: 14px 4px;
-            border-top: 1px solid rgba(13, 18, 19, 0.08);
+            padding: 14px 2px;
+            border: 0; border-top: 1px solid #F0F0F0;
+            background: transparent;
+            font-family: inherit; text-align: left; cursor: pointer;
+            width: 100%;
         }
-        .discovery-item:first-child { border-top: 0; }
-        .discovery-emoji { font-size: 20px; line-height: 1; }
-        .discovery-label { font-size: 14px; font-weight: 600; color: var(--text-main); }
-        .discovery-price {
-            font-size: 13px; font-weight: 800; color: var(--forest-dark);
-            opacity: 0.78; letter-spacing: 0.2px;
-            font-feature-settings: "tnum";
-        }
-        .discovery-add {
-            background: var(--accent-green); color: #FFFFFF; border: none;
-            width: 28px; height: 28px; border-radius: 50%;
-            font-family: inherit; font-size: 16px; font-weight: 900;
-            cursor: pointer; line-height: 1;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .discovery-add:active { transform: scale(0.92); }
-        .discovery-empty {
-            padding: 30px 10px; text-align: center;
-            color: var(--forest-dark); opacity: 0.7;
-            font-size: 13px; font-weight: 500; line-height: 1.5;
+        .suggestion-chip:first-child { border-top: 0; }
+        .suggestion-chip:active { transform: scale(0.985); background: rgba(0, 0, 0, 0.03); }
+        .suggestion-emoji { font-size: 20px; line-height: 1; }
+        .suggestion-label { font-size: 13px; font-weight: 400; color: var(--text-main); }
+        .suggestion-price {
+            font-size: 12px; font-weight: 600; color: var(--text-main);
+            opacity: 0.68; letter-spacing: 0.2px;
+            font-variant-numeric: tabular-nums;
         }
         .discovery-disclaimer {
             padding: 14px 8px 0;
-            font-size: 10px; font-weight: 500;
-            color: var(--forest-dark); opacity: 0.55;
+            font-size: 10px; font-weight: 400;
+            color: var(--text-main); opacity: 0.5;
             text-align: center; letter-spacing: 0.2px;
             line-height: 1.4;
         }
@@ -795,26 +940,29 @@
 
 <div id="calc-keypad" class="modal-overlay" onclick="closeKeypad()">
     <div class="modal-sheet keypad-sheet" onclick="event.stopPropagation()">
+        <div class="sheet-handle"></div>
         <div class="keypad-display" id="keypad-expr">0</div>
         <div class="keypad-grid">
             <button class="keypad-btn" onclick="updateKeypad('1')">1</button>
             <button class="keypad-btn" onclick="updateKeypad('2')">2</button>
             <button class="keypad-btn" onclick="updateKeypad('3')">3</button>
-            <button class="keypad-btn keypad-op" onclick="updateKeypad('back')">⌫</button>
 
             <button class="keypad-btn" onclick="updateKeypad('4')">4</button>
             <button class="keypad-btn" onclick="updateKeypad('5')">5</button>
             <button class="keypad-btn" onclick="updateKeypad('6')">6</button>
-            <button class="keypad-btn keypad-op" onclick="updateKeypad('+')">+</button>
 
             <button class="keypad-btn" onclick="updateKeypad('7')">7</button>
             <button class="keypad-btn" onclick="updateKeypad('8')">8</button>
             <button class="keypad-btn" onclick="updateKeypad('9')">9</button>
-            <button class="keypad-btn keypad-op" onclick="updateKeypad('.')">.</button>
 
-            <button class="keypad-btn keypad-op" onclick="updateKeypad('clear')">C</button>
+            <button class="keypad-btn keypad-alt" onclick="updateKeypad('.')">.</button>
             <button class="keypad-btn" onclick="updateKeypad('0')">0</button>
-            <button class="keypad-btn keypad-done" onclick="closeKeypad()">Done</button>
+            <button class="keypad-btn keypad-alt" onclick="updateKeypad('back')">⌫</button>
+        </div>
+        <div class="keypad-actions">
+            <button class="keypad-action" onclick="updateKeypad('clear')">C</button>
+            <button class="keypad-action" onclick="updateKeypad('+')">+</button>
+            <button class="keypad-action keypad-done" onclick="closeKeypad()">Done</button>
         </div>
     </div>
 </div>
@@ -822,8 +970,15 @@
 <div id="ppp-discovery" class="modal-overlay" onclick="closeDiscovery()">
     <div class="modal-sheet discovery-sheet" onclick="event.stopPropagation()">
         <div class="modal-header" id="discovery-title"></div>
-        <div class="discovery-pills" id="discovery-pills"></div>
-        <div class="discovery-list" id="discovery-list"></div>
+        <div class="search-bar">
+            <input type="text" id="search-input" class="search-input"
+                placeholder=""
+                onkeydown="if(event.key==='Enter'){event.preventDefault();searchAnchor();}">
+            <button class="search-submit" id="search-submit" onclick="searchAnchor()">Go</button>
+        </div>
+        <div id="search-status"></div>
+        <div class="suggestions-label" id="suggestions-label"></div>
+        <div class="suggestions-list" id="suggestions-list"></div>
         <div class="discovery-disclaimer" id="discovery-disclaimer"></div>
     </div>
 </div>
@@ -834,6 +989,15 @@
         EUR: '🇪🇺', USD: '🇺🇸', GBP: '🇬🇧', JPY: '🇯🇵', AUD: '🇦🇺',
         CAD: '🇨🇦', CHF: '🇨🇭', CNY: '🇨🇳', SGD: '🇸🇬', HKD: '🇭🇰'
     };
+    const CURS_NAMES = {
+        en: { EUR: 'Euro', USD: 'US Dollar', GBP: 'British Pound', JPY: 'Japanese Yen', AUD: 'Australian Dollar', CAD: 'Canadian Dollar', CHF: 'Swiss Franc', CNY: 'Chinese Yuan', SGD: 'Singapore Dollar', HKD: 'Hong Kong Dollar' },
+        zh: { EUR: '欧元', USD: '美元', GBP: '英镑', JPY: '日元', AUD: '澳元', CAD: '加元', CHF: '瑞郎', CNY: '人民币', SGD: '新元', HKD: '港元' },
+        fr: { EUR: 'Euro', USD: 'Dollar US', GBP: 'Livre Sterling', JPY: 'Yen', AUD: 'Dollar AU', CAD: 'Dollar CA', CHF: 'Franc Suisse', CNY: 'Yuan', SGD: 'Dollar SG', HKD: 'Dollar HK' }
+    };
+    function currencyName(code) {
+        const lang = (typeof S !== 'undefined' && S.lang) ? S.lang : 'en';
+        return (CURS_NAMES[lang] && CURS_NAMES[lang][code]) || code;
+    }
 
     const ICONS = {
         compass: '<svg class="dock-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
@@ -845,10 +1009,10 @@
 
     const MAX_ANCHORS = 5;
 
-    // === v6.3 GLOBAL_PPP_DB — extended price matrix by category ===
-    // [推论 · PM baseline 2026]: All prices are PM-curated references, not live data.
+    // === GLOBAL_PPP_DB — suggestion seed for the v6.4 search flow ===
+    // [推论 · PM baseline 2026]: PM-curated references, not live data.
     // Structure: { currency: { city, food[], grocery[], tech[], shopping[] } }
-    // fetchSmartPPP() will (in v7.x) SWR-merge remote updates via Edge Worker.
+    // Used to populate the "Popular in {city}" chip strip; LLM search bypasses this.
     const GLOBAL_PPP_DB = {
         EUR: {
             city: 'Paris',
@@ -1164,11 +1328,15 @@
             anchorsTitle: "My Price Anchors",
             anchorsHint: "Edit the seeded items or add your own. We never invent prices — delete any you disagree with.",
             anchorAdd: "+ Add an anchor",
-            anchorDiscover: "+ Browse price anchors",
-            pppDiscoveryTitle: "Discover price anchors",
-            pppCategory: { food: "Food", grocery: "Grocery", tech: "Tech", shopping: "Shopping" },
-            pppNoData: "No {city} prices curated yet.",
-            pppDisclaimer: "Reference values — actuals vary. Edit after adding.",
+            anchorDiscover: "+ Search price anchors",
+            pppDiscoveryTitle: "Search any price, anywhere",
+            searchPlaceholder: "e.g., PS5 in Japan, coffee in Rome",
+            searchSubmit: "Go",
+            searching: "Searching…",
+            searchError: "Couldn't fetch that. Try again.",
+            maxAnchors: "Anchor limit reached (5). Remove one to add more.",
+            suggestionsLabel: "Popular in {city}",
+            pppDisclaimer: "AI-estimated reference values — actuals vary. Edit after adding.",
             anchorEmojiPh: "🍜",
             anchorLabelPh: "Name (City)",
             clearLabel: "Reset (clear everything)",
@@ -1243,11 +1411,15 @@
             anchorsTitle: "我的物价参照物",
             anchorsHint: "编辑默认值或添加你自己的。我们不替你编数据 — 不认可的直接删。",
             anchorAdd: "+ 添加参照物",
-            anchorDiscover: "+ 浏览物价参照",
-            pppDiscoveryTitle: "探索物价参照物",
-            pppCategory: { food: "餐饮", grocery: "超市", tech: "数码", shopping: "消费" },
-            pppNoData: "暂无 {city} 的参考数据。",
-            pppDisclaimer: "参考值,实际以当地为准,添加后可修改。",
+            anchorDiscover: "+ 搜索任意物价",
+            pppDiscoveryTitle: "搜索任意物价,任意城市",
+            searchPlaceholder: "例如:日本的 PS5、罗马的咖啡",
+            searchSubmit: "搜索",
+            searching: "搜索中…",
+            searchError: "获取失败,请重试。",
+            maxAnchors: "参照物已达上限(5 条),请先删除再添加。",
+            suggestionsLabel: "{city} 常见",
+            pppDisclaimer: "AI 估算的参考值,实际以当地为准,添加后可修改。",
             anchorEmojiPh: "🍜",
             anchorLabelPh: "名称(城市)",
             clearLabel: "重置(清空所有)",
@@ -1322,11 +1494,15 @@
             anchorsTitle: "Mes Repères de Prix",
             anchorsHint: "Modifiez les valeurs de départ ou ajoutez les vôtres. On n'invente jamais — supprimez ce avec quoi vous n'êtes pas d'accord.",
             anchorAdd: "+ Ajouter un repère",
-            anchorDiscover: "+ Explorer les repères",
-            pppDiscoveryTitle: "Repères de prix",
-            pppCategory: { food: "Restauration", grocery: "Épicerie", tech: "Tech", shopping: "Loisirs" },
-            pppNoData: "Aucun prix {city} curé pour le moment.",
-            pppDisclaimer: "Valeurs indicatives — les prix réels varient. Modifiable après ajout.",
+            anchorDiscover: "+ Rechercher un repère",
+            pppDiscoveryTitle: "Cherchez n'importe quel prix",
+            searchPlaceholder: "ex. PS5 au Japon, café à Rome",
+            searchSubmit: "OK",
+            searching: "Recherche…",
+            searchError: "Échec de la recherche. Réessayez.",
+            maxAnchors: "Limite atteinte (5 repères). Supprimez-en un pour continuer.",
+            suggestionsLabel: "Populaire à {city}",
+            pppDisclaimer: "Valeurs indicatives estimées par IA — les prix réels varient. Modifiable après ajout.",
             anchorEmojiPh: "🥐",
             anchorLabelPh: "Nom (Ville)",
             clearLabel: "Réinitialiser (tout effacer)",
@@ -1711,44 +1887,75 @@
         if (S.activeTab === 'weather') { tickRoutes(); tickPPP(); }
     }
 
-    // === Weather tab ===
+    // === Weather tab (v7.0 — floating hero + white sheet) ===
     function vWeather() {
         const d = t();
         const bannerShown = localStorage.getItem('fx_banner_dismissed') !== 'true';
         const dccText = d.dccShield.replace('{BASE}', S.base).replace('{TARGET}', S.target);
+        const targetAmount = (S.amount && S.cr) ? (S.amount * S.cr) : 0;
+        const targetStr = targetAmount > 0
+            ? targetAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })
+            : '—';
+        const baseFull = currencyName(S.base);
+        const targetFull = currencyName(S.target);
 
         return `
             <section class="hero">
-                <div class="pair-selector">
-                    <span class="picker-unit" onclick="openCurrencyModal('base')">${S.base}</span>
-                    <span class="pair-sep">→</span>
-                    <span class="picker-unit" onclick="openCurrencyModal('target')">${S.target}</span>
-                </div>
-                <div class="amount-wrap">
+                <div class="hero-block">
+                    <div class="hero-row">
+                        <span class="hero-label picker-unit" onclick="openCurrencyModal('base')">${S.base} · ${baseFull}</span>
+                    </div>
                     <input type="text" id="calc-in" class="hero-amount-input"
                         value="${S.amount > 0 ? Number(S.amount).toLocaleString() : ''}"
                         readonly inputmode="none"
                         onclick="openKeypad()">
-                    <span class="hero-amount-label">${d.heroAmountLabel}</span>
                 </div>
-                <div class="weather-label">${renderHeroWeatherLabel()}</div>
+                <div class="hero-divider">
+                    <button class="hero-swap-btn" onclick="swapCurrencies()" aria-label="swap">
+                        <svg class="hero-swap-icon" viewBox="0 0 24 24">
+                            <path d="M3 7h15M15 4l3 3-3 3M21 17H6M9 20l-3-3 3-3"/>
+                        </svg>
+                    </button>
+                    <div class="hero-divider-line"></div>
+                </div>
+                <div class="hero-block">
+                    <div class="hero-row">
+                        <span class="hero-label picker-unit" onclick="openCurrencyModal('target')">${S.target} · ${targetFull}</span>
+                    </div>
+                    <div class="hero-target-amount" id="hero-target-amount">${targetStr}</div>
+                </div>
+                <div class="action-pills">
+                    <span class="action-pill" role="status">${renderHeroWeatherLabel()}</span>
+                    <button class="action-pill" onclick="openSplitModal()" aria-label="split">${d.splitTrigger || 'AA'}</button>
+                </div>
             </section>
-
-            <section class="ppp-bar" id="ppp-slot">${renderPPPContent()}</section>
-
-            <section class="routes-section">
-                <div class="dcc-shield">${dccText}</div>
-                ${bannerShown ? `
-                    <div class="first-run-banner" onclick="dismissBanner(true)">
-                        <span class="banner-text">${d.bannerDefault}</span>
-                        <button class="banner-close" onclick="event.stopPropagation(); dismissBanner(false)" aria-label="close">✕</button>
-                    </div>` : ''}
-                <div class="section-label">${d.routesSection}</div>
-                <div id="routing-panel">${renderRoutes()}</div>
-                <button class="split-trigger-btn" onclick="openSplitModal()">${d.splitTrigger}</button>
-                <div id="time-machine-slot">${renderTimeMachine()}</div>
-            </section>
+            <div class="bottom-sheet">
+                <div class="sheet-handle"></div>
+                <section class="ppp-bar" id="ppp-slot">${renderPPPContent()}</section>
+                <section class="routes-section">
+                    <div class="dcc-shield"><span class="dcc-shield-icon">!</span>${dccText}</div>
+                    ${bannerShown ? `
+                        <div class="first-run-banner" onclick="dismissBanner(true)">
+                            <span class="banner-text">${d.bannerDefault}</span>
+                            <button class="banner-close" onclick="event.stopPropagation(); dismissBanner(false)" aria-label="close">✕</button>
+                        </div>` : ''}
+                    <div class="section-label">${d.routesSection}</div>
+                    <div id="routing-panel">${renderRoutes()}</div>
+                    <div id="time-machine-slot">${renderTimeMachine()}</div>
+                </section>
+            </div>
         `;
+    }
+
+    async function swapCurrencies() {
+        haptic();
+        const tmp = S.base;
+        S.base = S.target;
+        S.target = tmp;
+        resetCostCaches();
+        renderContent();
+        await fetchR();
+        renderContent();
     }
 
     function renderPPPContent() {
@@ -2038,6 +2245,13 @@
             S.amount = result;
             const input = document.getElementById('calc-in');
             if (input) input.value = result > 0 ? Number(result.toFixed(2)).toLocaleString() : '';
+            const targetEl = document.getElementById('hero-target-amount');
+            if (targetEl) {
+                const tv = (result > 0 && S.cr) ? (result * S.cr) : 0;
+                targetEl.textContent = tv > 0
+                    ? tv.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                    : '—';
+            }
             const panel = document.getElementById('routing-panel');
             if (panel) { panel.innerHTML = renderRoutes(); tickRoutes(); }
             const pppSlot = document.getElementById('ppp-slot');
@@ -2045,21 +2259,27 @@
         }
     }
 
-    // === v6.3 Smart Discovery PPP ===
-    let _discoveryCategory = 'food';
-    const DISCOVERY_CATS = ['food', 'grocery', 'tech', 'shopping'];
+    // === v6.4 Infinite Anchor Engine ===
+    // Search any item in any currency. LLM returns {emoji, label, price, currency}
+    // cached directly into fx_anchors. Local GLOBAL_PPP_DB still seeds suggestion chips.
+    const LLM_SEARCH_ENDPOINT = 'https://api.ourdomain.com/search-ppp';
+    const LOCAL_CATS = ['food', 'grocery', 'tech', 'shopping'];
 
     function openDiscovery() {
         haptic();
-        _discoveryCategory = 'food';
         const d = t();
         document.getElementById('discovery-title').textContent = d.pppDiscoveryTitle;
         document.getElementById('discovery-disclaimer').textContent = d.pppDisclaimer;
-        renderDiscoveryBody();
+        const input = document.getElementById('search-input');
+        input.value = '';
+        input.placeholder = d.searchPlaceholder;
+        document.getElementById('search-submit').textContent = d.searchSubmit;
+        document.getElementById('search-status').textContent = '';
+        document.getElementById('search-status').className = '';
+        renderSuggestions();
         document.getElementById('ppp-discovery').classList.add('show');
         document.body.style.overflow = 'hidden';
-        // SWR: stale-while-revalidate. For v6.3 this is a no-op stub.
-        fetchSmartPPP();
+        setTimeout(() => input.focus(), 120);
     }
 
     function closeDiscovery() {
@@ -2068,46 +2288,43 @@
         document.body.style.overflow = '';
     }
 
-    function selectCategory(cat) {
-        haptic();
-        _discoveryCategory = cat;
-        renderDiscoveryBody();
-    }
-
-    function renderDiscoveryBody() {
+    function renderSuggestions() {
         const d = t();
-        const pills = DISCOVERY_CATS.map(c => `
-            <button class="discovery-pill${_discoveryCategory === c ? ' active' : ''}"
-                onclick="selectCategory('${c}')">${d.pppCategory[c]}</button>
-        `).join('');
-        document.getElementById('discovery-pills').innerHTML = pills;
-
         const data = GLOBAL_PPP_DB[S.base];
-        const items = (data && data[_discoveryCategory]) || [];
-        const cityLabel = data ? data.city : S.base;
-        const listEl = document.getElementById('discovery-list');
-        if (items.length === 0) {
-            listEl.innerHTML = `<div class="discovery-empty">${d.pppNoData.replace('{city}', cityLabel)}</div>`;
+        const labelEl = document.getElementById('suggestions-label');
+        const listEl = document.getElementById('suggestions-list');
+        if (!data) {
+            labelEl.textContent = '';
+            listEl.innerHTML = '';
             return;
         }
-        listEl.innerHTML = items.map((item, i) => `
-            <div class="discovery-item">
-                <span class="discovery-emoji">${item.emoji}</span>
-                <span class="discovery-label">${escapeHtml(item.label)}</span>
-                <span class="discovery-price">${item.price} ${S.base}</span>
-                <button class="discovery-add" onclick="addAnchorFromPPP(${i})" aria-label="add">+</button>
-            </div>
+        labelEl.textContent = d.suggestionsLabel.replace('{city}', data.city);
+        // Flatten: pick 1 item per category for a compact popular strip
+        const picks = [];
+        LOCAL_CATS.forEach(cat => {
+            const items = data[cat] || [];
+            if (items.length > 0) picks.push({ cat, item: items[0] });
+        });
+        listEl.innerHTML = picks.map(p => `
+            <button class="suggestion-chip" onclick="addSuggestedAnchor('${p.cat}', 0)">
+                <span class="suggestion-emoji">${p.item.emoji}</span>
+                <span class="suggestion-label">${escapeHtml(p.item.label)}</span>
+                <span class="suggestion-price">${p.item.price} ${S.base}</span>
+            </button>
         `).join('');
     }
 
-    function addAnchorFromPPP(idx) {
+    function addSuggestedAnchor(cat, idx) {
         haptic();
         const data = GLOBAL_PPP_DB[S.base];
-        const item = data && data[_discoveryCategory] ? data[_discoveryCategory][idx] : null;
+        const item = data && data[cat] ? data[cat][idx] : null;
         if (!item) return;
+        const d = t();
         const arr = getAnchors();
         if (arr.length >= MAX_ANCHORS) {
-            closeDiscovery();
+            const status = document.getElementById('search-status');
+            status.textContent = d.maxAnchors;
+            status.className = 'error';
             return;
         }
         arr.push({
@@ -2117,24 +2334,65 @@
             currency: S.base
         });
         setAnchors(arr);
-        // Update Weather tab's PPP slot in-place if visible
         const pppSlot = document.getElementById('ppp-slot');
         if (pppSlot) { pppSlot.innerHTML = renderPPPContent(); tickPPP(); }
-        // Auto-close if at MAX (no more adds possible)
-        if (arr.length >= MAX_ANCHORS) {
-            closeDiscovery();
-            return;
-        }
-        // If Backpack tab is active, re-render to show the new row
+        if (arr.length >= MAX_ANCHORS) { closeDiscovery(); return; }
         if (S.activeTab === 'backpack') renderContent();
+        renderSuggestions();
     }
 
-    async function fetchSmartPPP() {
-        // v6.3 stub: no remote endpoint configured yet. When the Edge Worker
-        // ships (planned v7.x), this function will SWR-merge a latest JSON
-        // into GLOBAL_PPP_DB for the current S.base so the Discovery modal
-        // picks up fresh values without blocking the UI.
-        console.info('[fetchSmartPPP] v6.3 stub — remote endpoint planned for v7.x');
+    async function searchAnchor() {
+        haptic();
+        const d = t();
+        const input = document.getElementById('search-input');
+        const status = document.getElementById('search-status');
+        const submit = document.getElementById('search-submit');
+        const query = (input.value || '').trim();
+        if (!query) return;
+
+        const arr = getAnchors();
+        if (arr.length >= MAX_ANCHORS) {
+            status.textContent = d.maxAnchors;
+            status.className = 'error';
+            return;
+        }
+
+        submit.disabled = true;
+        status.textContent = d.searching;
+        status.className = '';
+
+        try {
+            const res = await fetch(LLM_SEARCH_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, currency: S.base })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const payload = await res.json();
+            // Expected: { emoji, label, price, currency }
+            if (!payload || typeof payload.price !== 'number' || !payload.label || !payload.currency) {
+                throw new Error('Invalid response shape');
+            }
+            arr.push({
+                emoji: payload.emoji || '🏷️',
+                label: payload.label,
+                price: payload.price,
+                currency: payload.currency
+            });
+            setAnchors(arr);
+            const pppSlot = document.getElementById('ppp-slot');
+            if (pppSlot) { pppSlot.innerHTML = renderPPPContent(); tickPPP(); }
+            if (S.activeTab === 'backpack') renderContent();
+            input.value = '';
+            status.textContent = '';
+            if (arr.length >= MAX_ANCHORS) { closeDiscovery(); return; }
+        } catch (err) {
+            console.warn('[searchAnchor] failed:', err);
+            status.textContent = d.searchError;
+            status.className = 'error';
+        } finally {
+            submit.disabled = false;
+        }
     }
 
     // === AA Splitter ===
@@ -2253,11 +2511,14 @@
             `;
         }).join('');
         return `
-            <section class="tab-header">
-                <h1 class="tab-title">${d.guideTitle}</h1>
-                <p class="tab-subtitle">${d.guideSubtitle}</p>
-            </section>
-            <section class="tab-body">${cards}</section>
+            <div class="bottom-sheet full">
+                <div class="sheet-handle"></div>
+                <section class="tab-header">
+                    <h1 class="tab-title">${d.guideTitle}</h1>
+                    <p class="tab-subtitle">${d.guideSubtitle}</p>
+                </section>
+                <section class="tab-body">${cards}</section>
+            </div>
         `;
     }
     function toggleCard(i) {
@@ -2294,69 +2555,71 @@
         const atMax = anchors.length >= MAX_ANCHORS;
 
         return `
-            <section class="tab-header">
-                <h1 class="tab-title">${d.backpackTitle}</h1>
-                <p class="tab-subtitle">${d.backpackSubtitle}</p>
-            </section>
-            <section class="tab-body">
-                <div class="setting-card toggle-row" onclick="toggleHaptic()">
-                    <span class="setting-label">${d.hapticLabel}</span>
-                    <span class="setting-val">${hapticOn ? d.on : d.off}</span>
-                </div>
-
-                <div class="wallet-section-title">${d.walletRatesTitle}</div>
-
-                <div class="setting-card">
-                    <div class="setting-row-top">
-                        <span class="setting-label">${d.rateZeroLabel}</span>
-                        <div>
-                            <input class="setting-input" type="number" step="0.01" min="0" value="${(r.zero * 100).toFixed(2)}"
-                                oninput="setWalletRate('fx_rate_zero', parseFloat(this.value) / 100)">
-                            <span class="setting-unit">%</span>
-                        </div>
+            <div class="bottom-sheet full">
+                <div class="sheet-handle"></div>
+                <section class="tab-header">
+                    <h1 class="tab-title">${d.backpackTitle}</h1>
+                    <p class="tab-subtitle">${d.backpackSubtitle}</p>
+                </section>
+                <section class="tab-body">
+                    <div class="setting-card toggle-row" onclick="toggleHaptic()">
+                        <span class="setting-label">${d.hapticLabel}</span>
+                        <span class="setting-val">${hapticOn ? d.on : d.off}</span>
                     </div>
-                    <div class="setting-origin">${d.rateZeroOrigin}</div>
-                </div>
 
-                <div class="setting-card">
-                    <div class="setting-row-top">
-                        <span class="setting-label">${d.rateCardLabel}</span>
-                        <div>
-                            <input class="setting-input" type="number" step="0.01" min="0" value="${(r.card * 100).toFixed(2)}"
-                                oninput="setWalletRate('fx_rate_card', parseFloat(this.value) / 100)">
-                            <span class="setting-unit">%</span>
+                    <div class="wallet-section-title">${d.walletRatesTitle}</div>
+
+                    <div class="setting-card">
+                        <div class="setting-row-top">
+                            <span class="setting-label">${d.rateZeroLabel}</span>
+                            <div>
+                                <input class="setting-input" type="number" step="0.01" min="0" value="${(r.zero * 100).toFixed(2)}"
+                                    oninput="setWalletRate('fx_rate_zero', parseFloat(this.value) / 100)">
+                                <span class="setting-unit">%</span>
+                            </div>
                         </div>
+                        <div class="setting-origin">${d.rateZeroOrigin}</div>
                     </div>
-                    <div class="setting-origin">${d.rateCardOrigin}</div>
-                </div>
 
-                <div class="setting-card">
-                    <div class="setting-row-top">
-                        <span class="setting-label">${d.feeAtmLabel}</span>
-                        <div>
-                            <input class="setting-input" type="number" step="0.5" min="0" value="${r.atm}"
-                                oninput="setWalletRate('fx_fee_atm', parseFloat(this.value))">
-                            <span class="setting-unit">${S.base}</span>
+                    <div class="setting-card">
+                        <div class="setting-row-top">
+                            <span class="setting-label">${d.rateCardLabel}</span>
+                            <div>
+                                <input class="setting-input" type="number" step="0.01" min="0" value="${(r.card * 100).toFixed(2)}"
+                                    oninput="setWalletRate('fx_rate_card', parseFloat(this.value) / 100)">
+                                <span class="setting-unit">%</span>
+                            </div>
                         </div>
+                        <div class="setting-origin">${d.rateCardOrigin}</div>
                     </div>
-                    <div class="setting-origin">${d.feeAtmOrigin}</div>
-                </div>
 
-                <div class="wallet-section-title">${d.anchorsTitle}</div>
-                <div class="wallet-section-hint">${d.anchorsHint}</div>
-                ${anchorRows}
-                <button class="anchor-add-btn" onclick="openDiscovery()" ${atMax ? 'disabled' : ''}>${d.anchorDiscover}</button>
+                    <div class="setting-card">
+                        <div class="setting-row-top">
+                            <span class="setting-label">${d.feeAtmLabel}</span>
+                            <div>
+                                <input class="setting-input" type="number" step="0.5" min="0" value="${r.atm}"
+                                    oninput="setWalletRate('fx_fee_atm', parseFloat(this.value))">
+                                <span class="setting-unit">${S.base}</span>
+                            </div>
+                        </div>
+                        <div class="setting-origin">${d.feeAtmOrigin}</div>
+                    </div>
 
-                <div class="setting-card toggle-row danger" onclick="haptic(); localStorage.clear(); location.reload()">
-                    <span class="setting-label">${d.clearLabel}</span>
-                    <span class="setting-val">⚠</span>
-                </div>
+                    <div class="wallet-section-title">${d.anchorsTitle}</div>
+                    <div class="wallet-section-hint">${d.anchorsHint}</div>
+                    ${anchorRows}
+                    <button class="anchor-add-btn" onclick="openDiscovery()" ${atMax ? 'disabled' : ''}>${d.anchorDiscover}</button>
 
-                <div class="footer">
-                    ${d.slogan}
-                    <span class="footer-version">v6.0</span>
-                </div>
-            </section>
+                    <div class="setting-card toggle-row danger" onclick="haptic(); localStorage.clear(); location.reload()">
+                        <span class="setting-label">${d.clearLabel}</span>
+                        <span class="setting-val">⚠</span>
+                    </div>
+
+                    <div class="footer">
+                        ${d.slogan}
+                    </div>
+                </section>
+            </div>
         `;
     }
 

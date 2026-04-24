@@ -46,12 +46,13 @@
         .layout { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
         #content { flex: 1; padding-bottom: calc(96px + var(--safe-b)); }
 
-        /* === Lumina site header (black, merges with hero) === */
+        /* === Lumina site header (dynamic weather-tinted dark) === */
         .site-header {
-            background: var(--black-base);
+            background: var(--hero-grad-1, var(--black-base));
             color: var(--text-inverse);
             padding: 22px 24px 8px;
             display: flex; justify-content: space-between; align-items: center;
+            transition: background 1.2s ease;
         }
         .logo {
             font-size: 13px; font-weight: 800; letter-spacing: 2.5px;
@@ -68,15 +69,18 @@
         .lang-option.active { color: var(--accent-green); font-weight: 900; }
         .lang-sep { color: var(--sage-mid); opacity: 0.4; }
 
-        /* === Lumina hero (black, rounded bottom-LEFT) === */
+        /* === Lumina hero (dynamic weather gradient, rounded bottom-LEFT) === */
         .hero {
-            background: var(--black-base);
+            background: linear-gradient(135deg,
+                var(--hero-grad-1, var(--black-base)) 0%,
+                var(--hero-grad-2, var(--black-base)) 100%);
             color: var(--text-inverse);
             padding: 8px 24px 52px;
             margin: 0;
             border-bottom-left-radius: 36px;
             box-shadow: 0 10px 24px rgba(13, 18, 19, 0.18);
             position: relative; z-index: 2;
+            transition: background 1.2s ease;
         }
 
         /* Pair selector as forest-dark pill */
@@ -617,6 +621,105 @@
 
         ::-webkit-scrollbar { display: none; }
 
+        /* === v6.3 Lumina Calculatrice keypad === */
+        .keypad-sheet { padding: 12px 16px calc(24px + var(--safe-b)); max-height: 72vh; }
+        .keypad-display {
+            padding: 14px 14px 18px;
+            font-size: 30px; font-weight: 700; color: var(--accent-green);
+            text-align: right; letter-spacing: -0.02em;
+            min-height: 52px;
+            word-break: break-all; overflow-wrap: break-word;
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 14px;
+        }
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .keypad-btn {
+            aspect-ratio: 1.35 / 1;
+            background: var(--sage-light);
+            border: none; border-radius: 16px;
+            color: var(--text-main);
+            font-family: inherit; font-size: 22px; font-weight: 600;
+            cursor: pointer; letter-spacing: -0.01em;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+        .keypad-btn:active:not(:disabled) { transform: scale(0.94); background: #C2CEC7; }
+        .keypad-btn.keypad-op {
+            background: var(--forest-dark);
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+        .keypad-btn.keypad-op:active { background: #1F2A25; }
+        .keypad-btn.keypad-done {
+            grid-column: span 2;
+            aspect-ratio: auto;
+            background: var(--accent-green); color: #FFFFFF;
+            font-weight: 800; font-size: 14px; letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 18px 0;
+        }
+        .keypad-btn.keypad-done:active { background: #4A7E63; }
+
+        /* === v6.3 Smart PPP Discovery === */
+        .discovery-sheet { padding: 24px 20px calc(30px + var(--safe-b)); max-height: 82vh; display: flex; flex-direction: column; }
+        .discovery-pills {
+            display: flex; gap: 8px; padding: 0 0 16px;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+        }
+        .discovery-pill {
+            flex-shrink: 0;
+            padding: 8px 14px; border-radius: 999px;
+            border: 1px solid var(--line); background: var(--sage-light);
+            color: var(--text-main); cursor: pointer;
+            font-family: inherit; font-size: 12px; font-weight: 700;
+            letter-spacing: 0.3px;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .discovery-pill.active { background: var(--accent-green); color: #FFFFFF; border-color: var(--accent-green); }
+        .discovery-list {
+            flex: 1; overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .discovery-item {
+            display: grid;
+            grid-template-columns: 28px 1fr auto 32px;
+            gap: 12px; align-items: center;
+            padding: 14px 4px;
+            border-top: 1px solid rgba(13, 18, 19, 0.08);
+        }
+        .discovery-item:first-child { border-top: 0; }
+        .discovery-emoji { font-size: 20px; line-height: 1; }
+        .discovery-label { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .discovery-price {
+            font-size: 13px; font-weight: 800; color: var(--forest-dark);
+            opacity: 0.78; letter-spacing: 0.2px;
+            font-feature-settings: "tnum";
+        }
+        .discovery-add {
+            background: var(--accent-green); color: #FFFFFF; border: none;
+            width: 28px; height: 28px; border-radius: 50%;
+            font-family: inherit; font-size: 16px; font-weight: 900;
+            cursor: pointer; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .discovery-add:active { transform: scale(0.92); }
+        .discovery-empty {
+            padding: 30px 10px; text-align: center;
+            color: var(--forest-dark); opacity: 0.7;
+            font-size: 13px; font-weight: 500; line-height: 1.5;
+        }
+        .discovery-disclaimer {
+            padding: 14px 8px 0;
+            font-size: 10px; font-weight: 500;
+            color: var(--forest-dark); opacity: 0.55;
+            text-align: center; letter-spacing: 0.2px;
+            line-height: 1.4;
+        }
+
         /* === Interaction physics layer (inherited from v5.0.1) === */
         button, .picker-unit, .dock-btn, .modal-item, .flashcard, .anchor-add-btn,
         .split-step-btn, .split-seg-btn, .anchor-currency-btn, .anchor-delete-btn,
@@ -690,6 +793,41 @@
     </div>
 </div>
 
+<div id="calc-keypad" class="modal-overlay" onclick="closeKeypad()">
+    <div class="modal-sheet keypad-sheet" onclick="event.stopPropagation()">
+        <div class="keypad-display" id="keypad-expr">0</div>
+        <div class="keypad-grid">
+            <button class="keypad-btn" onclick="updateKeypad('1')">1</button>
+            <button class="keypad-btn" onclick="updateKeypad('2')">2</button>
+            <button class="keypad-btn" onclick="updateKeypad('3')">3</button>
+            <button class="keypad-btn keypad-op" onclick="updateKeypad('back')">⌫</button>
+
+            <button class="keypad-btn" onclick="updateKeypad('4')">4</button>
+            <button class="keypad-btn" onclick="updateKeypad('5')">5</button>
+            <button class="keypad-btn" onclick="updateKeypad('6')">6</button>
+            <button class="keypad-btn keypad-op" onclick="updateKeypad('+')">+</button>
+
+            <button class="keypad-btn" onclick="updateKeypad('7')">7</button>
+            <button class="keypad-btn" onclick="updateKeypad('8')">8</button>
+            <button class="keypad-btn" onclick="updateKeypad('9')">9</button>
+            <button class="keypad-btn keypad-op" onclick="updateKeypad('.')">.</button>
+
+            <button class="keypad-btn keypad-op" onclick="updateKeypad('clear')">C</button>
+            <button class="keypad-btn" onclick="updateKeypad('0')">0</button>
+            <button class="keypad-btn keypad-done" onclick="closeKeypad()">Done</button>
+        </div>
+    </div>
+</div>
+
+<div id="ppp-discovery" class="modal-overlay" onclick="closeDiscovery()">
+    <div class="modal-sheet discovery-sheet" onclick="event.stopPropagation()">
+        <div class="modal-header" id="discovery-title"></div>
+        <div class="discovery-pills" id="discovery-pills"></div>
+        <div class="discovery-list" id="discovery-list"></div>
+        <div class="discovery-disclaimer" id="discovery-disclaimer"></div>
+    </div>
+</div>
+
 <script>
     const CURS = ["EUR","USD","GBP","JPY","AUD","CAD","CHF","CNY","SGD","HKD"];
     const FLAGS = {
@@ -707,22 +845,258 @@
 
     const MAX_ANCHORS = 5;
 
-    // === Editorial PPP seed data ===
-    // [推论] Big Mac values: The Economist Big Mac Index (publicly published semiannually, ~2024 values)
-    // [推论 · PM estimate] Coffee values: reference prices for a typical takeaway coffee in each city
-    // Cities are user-editable per anchor in Backpack
-    const PPP_DB = {
-        EUR: { bigMac: 5.80, coffee: 4.20, city: 'Paris' },
-        USD: { bigMac: 5.69, coffee: 5.00, city: 'New York' },
-        GBP: { bigMac: 4.89, coffee: 3.50, city: 'London' },
-        CNY: { bigMac: 25.0, coffee: 22.0, city: 'Shanghai' },
-        JPY: { bigMac: 480,  coffee: 450,  city: 'Tokyo' },
-        CHF: { bigMac: 6.70, coffee: 5.20, city: 'Zurich' },
-        AUD: { bigMac: 7.70, coffee: 5.50, city: 'Sydney' },
-        CAD: { bigMac: 7.00, coffee: 4.80, city: 'Toronto' },
-        SGD: { bigMac: 5.90, coffee: 5.00, city: 'Singapore' },
-        HKD: { bigMac: 23.5, coffee: 45.0, city: 'Hong Kong' }
+    // === v6.3 GLOBAL_PPP_DB — extended price matrix by category ===
+    // [推论 · PM baseline 2026]: All prices are PM-curated references, not live data.
+    // Structure: { currency: { city, food[], grocery[], tech[], shopping[] } }
+    // fetchSmartPPP() will (in v7.x) SWR-merge remote updates via Edge Worker.
+    const GLOBAL_PPP_DB = {
+        EUR: {
+            city: 'Paris',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 5.80 },
+                { emoji: '☕', label: 'Coffee', price: 4.20 },
+                { emoji: '🥐', label: 'Croissant', price: 1.50 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 1.15 },
+                { emoji: '🍞', label: 'Baguette', price: 1.20 },
+                { emoji: '🥚', label: '12 eggs', price: 3.80 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 1229 },
+                { emoji: '💻', label: 'MacBook Air', price: 1299 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 279 }
+            ],
+            shopping: [
+                { emoji: '🍷', label: 'Glass of wine', price: 6.50 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 11.50 },
+                { emoji: '🚇', label: 'Metro ticket', price: 2.15 }
+            ]
+        },
+        USD: {
+            city: 'New York',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 5.69 },
+                { emoji: '☕', label: 'Coffee', price: 5.00 },
+                { emoji: '🥯', label: 'Bagel', price: 3.50 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1 gal milk', price: 4.50 },
+                { emoji: '🍞', label: 'Bread loaf', price: 3.50 },
+                { emoji: '🥚', label: '12 eggs', price: 4.20 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 999 },
+                { emoji: '💻', label: 'MacBook Air', price: 1199 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 249 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Pint of beer', price: 8.50 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 17.00 },
+                { emoji: '🚇', label: 'Subway ride', price: 2.90 }
+            ]
+        },
+        GBP: {
+            city: 'London',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 4.89 },
+                { emoji: '☕', label: 'Coffee', price: 3.50 },
+                { emoji: '🥪', label: 'Sandwich', price: 4.50 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 1.20 },
+                { emoji: '🍞', label: 'Bread loaf', price: 1.30 },
+                { emoji: '🥚', label: '12 eggs', price: 2.80 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 999 },
+                { emoji: '💻', label: 'MacBook Air', price: 1099 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 229 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Pint of beer', price: 6.50 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 14.00 },
+                { emoji: '🚇', label: 'Tube ride', price: 2.80 }
+            ]
+        },
+        CNY: {
+            city: 'Shanghai',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 25 },
+                { emoji: '☕', label: 'Coffee', price: 28 },
+                { emoji: '🍜', label: 'Noodle bowl', price: 35 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 12 },
+                { emoji: '🍞', label: 'Bread loaf', price: 15 },
+                { emoji: '🥚', label: '12 eggs', price: 18 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 7999 },
+                { emoji: '💻', label: 'MacBook Air', price: 9199 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 1899 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Beer 500ml', price: 25 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 80 },
+                { emoji: '🚇', label: 'Metro ride', price: 5 }
+            ]
+        },
+        JPY: {
+            city: 'Tokyo',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 480 },
+                { emoji: '☕', label: 'Coffee', price: 450 },
+                { emoji: '🍱', label: 'Bento', price: 800 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 220 },
+                { emoji: '🍞', label: 'Bread loaf', price: 200 },
+                { emoji: '🥚', label: '10 eggs', price: 260 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 159800 },
+                { emoji: '💻', label: 'MacBook Air', price: 164800 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 39800 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Beer 500ml', price: 500 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 2000 },
+                { emoji: '🚇', label: 'Metro ride', price: 200 }
+            ]
+        },
+        CHF: {
+            city: 'Zurich',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 6.70 },
+                { emoji: '☕', label: 'Coffee', price: 5.20 },
+                { emoji: '🥐', label: 'Croissant', price: 3.00 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 1.70 },
+                { emoji: '🍞', label: 'Bread loaf', price: 3.50 },
+                { emoji: '🥚', label: '12 eggs', price: 6.50 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 1199 },
+                { emoji: '💻', label: 'MacBook Air', price: 1249 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 269 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Pint of beer', price: 9.00 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 19.00 },
+                { emoji: '🚇', label: 'Tram ticket', price: 4.40 }
+            ]
+        },
+        AUD: {
+            city: 'Sydney',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 7.70 },
+                { emoji: '☕', label: 'Coffee', price: 5.50 },
+                { emoji: '🥐', label: 'Pastry', price: 5.00 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 2.00 },
+                { emoji: '🍞', label: 'Bread loaf', price: 3.80 },
+                { emoji: '🥚', label: '12 eggs', price: 6.50 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 1849 },
+                { emoji: '💻', label: 'MacBook Air', price: 1799 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 399 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Pint of beer', price: 12.00 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 22.00 },
+                { emoji: '🚇', label: 'Train ride', price: 4.80 }
+            ]
+        },
+        CAD: {
+            city: 'Toronto',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 7.00 },
+                { emoji: '☕', label: 'Coffee', price: 4.80 },
+                { emoji: '🥓', label: 'Bacon breakfast', price: 14.00 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 3.00 },
+                { emoji: '🍞', label: 'Bread loaf', price: 3.50 },
+                { emoji: '🥚', label: '12 eggs', price: 4.80 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 1449 },
+                { emoji: '💻', label: 'MacBook Air', price: 1499 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 329 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Pint of beer', price: 9.00 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 14.00 },
+                { emoji: '🚇', label: 'Subway ride', price: 3.35 }
+            ]
+        },
+        SGD: {
+            city: 'Singapore',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 5.90 },
+                { emoji: '☕', label: 'Coffee', price: 5.00 },
+                { emoji: '🍜', label: 'Hawker noodles', price: 6.50 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 3.80 },
+                { emoji: '🍞', label: 'Bread loaf', price: 3.20 },
+                { emoji: '🥚', label: '10 eggs', price: 4.20 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 1664 },
+                { emoji: '💻', label: 'MacBook Air', price: 1649 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 379 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Pint of beer', price: 14.00 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 15.00 },
+                { emoji: '🚇', label: 'MRT ride', price: 1.80 }
+            ]
+        },
+        HKD: {
+            city: 'Hong Kong',
+            food: [
+                { emoji: '🍔', label: 'Big Mac', price: 23.50 },
+                { emoji: '☕', label: 'Coffee', price: 45 },
+                { emoji: '🍜', label: 'Noodle bowl', price: 60 }
+            ],
+            grocery: [
+                { emoji: '🥛', label: '1L milk', price: 28 },
+                { emoji: '🍞', label: 'Bread loaf', price: 22 },
+                { emoji: '🥚', label: '12 eggs', price: 35 }
+            ],
+            tech: [
+                { emoji: '📱', label: 'iPhone 15 Pro', price: 8599 },
+                { emoji: '💻', label: 'MacBook Air', price: 9199 },
+                { emoji: '🎧', label: 'AirPods Pro', price: 1999 }
+            ],
+            shopping: [
+                { emoji: '🍺', label: 'Pint of beer', price: 60 },
+                { emoji: '🎬', label: 'Cinema ticket', price: 95 },
+                { emoji: '🚇', label: 'MTR ride', price: 12 }
+            ]
+        }
     };
+
+    // === v6.3 Dynamic dark weather gradients (hero + site-header) ===
+    const HERO_GRADIENTS = {
+        great:  ['#0F2D3D', '#1E4A5F'],   /* deep space blue */
+        good:   ['#182E25', '#264A3B'],   /* deep forest green */
+        stable: ['#0D1213', '#1F2726'],   /* default near-black (neutral) */
+        poor:   ['#2E1F16', '#4A2F24'],   /* burnt umber */
+        storm:  ['#2E1319', '#4A2030']    /* burgundy dark red */
+    };
+    function applyHeroGradient() {
+        const w = calcWeatherBand();
+        const band = w ? w.band : 'stable';
+        const [c1, c2] = HERO_GRADIENTS[band] || HERO_GRADIENTS.stable;
+        document.documentElement.style.setProperty('--hero-grad-1', c1);
+        document.documentElement.style.setProperty('--hero-grad-2', c2);
+    }
 
     const I18N = {
         en: {
@@ -790,6 +1164,11 @@
             anchorsTitle: "My Price Anchors",
             anchorsHint: "Edit the seeded items or add your own. We never invent prices — delete any you disagree with.",
             anchorAdd: "+ Add an anchor",
+            anchorDiscover: "+ Browse price anchors",
+            pppDiscoveryTitle: "Discover price anchors",
+            pppCategory: { food: "Food", grocery: "Grocery", tech: "Tech", shopping: "Shopping" },
+            pppNoData: "No {city} prices curated yet.",
+            pppDisclaimer: "Reference values — actuals vary. Edit after adding.",
             anchorEmojiPh: "🍜",
             anchorLabelPh: "Name (City)",
             clearLabel: "Reset (clear everything)",
@@ -864,6 +1243,11 @@
             anchorsTitle: "我的物价参照物",
             anchorsHint: "编辑默认值或添加你自己的。我们不替你编数据 — 不认可的直接删。",
             anchorAdd: "+ 添加参照物",
+            anchorDiscover: "+ 浏览物价参照",
+            pppDiscoveryTitle: "探索物价参照物",
+            pppCategory: { food: "餐饮", grocery: "超市", tech: "数码", shopping: "消费" },
+            pppNoData: "暂无 {city} 的参考数据。",
+            pppDisclaimer: "参考值,实际以当地为准,添加后可修改。",
             anchorEmojiPh: "🍜",
             anchorLabelPh: "名称(城市)",
             clearLabel: "重置(清空所有)",
@@ -938,6 +1322,11 @@
             anchorsTitle: "Mes Repères de Prix",
             anchorsHint: "Modifiez les valeurs de départ ou ajoutez les vôtres. On n'invente jamais — supprimez ce avec quoi vous n'êtes pas d'accord.",
             anchorAdd: "+ Ajouter un repère",
+            anchorDiscover: "+ Explorer les repères",
+            pppDiscoveryTitle: "Repères de prix",
+            pppCategory: { food: "Restauration", grocery: "Épicerie", tech: "Tech", shopping: "Loisirs" },
+            pppNoData: "Aucun prix {city} curé pour le moment.",
+            pppDisclaimer: "Valeurs indicatives — les prix réels varient. Modifiable après ajout.",
             anchorEmojiPh: "🥐",
             anchorLabelPh: "Nom (Ville)",
             clearLabel: "Réinitialiser (tout effacer)",
@@ -1105,22 +1494,34 @@
             });
     }
 
-    // === v5.0: Seed anchors from PPP_DB on first launch ===
+    // === v6.3: Seed anchors from GLOBAL_PPP_DB.food on first launch ===
     function seedAnchorsIfEmpty() {
         if (localStorage.getItem('fx_anchors_seeded') === 'true') return;
         if (getAnchors().length > 0) {
             localStorage.setItem('fx_anchors_seeded', 'true');
             return;
         }
-        const baseData = PPP_DB[S.base];
-        const targetData = PPP_DB[S.target];
+        const baseData = GLOBAL_PPP_DB[S.base];
+        const targetData = GLOBAL_PPP_DB[S.target];
         const seeded = [];
-        if (baseData) {
-            seeded.push({ emoji: '🍔', label: `Big Mac (${baseData.city})`, price: baseData.bigMac, currency: S.base });
-            seeded.push({ emoji: '☕', label: `Coffee (${baseData.city})`, price: baseData.coffee, currency: S.base });
+        if (baseData && baseData.food) {
+            baseData.food.slice(0, 2).forEach(item => {
+                seeded.push({
+                    emoji: item.emoji,
+                    label: `${item.label} (${baseData.city})`,
+                    price: item.price,
+                    currency: S.base
+                });
+            });
         }
-        if (targetData && S.target !== S.base) {
-            seeded.push({ emoji: '🍔', label: `Big Mac (${targetData.city})`, price: targetData.bigMac, currency: S.target });
+        if (targetData && targetData.food && S.target !== S.base) {
+            const item = targetData.food[0];
+            seeded.push({
+                emoji: item.emoji,
+                label: `${item.label} (${targetData.city})`,
+                price: item.price,
+                currency: S.target
+            });
         }
         if (seeded.length) setAnchors(seeded);
         localStorage.setItem('fx_anchors_seeded', 'true');
@@ -1247,6 +1648,7 @@
                 S.hist = [];
             }
         } catch(e) { console.error("History API error", e); S.hist = []; }
+        applyHeroGradient();
     }
 
     // [产品决策] 7-day MA weather bands — thresholds ±0.3% / ±0.8% per PRD v4.1 (carried into v5.0)
@@ -1323,9 +1725,10 @@
                     <span class="picker-unit" onclick="openCurrencyModal('target')">${S.target}</span>
                 </div>
                 <div class="amount-wrap">
-                    <input type="number" id="calc-in" class="hero-amount-input" value="${S.amount}"
-                        oninput="if(this.value.length>10)this.value=this.value.slice(0,10); updateRouting(this.value)"
-                        inputmode="decimal">
+                    <input type="text" id="calc-in" class="hero-amount-input"
+                        value="${S.amount > 0 ? Number(S.amount).toLocaleString() : ''}"
+                        readonly inputmode="none"
+                        onclick="openKeypad()">
                     <span class="hero-amount-label">${d.heroAmountLabel}</span>
                 </div>
                 <div class="weather-label">${renderHeroWeatherLabel()}</div>
@@ -1570,6 +1973,170 @@
         renderContent();
     }
 
+    // === v6.3 Lumina Calculatrice (custom numeric keypad) ===
+    let _keypadExpr = '';
+
+    function safeEval(expr) {
+        if (!expr) return 0;
+        if (!/^[\d+.]*$/.test(expr)) return NaN;
+        const clean = expr.replace(/[+.]+$/, '');
+        if (!clean) return 0;
+        const parts = clean.split('+').map(p => parseFloat(p));
+        if (parts.some(isNaN)) return NaN;
+        return parts.reduce((a, b) => a + b, 0);
+    }
+
+    function openKeypad() {
+        haptic();
+        _keypadExpr = (S.amount && S.amount > 0) ? String(S.amount) : '';
+        updateKeypadDisplay();
+        document.getElementById('calc-keypad').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeKeypad() {
+        haptic();
+        document.getElementById('calc-keypad').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    function updateKeypadDisplay() {
+        const el = document.getElementById('keypad-expr');
+        if (!el) return;
+        el.textContent = _keypadExpr || '0';
+    }
+
+    function updateKeypad(char) {
+        haptic();
+        if (char === 'clear') {
+            _keypadExpr = '';
+        } else if (char === 'back') {
+            _keypadExpr = _keypadExpr.slice(0, -1);
+        } else if (char === '+') {
+            if (!_keypadExpr) return;
+            if (/[+.]$/.test(_keypadExpr)) return;
+            _keypadExpr += '+';
+        } else if (char === '.') {
+            const lastTerm = _keypadExpr.split('+').pop();
+            if (!lastTerm) { _keypadExpr += '0.'; updateKeypadDisplay(); return; }
+            if (lastTerm.includes('.')) return;
+            _keypadExpr += '.';
+        } else {
+            // digit
+            if (_keypadExpr.length >= 15) return;
+            // strip leading zero if starting a new term and user types a non-zero digit
+            const lastTerm = _keypadExpr.split('+').pop();
+            if (lastTerm === '0' && char !== '0' && char !== '.') {
+                _keypadExpr = _keypadExpr.slice(0, -1) + char;
+            } else {
+                _keypadExpr += char;
+            }
+        }
+        updateKeypadDisplay();
+        const result = safeEval(_keypadExpr);
+        if (!isNaN(result)) {
+            S.amount = result;
+            const input = document.getElementById('calc-in');
+            if (input) input.value = result > 0 ? Number(result.toFixed(2)).toLocaleString() : '';
+            const panel = document.getElementById('routing-panel');
+            if (panel) { panel.innerHTML = renderRoutes(); tickRoutes(); }
+            const pppSlot = document.getElementById('ppp-slot');
+            if (pppSlot) { pppSlot.innerHTML = renderPPPContent(); tickPPP(); }
+        }
+    }
+
+    // === v6.3 Smart Discovery PPP ===
+    let _discoveryCategory = 'food';
+    const DISCOVERY_CATS = ['food', 'grocery', 'tech', 'shopping'];
+
+    function openDiscovery() {
+        haptic();
+        _discoveryCategory = 'food';
+        const d = t();
+        document.getElementById('discovery-title').textContent = d.pppDiscoveryTitle;
+        document.getElementById('discovery-disclaimer').textContent = d.pppDisclaimer;
+        renderDiscoveryBody();
+        document.getElementById('ppp-discovery').classList.add('show');
+        document.body.style.overflow = 'hidden';
+        // SWR: stale-while-revalidate. For v6.3 this is a no-op stub.
+        fetchSmartPPP();
+    }
+
+    function closeDiscovery() {
+        haptic();
+        document.getElementById('ppp-discovery').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    function selectCategory(cat) {
+        haptic();
+        _discoveryCategory = cat;
+        renderDiscoveryBody();
+    }
+
+    function renderDiscoveryBody() {
+        const d = t();
+        const pills = DISCOVERY_CATS.map(c => `
+            <button class="discovery-pill${_discoveryCategory === c ? ' active' : ''}"
+                onclick="selectCategory('${c}')">${d.pppCategory[c]}</button>
+        `).join('');
+        document.getElementById('discovery-pills').innerHTML = pills;
+
+        const data = GLOBAL_PPP_DB[S.base];
+        const items = (data && data[_discoveryCategory]) || [];
+        const cityLabel = data ? data.city : S.base;
+        const listEl = document.getElementById('discovery-list');
+        if (items.length === 0) {
+            listEl.innerHTML = `<div class="discovery-empty">${d.pppNoData.replace('{city}', cityLabel)}</div>`;
+            return;
+        }
+        listEl.innerHTML = items.map((item, i) => `
+            <div class="discovery-item">
+                <span class="discovery-emoji">${item.emoji}</span>
+                <span class="discovery-label">${escapeHtml(item.label)}</span>
+                <span class="discovery-price">${item.price} ${S.base}</span>
+                <button class="discovery-add" onclick="addAnchorFromPPP(${i})" aria-label="add">+</button>
+            </div>
+        `).join('');
+    }
+
+    function addAnchorFromPPP(idx) {
+        haptic();
+        const data = GLOBAL_PPP_DB[S.base];
+        const item = data && data[_discoveryCategory] ? data[_discoveryCategory][idx] : null;
+        if (!item) return;
+        const arr = getAnchors();
+        if (arr.length >= MAX_ANCHORS) {
+            closeDiscovery();
+            return;
+        }
+        arr.push({
+            emoji: item.emoji,
+            label: `${item.label} (${data.city})`,
+            price: item.price,
+            currency: S.base
+        });
+        setAnchors(arr);
+        // Update Weather tab's PPP slot in-place if visible
+        const pppSlot = document.getElementById('ppp-slot');
+        if (pppSlot) { pppSlot.innerHTML = renderPPPContent(); tickPPP(); }
+        // Auto-close if at MAX (no more adds possible)
+        if (arr.length >= MAX_ANCHORS) {
+            closeDiscovery();
+            return;
+        }
+        // If Backpack tab is active, re-render to show the new row
+        if (S.activeTab === 'backpack') renderContent();
+    }
+
+    async function fetchSmartPPP() {
+        // v6.3 stub: no remote endpoint configured yet. When the Edge Worker
+        // ships (planned v7.x), this function will SWR-merge a latest JSON
+        // into GLOBAL_PPP_DB for the current S.base so the Discovery modal
+        // picks up fresh values without blocking the UI.
+        console.info('[fetchSmartPPP] v6.3 stub — remote endpoint planned for v7.x');
+    }
+
     // === AA Splitter ===
     function calcSplit(bill, n, payer) {
         if (!S.cr || !bill || bill <= 0 || n <= 0) return null;
@@ -1778,7 +2345,7 @@
                 <div class="wallet-section-title">${d.anchorsTitle}</div>
                 <div class="wallet-section-hint">${d.anchorsHint}</div>
                 ${anchorRows}
-                <button class="anchor-add-btn" onclick="addAnchor()" ${atMax ? 'disabled' : ''}>${d.anchorAdd}</button>
+                <button class="anchor-add-btn" onclick="openDiscovery()" ${atMax ? 'disabled' : ''}>${d.anchorDiscover}</button>
 
                 <div class="setting-card toggle-row danger" onclick="haptic(); localStorage.clear(); location.reload()">
                     <span class="setting-label">${d.clearLabel}</span>

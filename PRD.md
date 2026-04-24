@@ -1,8 +1,8 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v6.1 (Lumina De-cardified — naked typographic surfaces)
-**Build target:** `weather.html` · Service Worker `fx-weather-v31` · Manifest `FX Weather`
-**Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina visual reskin → v6.1 De-cardification. Pure CSS refinement; zero JS change.
+**Version:** v6.3 (Lumina Elite — dynamic weather + built-in keypad + Smart Discovery)
+**Build target:** `weather.html` · Service Worker `fx-weather-v32` · Manifest `FX Weather`
+**Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina reskin → v6.1 De-cardification → v6.3 Lumina Elite (feature release). Atomic CSS + HTML + JS additions; `calcRouting` / `calcAnchors` / `calcSplit` / business-logic untouched.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
 
 ---
@@ -425,6 +425,96 @@ Second-pass visual correction on v6.0 Lumina. The earlier "cards on sage" still 
 
 **File:** 82,968 → 83,967 bytes (+1 KB; mostly added `:first-of-type` / `:first-child` resets and dimming rules).
 **Service Worker cache:** `v30` → `v31`.
+
+## 10.4 v6.3 Lumina Elite (shipped)
+
+Three-pillar feature release on top of v6.1 de-cardified Lumina.
+
+### Pillar 1 — Dynamic weather gradients on hero
+
+Replaces flat `--black-base` hero with a `linear-gradient(135deg, ...)` driven by the existing `calcWeatherBand()` output (no new math). Site-header shares the gradient's starting color for visual continuity. 1.2s CSS transition smooths band changes.
+
+**Bands → hex pair:**
+| Band | c1 | c2 | Intent |
+|---|---|---|---|
+| great | `#0F2D3D` | `#1E4A5F` | deep space blue |
+| good | `#182E25` | `#264A3B` | deep forest green |
+| stable | `#0D1213` | `#1F2726` | default near-black (neutral) |
+| poor | `#2E1F16` | `#4A2F24` | burnt umber |
+| storm | `#2E1319` | `#4A2030` | burgundy dark red |
+
+New helper `applyHeroGradient()` called at end of `fetchR()` — reads `calcWeatherBand()` and sets two CSS vars (`--hero-grad-1`, `--hero-grad-2`) on `document.documentElement`. Pure visual, no business-logic change.
+
+### Pillar 2 — Lumina Calculatrice (custom numeric keypad)
+
+Native OS keyboard is suppressed via `readonly` + `inputmode="none"` on the hero input. Tap → bottom sheet rises with custom keypad.
+
+**Keypad layout (4-col grid):**
+```
+1  2  3  ⌫
+4  5  6  +
+7  8  9  .
+C  0  [Done · · spans 2]
+```
+
+**Expression engine:**
+- State: module-level `_keypadExpr` string (e.g., `"12+5+3"`)
+- Each press appends / validates / strips via `updateKeypad(char)`
+- Live evaluation via `safeEval(expr)` — pure split-and-sum, no `eval()`. Regex guard: `/^[\d+.]*$/`; trailing `+.` stripped before parse. Only `+` operator supported in v6.3.
+- Display: the keypad shows the raw expression; the hero amount input shows the **live evaluated result** formatted via `toLocaleString()`
+- On result change, `S.amount` updates + `renderRoutes()` / `renderPPPContent()` re-run + ticks fire
+
+**Edge cases handled:**
+- Can't start expression with `+`
+- Can't have `++` (consecutive operators)
+- Only one `.` per term (split on `+`, check last term)
+- 15-char length cap
+- Leading-zero suppression (typing `0` then `5` becomes `5`, not `05`)
+- `C` clears all, `⌫` backspaces one char
+
+**Why it matters:** no iOS keyboard pushes hero off-screen; thumb reach preserved; ability to sum restaurant tabs (`12.50+8+3`) inline.
+
+### Pillar 3 — Smart Discovery PPP
+
+Replaces the `+ Add an anchor` button (empty row) with `+ Browse price anchors` → opens a bottom-sheet discovery panel.
+
+**GLOBAL_PPP_DB schema:** 11 currencies × 4 categories (`food` / `grocery` / `tech` / `shopping`) × 3 items each = **132 price points**. All prices are tagged in-code as `[推论 · PM baseline 2026]` with an inline disclaimer in the modal: "Reference values — actuals vary. Edit after adding."
+
+**Categories (i18n EN / ZH / FR):**
+- food · 餐饮 · Restauration
+- grocery · 超市 · Épicerie
+- tech · 数码 · Tech
+- shopping · 消费 · Loisirs
+
+**Interaction flow:**
+1. User on any currency pair (say EUR→CNY) → taps `+ Browse price anchors` in Backpack
+2. Modal opens, shows items from `GLOBAL_PPP_DB[S.base]` (current local currency, e.g. EUR → Paris items)
+3. Category pills at top (default `food`); tap pill → list switches category
+4. Each row: emoji, label, price in BASE, `+` button
+5. Tap `+` → row pushed into `fx_anchors` with `label = "{item.label} ({city})"` and currency = `S.base`
+6. Weather tab's PPP strip updates in-place; Backpack tab re-renders if active
+7. Auto-close at MAX_ANCHORS (5)
+
+**SWR infrastructure (stub):** `fetchSmartPPP()` is present as `async` function that logs `[fetchSmartPPP] v6.3 stub — remote endpoint planned for v7.x`. No remote wiring yet. Discovery uses bundled `GLOBAL_PPP_DB` baseline only. When the Edge Worker endpoint ships, this function will merge fresh JSON into the in-memory DB without blocking the UI.
+
+### Seed anchors migration
+
+`seedAnchorsIfEmpty()` was pointing to the old `PPP_DB.bigMac`/`coffee` fields. Now it reads `GLOBAL_PPP_DB[S.base].food.slice(0, 2)` (first two food items from user's base currency), preserving the exact seed behavior (Big Mac + Coffee for most currencies) with identical `"Label (City)"` format.
+
+### Preserved (per PM directive — JS business logic frozen)
+
+Zero changes to: `calcRouting`, `calcAnchors`, `calcSplit`, `calcAtmTier`, `calcTimeMachine`, `calcWeatherBand`, `tickNumber`, `fetchR`'s network code, `updateRouting`, `editPPPAnchor`, `savePPPEdit`, I18N engine structure, localStorage scheme.
+
+### File size
+
+- weather.html: 83,967 → **108,639 bytes** (+24.7 KB)
+- Breakdown: GLOBAL_PPP_DB ~6.5 KB (132 price points), keypad HTML+CSS+JS ~4.5 KB, Discovery HTML+CSS+JS ~4 KB, HERO_GRADIENTS + applyHeroGradient ~1 KB, i18n additions across 3 langs ~1.2 KB, rest is comment and whitespace
+
+Over 100 KB for a single-file PWA — still well within acceptable PWA shell size (mobile networks handle 100 KB in sub-second), zero external dependencies.
+
+### Service Worker cache
+
+`v31` → `v32`.
 
 ## 11. v5.0 final state — preserved disciplines
 

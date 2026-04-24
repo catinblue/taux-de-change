@@ -1,8 +1,8 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v6.0 (Lumina — Morandi Forest + Extreme Black)
-**Build target:** `weather.html` · Service Worker `fx-weather-v30` · Manifest `FX Weather`
-**Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina visual reskin. Zero JS / business-logic changes; pure CSS + minor HTML/i18n layer.
+**Version:** v6.1 (Lumina De-cardified — naked typographic surfaces)
+**Build target:** `weather.html` · Service Worker `fx-weather-v31` · Manifest `FX Weather`
+**Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina visual reskin → v6.1 De-cardification. Pure CSS refinement; zero JS change.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
 
 ---
@@ -390,6 +390,41 @@ Visual pivot from Editorial Fintech (coral on white) to Lumina (Morandi forest g
 - Service Worker cache bump `v29` → `v30`.
 
 **File size:** 81,166 → 82,968 bytes (+1.8 KB net; no JS diff).
+
+## 10.3 v6.1 De-cardification (shipped)
+
+Second-pass visual correction on v6.0 Lumina. The earlier "cards on sage" still read as a generic white-tile list; this pass strips all surface chrome so information sits naked on the global background and layout is organized purely by typography, spacing, and hairline dividers.
+
+**What was stripped (backgrounds, borders, shadows removed):**
+- `.route-card` — was white card with border; now a vertical row with a single `1px rgba(13,18,19,0.1)` top hairline separating methods
+- `.flashcard` (Guide) — same treatment
+- `.setting-card` (Backpack rates, anchors, toggles, danger row) — same treatment
+- `.time-machine` — naked, prefaced with hairline
+- `.dcc-shield` — kept only the 3px accent-green left stroke as chrome; no background, no border
+- `.first-run-banner` — fully naked, separated by top hairline
+- `.ppp-bar` — white-card + negative overlay removed; lines sit directly on sage-light body
+- `.best-pill` — was coral pill; now text-only `OPTIMAL` label in accent-green uppercase, same position
+
+**New layout logic:**
+- First-in-group rows get `border-top: 0` via `:first-of-type` / `:first-child` selectors so stacks don't start with a stray hairline
+- Non-optimal route cards get `opacity: 0.52` to fade into secondary; the best route reads in full accent-green on all key elements (method name, cost, icon, OPTIMAL label). No chrome highlight — **color and opacity are the only hierarchy cues**
+- Guide flashcards reveal their body with indented `padding-left: 36px` when open, giving an editorial blockquote feel instead of the prior card-frame padding
+
+**What was preserved (per spec):**
+- Modal sheets (`#currency-modal`, `#split-modal`) keep white `card-bg` background — spec allows white chrome ONLY on bottom-anchored active interaction panels
+- Split modal internals (stepper buttons, segment buttons, input chrome) keep their existing styling — part of the modal's "active panel" surface
+- Split trigger CTA stays as accent-green pill button — it's a primary action, not scrolling content
+- Hero (black) and dock (black, top-rounded) unchanged — structural framing, not content
+- ATM slider thumb + track — interactive control, chrome is intentional
+- PPP edit-mode inputs — need minimal chrome for editability affordance
+
+**What remained chromeless but PRESERVED from v6.0:**
+- Semantic emoji (🩸🟡🟢 tier labels, 🧛‍♂️🏧🎓💸 flashcard illustrations) — carry meaning, not decoration
+- All interaction physics (spring bezier, ticking numbers, pill fade-in, stagger entry, tab slide-in)
+- All JS business logic
+
+**File:** 82,968 → 83,967 bytes (+1 KB; mostly added `:first-of-type` / `:first-child` resets and dimming rules).
+**Service Worker cache:** `v30` → `v31`.
 
 ## 11. v5.0 final state — preserved disciplines
 

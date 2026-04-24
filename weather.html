@@ -2073,36 +2073,74 @@
         renderContent();
     }
 
-    // === v7.1 Zero-click Geo-IP PPP (MOCK — real endpoint lives in worker.js) ===
-    // Spec: on first Weather-tab render, pretend to sniff the user's city via edge
-    // IP lookup and offer a one-tap import of local price anchors. The mock
-    // simulates a 500ms roundtrip and hardcodes an Osaka payload so the UI loop
-    // closes before the Worker is deployed.
-    let _geoMockData = null;
+    // === v7.1 Vercel: Zero-click Geo-IP PPP ===
+    // On first Weather-tab render we call /api/geo (backed by Vercel's edge IP
+    // headers — no browser permission prompt, no PII stored). When the returned
+    // country maps to a currency we already have curated price data for, we seed
+    // 2–3 anchors from GLOBAL_PPP_DB and re-label them with the detected city.
+    // No curated match → banner stays hidden (user can still add via search).
+    let _geoPayload = null;
     let _geoDetectStarted = false;
 
-    function autoDetectGeoPPP() {
+    const COUNTRY_TO_CCY = {
+        // Eurozone — keep in sync with GLOBAL_PPP_DB.EUR
+        FR: 'EUR', DE: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR', BE: 'EUR',
+        PT: 'EUR', AT: 'EUR', IE: 'EUR', FI: 'EUR', GR: 'EUR', LU: 'EUR',
+        SI: 'EUR', SK: 'EUR', EE: 'EUR', LV: 'EUR', LT: 'EUR', CY: 'EUR',
+        MT: 'EUR', HR: 'EUR',
+        US: 'USD', GB: 'GBP', JP: 'JPY', AU: 'AUD', CA: 'CAD',
+        CH: 'CHF', LI: 'CHF', CN: 'CNY', SG: 'SGD', HK: 'HKD'
+    };
+
+    async function autoDetectGeoPPP() {
         if (_geoDetectStarted) return;
         if (localStorage.getItem('fx_geo_dismissed') === 'true') return;
         if (localStorage.getItem('fx_geo_applied') === 'true') return;
         _geoDetectStarted = true;
-        console.info('[Mock] Geo-IP Fetch: Pretending to be in Osaka');
-        setTimeout(() => {
-            // Hardcoded stand-in for a real LLM response given city=Osaka, currency=JPY.
-            _geoMockData = {
-                city: 'Osaka',
-                country: 'Japan',
-                currency: 'JPY',
-                items: [
-                    { emoji: '🍜', label: 'Ichiran Ramen (Osaka)',   price: 1050, currency: 'JPY' },
-                    { emoji: '🐙', label: 'Takoyaki 8-pack (Osaka)', price: 650,  currency: 'JPY' },
-                    { emoji: '🚇', label: 'Osaka Metro single ride', price: 240,  currency: 'JPY' },
-                    { emoji: '🍣', label: 'Kaiten-zushi plate',      price: 140,  currency: 'JPY' },
-                    { emoji: '☕', label: 'Starbucks latte tall',    price: 475,  currency: 'JPY' }
-                ]
-            };
-            maybeRenderGeoBanner();
-        }, 500);
+
+        let country = '', city = '';
+        try {
+            const res = await fetch('/api/geo', { cache: 'no-store' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            country = (data.country || '').toUpperCase();
+            city = data.city || '';
+        } catch (err) {
+            console.info('[Geo] /api/geo unreachable (likely local dev):', err.message);
+            return;
+        }
+
+        if (!country) {
+            console.info('[Geo] No country resolved. Banner skipped.');
+            return;
+        }
+
+        const currency = COUNTRY_TO_CCY[country];
+        if (!currency || !GLOBAL_PPP_DB[currency]) {
+            console.info(`[Geo] ${country} not yet curated in GLOBAL_PPP_DB. Banner skipped.`);
+            return;
+        }
+
+        const seed = GLOBAL_PPP_DB[currency];
+        const pppCity = city || seed.city;
+        const items = [];
+        ['food', 'grocery', 'tech', 'shopping'].forEach(cat => {
+            if (items.length >= 3) return;
+            const arr = seed[cat];
+            if (arr && arr.length > 0) {
+                items.push({
+                    emoji:    arr[0].emoji,
+                    label:    `${arr[0].label} (${pppCity})`,
+                    price:    arr[0].price,
+                    currency
+                });
+            }
+        });
+        if (items.length === 0) return;
+
+        _geoPayload = { city: pppCity, country, currency, items };
+        console.info(`[Geo] Detected ${pppCity} (${country}). ${items.length} anchors ready.`);
+        maybeRenderGeoBanner();
     }
 
     function maybeRenderGeoBanner() {
@@ -2114,12 +2152,12 @@
             slot.innerHTML = '';
             return;
         }
-        if (!_geoMockData) { autoDetectGeoPPP(); return; }
+        if (!_geoPayload) { autoDetectGeoPPP(); return; }
         const d = t();
         slot.classList.add('show');
         slot.innerHTML = `
             <span class="geo-banner-icon">📍</span>
-            <span class="geo-banner-text">${d.geoBannerDetected.replace('{city}', _geoMockData.city)}</span>
+            <span class="geo-banner-text">${d.geoBannerDetected.replace('{city}', _geoPayload.city)}</span>
             <button class="geo-banner-accept" onclick="acceptGeoPPP()">${d.geoBannerAccept}</button>
             <button class="geo-banner-close" onclick="dismissGeoBanner()" aria-label="close">✕</button>
         `;
@@ -2127,10 +2165,10 @@
 
     function acceptGeoPPP() {
         haptic();
-        if (!_geoMockData) return;
+        if (!_geoPayload) return;
         const arr = getAnchors();
         const slots = Math.max(0, MAX_ANCHORS - arr.length);
-        _geoMockData.items.slice(0, slots).forEach(it => arr.push(it));
+        _geoPayload.items.slice(0, slots).forEach(it => arr.push(it));
         setAnchors(arr);
         localStorage.setItem('fx_geo_applied', 'true');
         const slot = document.getElementById('geo-banner');
@@ -2538,7 +2576,7 @@
     // === v6.4 Infinite Anchor Engine ===
     // Search any item in any currency. LLM returns {emoji, label, price, currency}
     // cached directly into fx_anchors. Local GLOBAL_PPP_DB still seeds suggestion chips.
-    const LLM_SEARCH_ENDPOINT = 'https://api.ourdomain.com/search-ppp';
+    const LLM_SEARCH_ENDPOINT = '/api/search';
     const LOCAL_CATS = ['food', 'grocery', 'tech', 'shopping'];
 
     function openDiscovery() {

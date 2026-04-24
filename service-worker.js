@@ -1,10 +1,11 @@
 // FX Weather Service Worker
 // Strategy:
-//   same-origin assets (HTML/SVG/JSON) → cache-first (offline-ready app shell)
-//   api.exchangerate-api.com         → network-first with cache fallback (graceful offline)
-//   everything else                  → passthrough (no interception)
+//   same-origin /api/*               → passthrough (dynamic; never cache geo/LLM)
+//   other same-origin assets         → cache-first (offline-ready app shell)
+//   api.exchangerate-api.com         → network-first with cache fallback
+//   everything else                  → passthrough
 
-const CACHE = 'fx-weather-v36';
+const CACHE = 'fx-weather-v37';
 
 self.addEventListener('install', () => {
     self.skipWaiting();
@@ -24,6 +25,9 @@ self.addEventListener('fetch', e => {
     const url = new URL(e.request.url);
 
     if (url.origin === self.location.origin) {
+        // Vercel Serverless endpoints must hit the network every time — caching
+        // a Geo response would pin the banner to an old city for offline reopens.
+        if (url.pathname.startsWith('/api/')) return;
         e.respondWith(cacheFirst(e.request));
     } else if (url.hostname === 'api.exchangerate-api.com') {
         e.respondWith(networkFirst(e.request));

@@ -1,6 +1,6 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v7.1 (Tab-moods + four-op calculator + Geo-IP mock + Playbook 8)
+**Version:** v7.1 — Vercel Edition (tab-moods + four-op calculator + real Geo-IP + LLM search + Playbook 8)
 **Build target:** `weather.html` · Service Worker `fx-weather-v32` · Manifest `FX Weather`
 **Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina reskin → v6.1 De-cardification → v6.3 Lumina Elite (feature release). Atomic CSS + HTML + JS additions; `calcRouting` / `calcAnchors` / `calcSplit` / business-logic untouched.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
@@ -714,6 +714,64 @@ Numbers are intentionally expressed as ranges or "roughly" language — no fake-
 
 - Geo-IP detection is MOCKED. Hardcoded Osaka payload. Real Worker endpoint still unbuilt; flip-over is a one-line `fetch` swap when the Worker ships.
 - Browser testing from the authoring session was again blocked (Playwright MCP did not initialise). Manual device check recommended before pushing.
+
+## 10.8 v7.1 Vercel migration — real Geo-IP + LLM search (shipped)
+
+### Why Vercel, and what moved
+
+v7.1 originally shipped Geo-IP and Smart-Discovery search as frontend stubs (500ms Osaka timeout + hardcoded `api.ourdomain.com` endpoint that never resolved). This iteration replaces both with Vercel Serverless Functions, removes the abandoned Cloudflare `worker.js`, and rewires the frontend so the banner and search both hit a real backend.
+
+Choice of host: Vercel. The project already targets Vercel for static hosting (per v5.0 memory); keeping the backend on the same origin simplifies CORS, auth, and deploy (a single `vercel deploy` picks up both the static HTML and the `api/*` functions). The `api.ourdomain.com` placeholder from v6.4 was always a stand-in.
+
+### New backend
+
+**`api/geo.js`** — CommonJS Vercel function.
+
+- GET-only. No body.
+- Reads `req.headers['x-vercel-ip-country']` and `req.headers['x-vercel-ip-city']`. City header is URL-encoded on non-ASCII, so we `decodeURIComponent` with a raw-value fallback.
+- Returns `{ country: "JP", city: "Osaka" }`. Both strings may be empty in local dev (`vercel dev`) or behind anonymising proxies — frontend handles empty gracefully.
+- Sets `Cache-Control: no-store`.
+- No env vars needed. No logging, no persistence.
+
+**`api/search.js`** — CommonJS Vercel function.
+
+- POST `{query, currency}`. JSON body.
+- Server-side validation before calling OpenAI: `query` trimmed ≤ 200 chars; `currency` must match `/^[A-Z]{3}$/`.
+- Calls OpenAI `gpt-4o-mini` with the same strict-JSON system prompt used by the retired Cloudflare worker: `{ emoji, label, price, currency }`. `response_format: { type: 'json_object' }`, `temperature: 0.2`, `max_tokens: 120`.
+- Server-side coerces model output: `emoji` ≤ 4 chars or fallback `🏷️`; `label` sliced to 64 chars; price must be a finite non-negative number; currency regex-checked or falls back to requested currency.
+- Env: `LLM_API_KEY` read from Vercel Secrets. Never reaches the client.
+- CORS open (`*`) on `POST` and `OPTIONS` so curl/dev/clients work uniformly.
+
+### Frontend wiring
+
+- `LLM_SEARCH_ENDPOINT` flipped from `https://api.ourdomain.com/search-ppp` → `/api/search`.
+- `autoDetectGeoPPP()` rewritten:
+  1. `fetch('/api/geo', { cache: 'no-store' })`.
+  2. Map `country` (ISO 3166 α-2) → `currency` via new `COUNTRY_TO_CCY` table. Table covers all 10 currencies already in `GLOBAL_PPP_DB` (EUR/USD/GBP/JPY/AUD/CAD/CHF/CNY/SGD/HKD) plus 20-country Eurozone expansion.
+  3. Pull first item from each of `food / grocery / tech / shopping` categories in `GLOBAL_PPP_DB[currency]`, cap at 3 anchors (was 5 in the mock, per PM v7.1 spec).
+  4. Re-label each anchor with the detected city (`Big Mac (Osaka)` instead of `Big Mac (Tokyo)`) so the banner reads local.
+  5. On any network failure (local dev, corp VPN, offline) — log and silently skip. No banner shown unless we have real data for the user's country.
+- Mock variable `_geoMockData` renamed to `_geoPayload` to reflect the non-mock nature.
+
+### Service Worker
+
+`v36 → v37`. Same-origin routes under `/api/*` are now explicit pass-through — without this, a cached geo response would pin the banner to yesterday's city after the user travels. POST `/api/search` was already skipped by the `method !== 'GET'` guard.
+
+### Removed
+
+- `worker.js` (Cloudflare module-format function) — no longer referenced; deletion is clean, `git log` retains history.
+
+### Deploy steps
+
+1. `npm i -g vercel && vercel link` (once).
+2. `vercel env add LLM_API_KEY` — paste OpenAI key.
+3. `vercel deploy --prod`.
+4. DNS will resolve `fx-weather.vercel.app` (or custom domain); `/api/geo` and `/api/search` auto-route to the functions.
+
+### Known caveats
+
+- Local file:// or `python -m http.server` testing will show `[Geo] /api/geo unreachable` in the console and no banner. That's expected — the functions only exist on Vercel.
+- First-anchor-per-category is a rough "best effort" picker; users can still fully edit the seeded anchors in the Backpack tab.
 
 ## 11. v5.0 final state — preserved disciplines
 

@@ -27,3 +27,13 @@ Desktop.ini
 
 # === Build artifacts ===
 fx-weather-deploy/
+
+# === Playwright MCP snapshots / test screenshots ===
+.playwright-mcp/
+v*.png
+
+# === Vercel ===
+.vercel/
+.env
+.env.local
+.env.*.local

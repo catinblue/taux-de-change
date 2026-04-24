@@ -1,6 +1,6 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v7.0 (True Lumina — full-bleed gradient shell + white bottom sheet + ghost numpad)
+**Version:** v7.1 (Tab-moods + four-op calculator + Geo-IP mock + Playbook 8)
 **Build target:** `weather.html` · Service Worker `fx-weather-v32` · Manifest `FX Weather`
 **Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina reskin → v6.1 De-cardification → v6.3 Lumina Elite (feature release). Atomic CSS + HTML + JS additions; `calcRouting` / `calcAnchors` / `calcSplit` / business-logic untouched.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
@@ -637,6 +637,83 @@ No new endpoint work. The `worker.js` + `LLM_SEARCH_ENDPOINT = 'https://api.ourd
 ### Caveats
 
 - Browser testing from inside the authoring session was blocked (Playwright MCP failed to initialise). Full visual regression should be done manually on-device before any push to `origin/main`.
+
+## 10.7 v7.1 Tab moods + Calculator + Geo-IP mock + Playbook 8 (shipped)
+
+### 1. Tab-specific mood gradients
+
+`applyHeroGradient()` → `applyTabGradient(tab)`. Weather still runs band-driven via `HERO_GRADIENTS`; Guide and Backpack are fixed:
+
+- Guide → `linear-gradient(160deg, #0A1128, #162244)` (midnight blue, reading calm)
+- Backpack → `linear-gradient(160deg, #150E17, #2D1B2E)` (deep blackberry, private vault)
+
+`body { transition: background 0.5s ease }` (was 1.2s). `renderContent()` now calls `applyTabGradient(S.activeTab)` on every tab switch so the crossfade triggers. Weather's mood is still `calcWeatherBand()` output; Guide/Backpack ignore the weather band entirely.
+
+Legacy `applyHeroGradient()` is kept as a shim delegating to `applyTabGradient(S.activeTab)` so existing callers (e.g. `fetchR`) still work.
+
+### 2. Four-op calculator
+
+`safeEval()` replaced with a shunting-yard tokeniser + RPN evaluator. No `eval()`, no `Function()`. Features:
+
+- Full BODMAS: `15+4.5*2` = `24`, not `39`.
+- Operator precedence table `{ '+':1, '-':1, '*':2, '/':2 }`.
+- Tokeniser regex gate: `^[\d+\-*/.\s]*$` — anything else short-circuits to `NaN`.
+- Trailing operator / dot stripped before evaluation so partial expressions preview a running total.
+- Division by zero → `NaN` (not `Infinity`) so the UI reverts gracefully.
+- Operator keys can replace a trailing operator (prevents `++` / `+*` junk); leading `-` treated as sign.
+
+Keypad HTML restructured: a dedicated `.keypad-ops` row (`+ − × ÷`, accent-green text, ghost background) sits above the 3×4 digit grid. `.keypad-actions` row trimmed to `[C]` + `[Done]` only (2-col grid with Done spanning 2fr).
+
+Display rendering: `formatKeypadExpr(e)` converts ASCII `*` `/` `-` `+` → `×` `÷` `−` `+` with single-space padding, so the working tape reads like a real calculator.
+
+### 3. Blinking cursor + keypad hint
+
+The amount field was a `readonly <input>` — now a `<div id="calc-in" role="button">` that contains `<span id="hero-amount-text">…</span><span class="hero-cursor"></span>`. The cursor is a 2 × 0.72em white bar blinking at 1 Hz (`@keyframes cursorBlink` with step-end timing for a crisp on/off). When the amount is empty, `#hero-amount-text:empty::before { content: '0'; opacity: 0.22 }` shows a ghost zero so the hero never looks blank.
+
+Below the amount: `<div class="hero-keypad-hint">⌨️ Tap to calculate</div>` at 0.5 opacity, right-aligned, 10px uppercase 1.5px letter-spacing. Trilingual (`Tap to calculate` / `按此计算` / `Appuyez pour calculer`).
+
+`updateKeypad()` now writes to `#hero-amount-text` textContent instead of the old `input.value`.
+
+### 4. Zero-click Geo-IP PPP (MOCK)
+
+PM accepted that `navigator.geolocation` cannot be silent — the browser always prompts. v7.1 ships the UI loop against a frontend mock of the IP-based endpoint so the demo stays seamless while the real Worker is still unwired.
+
+Flow:
+
+1. On first Weather-tab render, `maybeRenderGeoBanner()` runs → calls `autoDetectGeoPPP()`.
+2. `autoDetectGeoPPP()` logs `[Mock] Geo-IP Fetch: Pretending to be in Osaka`, then `setTimeout(500ms)` returns a hardcoded Osaka payload (5 JPY items: Ichiran ramen 1050, takoyaki 650, Osaka Metro 240, kaiten-zushi 140, Starbucks tall latte 475).
+3. Banner slides in at the top of `.bottom-sheet`: `📍 Detected Osaka — local price anchors ready. [Add] [✕]`.
+4. `acceptGeoPPP()` — pushes up to `MAX_ANCHORS - current.length` items into `fx_anchors`, sets `localStorage.fx_geo_applied = 'true'`, re-renders.
+5. `dismissGeoBanner()` — sets `localStorage.fx_geo_dismissed = 'true'`; both flags are one-shot per install.
+
+Wiring it to the real Worker (future) requires only swapping the `setTimeout(500ms, mock)` with a `fetch('https://api.ourdomain.com/geo-ppp')` whose response matches the same `{city, country, currency, items[]}` shape. Worker side will read `request.cf.city` and `request.cf.country` for zero-click detection.
+
+### 5. Playbook 8 — four new guide cards
+
+On top of the existing 4 (DCC / ATM / timing / refund counter), v7.1 adds four `[推论]`-anchored hard-knowledge cards, trilingual:
+
+- **Weekend Markup (🛑)** — FX markets close Fri night → Mon morning; Visa / Mastercard / Revolut add roughly 0.5–1% weekend spread. Settle big spend on weekdays.
+- **Cash or Plastic? (💵)** — Germany and Japan remain cash-heavy; Sweden, UK and Nordics are effectively cashless. Rule of thumb, not a per-country matrix.
+- **Tipping Culture (🪙)** — US 18–20% at sit-down restaurants; EU continental bakes service in; Japan tipping is mildly rude.
+- **Local Payment Networks (📱)** — PromptPay (TH), PIX (BR), UPI (IN), iDEAL (NL), Alipay / WeChat Pay (CN). Rail-switching kills foreign-card surcharges.
+
+Numbers are intentionally expressed as ranges or "roughly" language — no fake-precise percentages. The spirit carries over the v5.0 `[推论]` discipline without the inline code tag (flashcards are user-facing copy, not code comments).
+
+### What stays
+
+- `calcRouting` / `calcSplit` / `calcAnchors` / `calcWeatherBand` — unchanged.
+- `safeEval` signature unchanged (still `(expr: string) => number`); only the parser body rewrote.
+- Every JS-referenced DOM id and class from v7.0 still emitted by the renderers.
+- `worker.js` unchanged in this release (real LLM search + geo endpoint still await deployment).
+
+### Service Worker cache
+
+`v35` → `v36`. CSS, JS, and HTML all touched.
+
+### Known caveats
+
+- Geo-IP detection is MOCKED. Hardcoded Osaka payload. Real Worker endpoint still unbuilt; flip-over is a one-line `fetch` swap when the Worker ships.
+- Browser testing from the authoring session was again blocked (Playwright MCP did not initialise). Manual device check recommended before pushing.
 
 ## 11. v5.0 final state — preserved disciplines
 

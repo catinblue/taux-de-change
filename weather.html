@@ -49,7 +49,7 @@
             -webkit-font-smoothing: antialiased; line-height: 1.4;
             overflow: hidden;
             height: 100dvh;
-            transition: background 1.2s ease;
+            transition: background 0.5s ease;
         }
 
         .layout {
@@ -139,6 +139,27 @@
             font-family: inherit;
             text-align: right;
             caret-color: #FFFFFF;
+            cursor: pointer; user-select: none;
+            display: flex; justify-content: flex-end; align-items: baseline;
+            min-height: 1em;
+            font-variant-numeric: tabular-nums;
+        }
+        #hero-amount-text:empty::before { content: '0'; opacity: 0.22; }
+        .hero-cursor {
+            display: inline-block;
+            width: 2px; height: 0.72em;
+            background: #FFFFFF;
+            margin-left: 6px;
+            align-self: center;
+            animation: cursorBlink 1s step-end infinite;
+        }
+        @keyframes cursorBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        .hero-keypad-hint {
+            font-size: 10px; font-weight: 400;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 1.5px; text-transform: uppercase;
+            margin-top: 6px; text-align: right;
+            pointer-events: none;
         }
         .hero-target-amount {
             color: rgba(255, 255, 255, 0.82);
@@ -772,9 +793,25 @@
             color: rgba(13, 18, 19, 0.55);
             font-weight: 300;
         }
+        .keypad-ops {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 4px 0 6px;
+        }
+        .keypad-op {
+            background: transparent; border: none;
+            color: var(--accent-green);
+            font-family: inherit; font-size: 20px; font-weight: 400;
+            padding: 10px 0; cursor: pointer;
+            border-radius: 12px;
+            line-height: 1;
+            transition: background 0.15s ease;
+        }
+        .keypad-op:active { background: rgba(90, 147, 116, 0.12); }
         .keypad-actions {
             display: grid;
-            grid-template-columns: 1fr 1fr 2fr;
+            grid-template-columns: 1fr 2fr;
             gap: 6px;
             padding: 8px 0 0;
             margin-top: 6px;
@@ -865,6 +902,42 @@
             line-height: 1.4;
         }
 
+        /* === v7.1 Geo-IP zero-click banner === */
+        .geo-banner {
+            display: none;
+            align-items: center; gap: 10px;
+            margin: 10px 0 8px;
+            padding: 12px 14px;
+            background: rgba(90, 147, 116, 0.08);
+            border: 1px solid rgba(90, 147, 116, 0.3);
+            border-radius: 14px;
+            font-size: 12px; font-weight: 500; color: var(--text-main);
+            line-height: 1.4;
+        }
+        .geo-banner.show {
+            display: flex;
+            animation: geoSlideIn 0.45s cubic-bezier(0.2, 0.8, 0.3, 1.1) both;
+        }
+        .geo-banner-icon { font-size: 16px; flex-shrink: 0; }
+        .geo-banner-text { flex: 1; line-height: 1.35; }
+        .geo-banner-accept {
+            background: var(--accent-green); color: #FFFFFF; border: none;
+            border-radius: 999px; padding: 7px 14px;
+            font-family: inherit; font-size: 10px; font-weight: 600;
+            cursor: pointer; letter-spacing: 1.2px; text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .geo-banner-close {
+            background: none; border: none; color: #999999;
+            font-size: 14px; cursor: pointer; padding: 0 2px; line-height: 1;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        @keyframes geoSlideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         /* === Interaction physics layer (inherited from v5.0.1) === */
         button, .picker-unit, .dock-btn, .modal-item, .flashcard, .anchor-add-btn,
         .split-step-btn, .split-seg-btn, .anchor-currency-btn, .anchor-delete-btn,
@@ -942,6 +1015,12 @@
     <div class="modal-sheet keypad-sheet" onclick="event.stopPropagation()">
         <div class="sheet-handle"></div>
         <div class="keypad-display" id="keypad-expr">0</div>
+        <div class="keypad-ops">
+            <button class="keypad-op" onclick="updateKeypad('+')" aria-label="plus">+</button>
+            <button class="keypad-op" onclick="updateKeypad('-')" aria-label="minus">−</button>
+            <button class="keypad-op" onclick="updateKeypad('*')" aria-label="times">×</button>
+            <button class="keypad-op" onclick="updateKeypad('/')" aria-label="divide">÷</button>
+        </div>
         <div class="keypad-grid">
             <button class="keypad-btn" onclick="updateKeypad('1')">1</button>
             <button class="keypad-btn" onclick="updateKeypad('2')">2</button>
@@ -961,7 +1040,6 @@
         </div>
         <div class="keypad-actions">
             <button class="keypad-action" onclick="updateKeypad('clear')">C</button>
-            <button class="keypad-action" onclick="updateKeypad('+')">+</button>
             <button class="keypad-action keypad-done" onclick="closeKeypad()">Done</button>
         </div>
     </div>
@@ -1246,21 +1324,35 @@
         }
     };
 
-    // === v6.3 Dynamic dark weather gradients (hero + site-header) ===
+    // === v7.1 Tab-specific mood gradients ===
+    // Weather keeps band-driven dynamics; Guide/Backpack are fixed moods.
     const HERO_GRADIENTS = {
         great:  ['#0F2D3D', '#1E4A5F'],   /* deep space blue */
-        good:   ['#182E25', '#264A3B'],   /* deep forest green */
+        good:   ['#182E25', '#264A3B'],   /* forest emerald */
         stable: ['#0D1213', '#1F2726'],   /* default near-black (neutral) */
         poor:   ['#2E1F16', '#4A2F24'],   /* burnt umber */
         storm:  ['#2E1319', '#4A2030']    /* burgundy dark red */
     };
-    function applyHeroGradient() {
-        const w = calcWeatherBand();
-        const band = w ? w.band : 'stable';
-        const [c1, c2] = HERO_GRADIENTS[band] || HERO_GRADIENTS.stable;
+    const TAB_GRADIENTS = {
+        guide:    ['#0A1128', '#162244'],   /* midnight blue — reading / learning calm */
+        backpack: ['#150E17', '#2D1B2E']    /* deep blackberry — private vault */
+    };
+    function applyTabGradient(tab) {
+        let c1, c2;
+        if (tab === 'guide') {
+            [c1, c2] = TAB_GRADIENTS.guide;
+        } else if (tab === 'backpack') {
+            [c1, c2] = TAB_GRADIENTS.backpack;
+        } else {
+            const w = calcWeatherBand();
+            const band = w ? w.band : 'stable';
+            [c1, c2] = HERO_GRADIENTS[band] || HERO_GRADIENTS.stable;
+        }
         document.documentElement.style.setProperty('--hero-grad-1', c1);
         document.documentElement.style.setProperty('--hero-grad-2', c2);
     }
+    // Legacy alias — Weather-band gradient only. Kept for any remaining callers.
+    function applyHeroGradient() { applyTabGradient(S.activeTab || 'weather'); }
 
     const I18N = {
         en: {
@@ -1270,6 +1362,9 @@
             dccShield: "⚠ When the cashier asks, always pay in {BASE} — refuse the {TARGET} option (DCC, a hidden 3–7% extra).",
             bannerDefault: "Using default card rates. Tap to set up your real cards.",
             heroAmountLabel: "Current amount",
+            heroKeypadHint: "Tap to calculate",
+            geoBannerDetected: "Detected {city} — local price anchors ready.",
+            geoBannerAccept: "Add",
             pickerTitleBase: "Bill currency",
             pickerTitleTarget: "Card currency",
             pickerTitleAnchor: "Anchor currency",
@@ -1312,7 +1407,11 @@
                 { emoji: "🧛‍♂️", title: "The DCC Vampire", body: "Never pay in your home currency. Always choose the local currency on the machine!" },
                 { emoji: "🏧",    title: "The ATM Monster", body: "ATMs charge a flat fee. Withdrawing small amounts often will eat your money alive." },
                 { emoji: "🎓",    title: "Timing is Everything", body: "Big transfer coming up? Check our weather indicator — wait for a sunny day to send!" },
-                { emoji: "💸",    title: "The Refund Counter Trap", body: "At the airport VAT desk, always take your refund in {BASE}. If you choose {TARGET}, they will skim another 5% using terrible exchange rates!" }
+                { emoji: "💸",    title: "The Refund Counter Trap", body: "At the airport VAT desk, always take your refund in {BASE}. If you choose {TARGET}, they will skim another 5% using terrible exchange rates!" },
+                { emoji: "🛑",    title: "The Weekend Markup", body: "Card networks and neobanks freeze FX markets from late Friday to early Monday. To hedge, many add a ~0.5–1% weekend spread on top of the weekday rate. Rule of thumb: settle big cross-currency bills on weekdays, not Sunday brunch." },
+                { emoji: "💵",    title: "Cash or Plastic?", body: "Pay where the locals pay. Germany and Japan still run heavy on cash — a meat market or a ramen shop may politely decline foreign Visa. Sweden, UK and most Nordics are effectively cashless; hauling a wallet of krona just loses you ATM fees twice." },
+                { emoji: "🪙",    title: "Tipping: The Invisible Tax", body: "The US expects 18–20% at sit-down restaurants. Most of continental Europe bakes service into the bill (rounding up a euro or two is enough). In Japan, tipping is mildly rude — staff will chase you down the street to return the coin." },
+                { emoji: "📱",    title: "Go Local on Payments", body: "Foreign-card surcharges vanish the moment you hop onto the local rail: PromptPay in Thailand, PIX in Brazil, UPI in India, iDEAL at Dutch checkouts, Alipay / WeChat Pay in mainland China. Most of these top up from a cheap local prepaid card or e-wallet." }
             ],
             backpackTitle: "My Backpack",
             backpackSubtitle: "Make this app feel like yours.",
@@ -1353,6 +1452,9 @@
             dccShield: "⚠ 收银员问货币?永远选 {BASE},拒绝以 {TARGET} 结算(DCC 会多扣 3–7%)。",
             bannerDefault: "正在使用默认费率。点此配置你真实的卡片。",
             heroAmountLabel: "当前金额",
+            heroKeypadHint: "按此计算",
+            geoBannerDetected: "检测到您在 {city},已备好本地物价尺标。",
+            geoBannerAccept: "加入",
             pickerTitleBase: "账单币种",
             pickerTitleTarget: "卡片币种",
             pickerTitleAnchor: "参照物币种",
@@ -1395,7 +1497,11 @@
                 { emoji: "🧛‍♂️", title: "警惕 DCC 吸血鬼", body: "刷卡时绝对不要选人民币结算,永远选当地货币!" },
                 { emoji: "🏧",    title: "ATM 吞金兽", body: "境外取款有高昂的单笔机具费,千万别频繁去取小额现金。" },
                 { emoji: "🎓",    title: "交学费看天气", body: "准备交学费或大额汇款?看看主页的天气指示 — 挑个晴天再行动!" },
-                { emoji: "💸",    title: "退税柜台的暗刀", body: "机场退税时,永远要求退 {BASE}(当地货币)!如果选了 {TARGET},退税公司会用极差的汇率再偷偷割你 5% 的韭菜!" }
+                { emoji: "💸",    title: "退税柜台的暗刀", body: "机场退税时,永远要求退 {BASE}(当地货币)!如果选了 {TARGET},退税公司会用极差的汇率再偷偷割你 5% 的韭菜!" },
+                { emoji: "🛑",    title: "周末加价暗坑", body: "周五晚到周一早,外汇市场关门。Visa / Mastercard / Revolut 这期间往往加收一层约 0.5–1% 的风险溢价。大额消费尽量放到工作日结清,别留到周日早午餐。" },
+                { emoji: "💵",    title: "现金还是刷卡?", body: "入乡随俗。德国、日本仍是现金重度社会,菜市场和拉面馆可能直接拒绝外卡;北欧、英国基本无现金,带一兜硬币只会多交两遍 ATM 费。出发前先问下当地习惯。" },
+                { emoji: "🪙",    title: "小费 — 隐形税", body: "美国堂食 18–20% 是下限。欧洲大陆多数把服务费直接写进账单,凑个整就够。日本给小费属于失礼 — 店员会追出来还你硬币。" },
+                { emoji: "📱",    title: "走本地支付轨道", body: "外卡手续费一上本地通道就消失:泰国 PromptPay、巴西 PIX、印度 UPI、荷兰 iDEAL、中国大陆 Alipay / WeChat Pay。大多支持本地预付卡 / 电子钱包充值,比刷外卡省得多。" }
             ],
             backpackTitle: "我的背包",
             backpackSubtitle: "把这个 App 调成最适合你的样子。",
@@ -1436,6 +1542,9 @@
             dccShield: "⚠ Quand on vous demande, payez toujours en {BASE} — refusez l'option {TARGET} (DCC, 3–7% caché en plus).",
             bannerDefault: "Taux par défaut affichés. Touchez pour configurer vos vraies cartes.",
             heroAmountLabel: "Montant actuel",
+            heroKeypadHint: "Appuyez pour calculer",
+            geoBannerDetected: "Détecté à {city} — repères locaux prêts.",
+            geoBannerAccept: "Ajouter",
             pickerTitleBase: "Devise de l'addition",
             pickerTitleTarget: "Devise de ma carte",
             pickerTitleAnchor: "Devise du repère",
@@ -1478,7 +1587,11 @@
                 { emoji: "🧛‍♂️", title: "Le Piège DCC", body: "Ne payez jamais dans votre devise. Choisissez toujours la monnaie locale sur le terminal !" },
                 { emoji: "🏧",    title: "Le Monstre du DAB", body: "Les distributeurs prennent des frais fixes. Évitez de retirer de petites sommes trop souvent." },
                 { emoji: "🎓",    title: "Le Bon Timing", body: "Un gros transfert à faire ? Regardez l'indicateur météo — attendez une journée ensoleillée !" },
-                { emoji: "💸",    title: "Le Piège de la Détaxe", body: "Au guichet de détaxe, demandez toujours le remboursement en {BASE}. Choisir {TARGET} leur permet de voler 5% avec un taux de change catastrophique !" }
+                { emoji: "💸",    title: "Le Piège de la Détaxe", body: "Au guichet de détaxe, demandez toujours le remboursement en {BASE}. Choisir {TARGET} leur permet de voler 5% avec un taux de change catastrophique !" },
+                { emoji: "🛑",    title: "La Majoration Week-end", body: "Les marchés FX ferment du vendredi soir au lundi matin. Visa, Mastercard et Revolut appliquent souvent une marge d'environ 0,5–1% pour couvrir le risque. Réflexe : réglez vos gros achats en devise étrangère en semaine, pas le dimanche au brunch." },
+                { emoji: "💵",    title: "Espèces ou carte ?", body: "Adaptez-vous au pays. L'Allemagne et le Japon restent très cash — un marché ou un petit resto peut refuser une Visa étrangère. La Suède, le Royaume-Uni et les pays nordiques sont quasi sans espèces : traîner des pièces ne vous coûtera que des frais de DAB." },
+                { emoji: "🪙",    title: "Pourboires — l'impôt invisible", body: "Aux USA, 18–20% au restaurant est un plancher. L'Europe continentale inclut le service : arrondir d'un ou deux euros suffit. Au Japon, laisser un pourboire est ressenti comme impoli — le serveur vous rattrapera pour rendre la pièce." },
+                { emoji: "📱",    title: "Passez sur les rails locaux", body: "Les frais cartes étrangères disparaissent dès qu'on passe local : PromptPay en Thaïlande, PIX au Brésil, UPI en Inde, iDEAL aux Pays-Bas, Alipay / WeChat Pay en Chine. La plupart se rechargent via une prépayée locale ou un e-wallet bon marché." }
             ],
             backpackTitle: "Mon Sac à Dos",
             backpackSubtitle: "Rendez cette appli vraiment vôtre.",
@@ -1884,7 +1997,8 @@
         else if (S.activeTab === 'backpack') c.innerHTML = vBackpack();
         else c.innerHTML = '';
         renderDock();
-        if (S.activeTab === 'weather') { tickRoutes(); tickPPP(); }
+        applyTabGradient(S.activeTab);
+        if (S.activeTab === 'weather') { tickRoutes(); tickPPP(); maybeRenderGeoBanner(); }
     }
 
     // === Weather tab (v7.0 — floating hero + white sheet) ===
@@ -1905,10 +2019,10 @@
                     <div class="hero-row">
                         <span class="hero-label picker-unit" onclick="openCurrencyModal('base')">${S.base} · ${baseFull}</span>
                     </div>
-                    <input type="text" id="calc-in" class="hero-amount-input"
-                        value="${S.amount > 0 ? Number(S.amount).toLocaleString() : ''}"
-                        readonly inputmode="none"
-                        onclick="openKeypad()">
+                    <div class="hero-amount-input" id="calc-in" onclick="openKeypad()" role="button" tabindex="0">
+                        <span id="hero-amount-text">${S.amount > 0 ? Number(S.amount).toLocaleString() : ''}</span><span class="hero-cursor" aria-hidden="true"></span>
+                    </div>
+                    <div class="hero-keypad-hint">⌨️ ${d.heroKeypadHint}</div>
                 </div>
                 <div class="hero-divider">
                     <button class="hero-swap-btn" onclick="swapCurrencies()" aria-label="swap">
@@ -1931,6 +2045,7 @@
             </section>
             <div class="bottom-sheet">
                 <div class="sheet-handle"></div>
+                <div id="geo-banner" class="geo-banner"></div>
                 <section class="ppp-bar" id="ppp-slot">${renderPPPContent()}</section>
                 <section class="routes-section">
                     <div class="dcc-shield"><span class="dcc-shield-icon">!</span>${dccText}</div>
@@ -1956,6 +2071,78 @@
         renderContent();
         await fetchR();
         renderContent();
+    }
+
+    // === v7.1 Zero-click Geo-IP PPP (MOCK — real endpoint lives in worker.js) ===
+    // Spec: on first Weather-tab render, pretend to sniff the user's city via edge
+    // IP lookup and offer a one-tap import of local price anchors. The mock
+    // simulates a 500ms roundtrip and hardcodes an Osaka payload so the UI loop
+    // closes before the Worker is deployed.
+    let _geoMockData = null;
+    let _geoDetectStarted = false;
+
+    function autoDetectGeoPPP() {
+        if (_geoDetectStarted) return;
+        if (localStorage.getItem('fx_geo_dismissed') === 'true') return;
+        if (localStorage.getItem('fx_geo_applied') === 'true') return;
+        _geoDetectStarted = true;
+        console.info('[Mock] Geo-IP Fetch: Pretending to be in Osaka');
+        setTimeout(() => {
+            // Hardcoded stand-in for a real LLM response given city=Osaka, currency=JPY.
+            _geoMockData = {
+                city: 'Osaka',
+                country: 'Japan',
+                currency: 'JPY',
+                items: [
+                    { emoji: '🍜', label: 'Ichiran Ramen (Osaka)',   price: 1050, currency: 'JPY' },
+                    { emoji: '🐙', label: 'Takoyaki 8-pack (Osaka)', price: 650,  currency: 'JPY' },
+                    { emoji: '🚇', label: 'Osaka Metro single ride', price: 240,  currency: 'JPY' },
+                    { emoji: '🍣', label: 'Kaiten-zushi plate',      price: 140,  currency: 'JPY' },
+                    { emoji: '☕', label: 'Starbucks latte tall',    price: 475,  currency: 'JPY' }
+                ]
+            };
+            maybeRenderGeoBanner();
+        }, 500);
+    }
+
+    function maybeRenderGeoBanner() {
+        const slot = document.getElementById('geo-banner');
+        if (!slot) return;
+        if (localStorage.getItem('fx_geo_dismissed') === 'true' ||
+            localStorage.getItem('fx_geo_applied') === 'true') {
+            slot.classList.remove('show');
+            slot.innerHTML = '';
+            return;
+        }
+        if (!_geoMockData) { autoDetectGeoPPP(); return; }
+        const d = t();
+        slot.classList.add('show');
+        slot.innerHTML = `
+            <span class="geo-banner-icon">📍</span>
+            <span class="geo-banner-text">${d.geoBannerDetected.replace('{city}', _geoMockData.city)}</span>
+            <button class="geo-banner-accept" onclick="acceptGeoPPP()">${d.geoBannerAccept}</button>
+            <button class="geo-banner-close" onclick="dismissGeoBanner()" aria-label="close">✕</button>
+        `;
+    }
+
+    function acceptGeoPPP() {
+        haptic();
+        if (!_geoMockData) return;
+        const arr = getAnchors();
+        const slots = Math.max(0, MAX_ANCHORS - arr.length);
+        _geoMockData.items.slice(0, slots).forEach(it => arr.push(it));
+        setAnchors(arr);
+        localStorage.setItem('fx_geo_applied', 'true');
+        const slot = document.getElementById('geo-banner');
+        if (slot) { slot.classList.remove('show'); slot.innerHTML = ''; }
+        renderContent();
+    }
+
+    function dismissGeoBanner() {
+        haptic();
+        localStorage.setItem('fx_geo_dismissed', 'true');
+        const slot = document.getElementById('geo-banner');
+        if (slot) { slot.classList.remove('show'); slot.innerHTML = ''; }
     }
 
     function renderPPPContent() {
@@ -2180,17 +2367,83 @@
         renderContent();
     }
 
-    // === v6.3 Lumina Calculatrice (custom numeric keypad) ===
+    // === v7.1 Lumina Calculatrice — full four-op expression parser ===
+    // Internal storage uses ASCII ops: + - * /  (display shows − × ÷).
     let _keypadExpr = '';
+    const _OP_PRECEDENCE = { '+': 1, '-': 1, '*': 2, '/': 2 };
 
+    // Shunting-yard + RPN evaluator. No eval(), no Function(). Tokeniser rejects
+    // any char outside [digit, dot, + - * /, whitespace].
     function safeEval(expr) {
         if (!expr) return 0;
-        if (!/^[\d+.]*$/.test(expr)) return NaN;
-        const clean = expr.replace(/[+.]+$/, '');
-        if (!clean) return 0;
-        const parts = clean.split('+').map(p => parseFloat(p));
-        if (parts.some(isNaN)) return NaN;
-        return parts.reduce((a, b) => a + b, 0);
+        if (!/^[\d+\-*/.\s]*$/.test(expr)) return NaN;
+        // Strip trailing operator / dot so partial expressions still compute
+        const cleaned = expr.replace(/[+\-*/.]+$/, '');
+        if (!cleaned) return 0;
+
+        // Tokenise. Unary +/- (at start or right after an operator) glue to the
+        // next number instead of being pushed as binary operators.
+        const tokens = [];
+        let i = 0;
+        while (i < cleaned.length) {
+            const c = cleaned[i];
+            if (c === ' ') { i++; continue; }
+            const isUnary = (c === '-' || c === '+') &&
+                (tokens.length === 0 || tokens[tokens.length - 1].t === 'op');
+            if (isUnary) {
+                let num = c; i++;
+                while (i < cleaned.length && /[\d.]/.test(cleaned[i])) { num += cleaned[i]; i++; }
+                if (num === '-' || num === '+') return NaN;
+                if ((num.match(/\./g) || []).length > 1) return NaN;
+                const n = parseFloat(num);
+                if (isNaN(n)) return NaN;
+                tokens.push({ t: 'num', v: n });
+            } else if (c === '+' || c === '-' || c === '*' || c === '/') {
+                tokens.push({ t: 'op', v: c });
+                i++;
+            } else if (/[\d.]/.test(c)) {
+                let num = '';
+                while (i < cleaned.length && /[\d.]/.test(cleaned[i])) { num += cleaned[i]; i++; }
+                if ((num.match(/\./g) || []).length > 1) return NaN;
+                const n = parseFloat(num);
+                if (isNaN(n)) return NaN;
+                tokens.push({ t: 'num', v: n });
+            } else {
+                return NaN;
+            }
+        }
+        if (tokens.length === 0) return 0;
+
+        // Shunting-yard → RPN
+        const output = [];
+        const stack = [];
+        for (const tok of tokens) {
+            if (tok.t === 'num') {
+                output.push(tok);
+            } else {
+                while (stack.length && _OP_PRECEDENCE[stack[stack.length - 1].v] >= _OP_PRECEDENCE[tok.v]) {
+                    output.push(stack.pop());
+                }
+                stack.push(tok);
+            }
+        }
+        while (stack.length) output.push(stack.pop());
+
+        // Evaluate RPN
+        const es = [];
+        for (const tok of output) {
+            if (tok.t === 'num') {
+                es.push(tok.v);
+            } else {
+                if (es.length < 2) return NaN;
+                const b = es.pop(), a = es.pop();
+                if      (tok.v === '+') es.push(a + b);
+                else if (tok.v === '-') es.push(a - b);
+                else if (tok.v === '*') es.push(a * b);
+                else if (tok.v === '/') { if (b === 0) return NaN; es.push(a / b); }
+            }
+        }
+        return es.length === 1 ? es[0] : NaN;
     }
 
     function openKeypad() {
@@ -2207,33 +2460,54 @@
         document.body.style.overflow = '';
     }
 
+    // Pretty-print the working expression (ASCII → math glyphs)
+    function formatKeypadExpr(e) {
+        return (e || '').replace(/\*/g, ' × ').replace(/\//g, ' ÷ ').replace(/-/g, ' − ').replace(/\+/g, ' + ');
+    }
+
     function updateKeypadDisplay() {
         const el = document.getElementById('keypad-expr');
         if (!el) return;
-        el.textContent = _keypadExpr || '0';
+        el.textContent = _keypadExpr ? formatKeypadExpr(_keypadExpr) : '0';
+    }
+
+    // Helper: last numeric term (segment after the last operator) for validating . placement
+    function _lastTerm(expr) {
+        const m = expr.match(/[\d.]*$/);
+        return m ? m[0] : '';
     }
 
     function updateKeypad(char) {
         haptic();
+        const OPS = ['+', '-', '*', '/'];
         if (char === 'clear') {
             _keypadExpr = '';
         } else if (char === 'back') {
             _keypadExpr = _keypadExpr.slice(0, -1);
-        } else if (char === '+') {
-            if (!_keypadExpr) return;
-            if (/[+.]$/.test(_keypadExpr)) return;
-            _keypadExpr += '+';
+        } else if (OPS.includes(char)) {
+            if (!_keypadExpr) {
+                // Only `-` is legal as a leading sign for a first negative number
+                if (char === '-') _keypadExpr += '-';
+                return;
+            }
+            const last = _keypadExpr.slice(-1);
+            if (last === '.') return;
+            if (OPS.includes(last)) {
+                // Replace the trailing operator with the new one
+                _keypadExpr = _keypadExpr.slice(0, -1) + char;
+            } else {
+                _keypadExpr += char;
+            }
         } else if (char === '.') {
-            const lastTerm = _keypadExpr.split('+').pop();
-            if (!lastTerm) { _keypadExpr += '0.'; updateKeypadDisplay(); return; }
-            if (lastTerm.includes('.')) return;
+            const lt = _lastTerm(_keypadExpr);
+            if (!lt) { _keypadExpr += '0.'; updateKeypadDisplay(); return; }
+            if (lt.includes('.')) return;
             _keypadExpr += '.';
         } else {
             // digit
-            if (_keypadExpr.length >= 15) return;
-            // strip leading zero if starting a new term and user types a non-zero digit
-            const lastTerm = _keypadExpr.split('+').pop();
-            if (lastTerm === '0' && char !== '0' && char !== '.') {
+            if (_keypadExpr.length >= 24) return;
+            const lt = _lastTerm(_keypadExpr);
+            if (lt === '0' && char !== '0' && char !== '.') {
                 _keypadExpr = _keypadExpr.slice(0, -1) + char;
             } else {
                 _keypadExpr += char;
@@ -2241,13 +2515,15 @@
         }
         updateKeypadDisplay();
         const result = safeEval(_keypadExpr);
-        if (!isNaN(result)) {
-            S.amount = result;
-            const input = document.getElementById('calc-in');
-            if (input) input.value = result > 0 ? Number(result.toFixed(2)).toLocaleString() : '';
+        if (!isNaN(result) && isFinite(result)) {
+            S.amount = result < 0 ? 0 : result;
+            const heroText = document.getElementById('hero-amount-text');
+            if (heroText) heroText.textContent = S.amount > 0
+                ? Number(S.amount.toFixed(2)).toLocaleString()
+                : '';
             const targetEl = document.getElementById('hero-target-amount');
             if (targetEl) {
-                const tv = (result > 0 && S.cr) ? (result * S.cr) : 0;
+                const tv = (S.amount > 0 && S.cr) ? (S.amount * S.cr) : 0;
                 targetEl.textContent = tv > 0
                     ? tv.toLocaleString(undefined, { maximumFractionDigits: 2 })
                     : '—';

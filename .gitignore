@@ -37,3 +37,8 @@ v*.png
 .env
 .env.local
 .env.*.local
+
+# === Private audit / memory notes (per feedback_privacy_audit_spec §4 step 9) ===
+docs/
+PRIVACY_AUDIT.md
+*_AUDIT.md

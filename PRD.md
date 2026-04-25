@@ -1,6 +1,6 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v7.2 Omniscient (Mistral compound search + tag-aware Guide + visceral PPP + rate tooltips + Zen Checkout)
+**Version:** v7.2.1 Omniscient + Tax-Free Radar (Mistral compound search · tag-aware Guide · visceral PPP · rate tooltips · Zen Checkout · gamified VAT refund)
 **Build target:** `weather.html` · Service Worker `fx-weather-v32` · Manifest `FX Weather`
 **Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina reskin → v6.1 De-cardification → v6.3 Lumina Elite (feature release). Atomic CSS + HTML + JS additions; `calcRouting` / `calcAnchors` / `calcSplit` / business-logic untouched.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
@@ -871,6 +871,102 @@ PM directive ("the previous spec was too thin — build an elite AI-native finan
 
 - `MISTRAL_API_KEY` env var must be added in Vercel for `/api/search` to function.
 - Mistral compound search response (3-item array) verified against schema only locally; needs end-to-end test on the deployed preview URL.
+
+## 10.10 v7.2.1 Tax-Free Radar (shipped)
+
+PM directive: turn the VAT refund hint into a 3-layer gamified micro-interaction — a "Top-Up" progress feel below threshold, a "Lumina Flip" reveal at threshold, and a hardcore rule engine for the geo-aware behaviour. All-frontend, no LLM call.
+
+### 1. Hardcore rule engine
+
+`VAT_RULES` constant in `weather.html`:
+
+| Currency | Threshold | Refund rate | Notes |
+|---|---|---|---|
+| JPY | 5 000 | 10 % | Japan Tax-Free (PM spec) |
+| AUD | 300 | 10 % | TRS Refund (PM spec) |
+| SGD | 100 | 9 % | SG Tourist Refund (PM spec) |
+| KRW | 30 000 | 10 % | Korea Tax-Free |
+| CHF | 300 | 7.7 % | Swiss MWST |
+| **EUR_FR** | 100 | 12 % | France Détaxe (PM spec) |
+| **EUR_DE** | 50 | 11 % | Germany VAT (PM spec) |
+| EUR (fallback) | 100 | 11 % | other Eurozone or unknown country |
+| GBP | — | — | **UK exception path** — no toggle, info-only banner |
+| USD / CNY / HKD / CAD | — | — | explicit `null` (no general tourist VAT) |
+
+`currentVatRule()` lookup logic:
+- Target = GBP → `{ uk: true }` (handled separately)
+- Target = EUR + `S.geoCountry` resolves to a sub-key (`EUR_FR`, `EUR_DE`) → use sub-rule
+- Else → `VAT_RULES[target]` or null
+
+`S.geoCountry` is populated by `autoDetectGeoPPP()` when the Vercel `/api/geo` endpoint returns a country code. Local dev / IP unresolved → null → generic EUR fallback.
+
+All entries tagged `[推论 · v7.2 PM-curated 2026 baseline]` in the source comment.
+
+### 2. The Top-Up progress (below threshold)
+
+When `S.amount * S.cr < threshold`, the radar slot renders a single faint line:
+
+> Tax-free threshold — add 500 JPY more to qualify
+
+Styling: `font-size: 11px`, `color: rgba(255,255,255,0.5)`, no chrome — exactly the "极其微细的浅色文字" PM specified. Re-computed on every keypad keystroke via `refreshVatRadar()` so the gap counts down live as the user types.
+
+i18n: `vatRadarGap` in EN/ZH/FR uses `{gap}` and `{ccy}` placeholders.
+
+### 3. The Lumina Flip (toggle eligible → applied)
+
+When `spend ≥ threshold`, the slot becomes a clickable accent-green pill:
+
+> 🏷️ TAX-FREE UNLOCKED · REFUND ~10 %
+
+Pill style: glass `rgba(90,147,116,0.18)` bg with 1 px solid accent-green border, 6 px backdrop-blur, `vatPulse` 2.4 s halo animation (matches the `local-anchor-cta`'s glow language).
+
+**Click → toggleVatRefund()**:
+
+1. `S.vatRefundOn = !S.vatRefundOn`
+2. Both `#hero-amount-text` and `#hero-target-amount` get the `lumina-flipping` class.
+3. `@keyframes luminaFlip 0.55 s` plays: `0–35 %` slide down + fade out; `41–65 %` slide in from above + fade up; `65–100 %` settle. Cubic-bezier easing.
+4. At the 220 ms midpoint, JS swaps the text content via `applyHeroAmountValues()` (which uses `effectiveBaseAmount() = S.amount × (1 − rate)` when toggle is on).
+5. `.savings-on` class adds an `!important` accent-green tint that persists after the animation.
+6. Pill switches to the "applied" variant: white text on saturated green `rgba(90,147,116,0.35)`, copy `"✓ REFUND APPLIED · 10 % OFF · TAP TO REVERT"`.
+7. A DCC reminder strip slides in below: `"⚠ At the refund desk, ask for the refund in {TARGET} (local). Never let them convert to {BASE} — that's DCC."` with `dccFadeIn` translateY animation.
+
+Tap again → flip back. PM rule: bidirectional toggle, both directions animate.
+
+### 4. The UK Exception
+
+Target = GBP renders an info-only red box:
+
+> 🛑 The UK abolished tourist VAT refunds in 2020 — what you see is the final price.
+
+Style: `rgba(180,60,60,0.18)` bg, soft pink text, 12 px radius. **No toggle, no Lumina Flip** — there is nothing to flip to.
+
+### 5. Closure loop with the Guide
+
+The DCC reminder under the active toggle deliberately echoes the language of Guide card #0 (DCC Vampire) and the route-section's persistent DCC shield. PM intent: when the user is one tap away from claiming a refund, the same anti-DCC reminder appears in-context — the Guide tip is no longer just learning material, it's an in-the-moment guard rail.
+
+### State management
+
+- `S.vatRefundOn` initial value `false`. Reset to `false` on `selectCurrency` (base or target) and `swapCurrencies`.
+- `reconcileVatState()` runs at the start of every `vWeather()` render and inside `applyHeroAmountValues()`. If amount drops below threshold or rule disappears, the toggle silently flips off — preventing the savings-on tint from getting stuck in an invalid state.
+- `updateKeypad()` now routes hero text updates through `applyHeroAmountValues()` instead of writing `textContent` directly, so the live keypad calc respects the VAT toggle and the savings tint persists across keystrokes.
+- `Zen` overlay is also refreshed inside `toggleVatRefund()` if open, so the Zen view shows the post-refund numbers too.
+
+### Verified locally (Playwright)
+
+| State | Result |
+|---|---|
+| Target=JPY, amount=25 EUR (4 500 JPY) | "Tax-free threshold — add 500 JPY more to qualify" (gap state) ✓ |
+| Target=JPY, amount=30 EUR (5 400 JPY) | 🏷️ pill "TAX-FREE UNLOCKED · REFUND ~10 %" (eligible state) ✓ |
+| Click pill | Hero flipped 30 → 27 EUR, 5 400 → 4 860 JPY, both green-tinted; pill became "REFUND APPLIED · 10 % OFF · TAP TO REVERT"; DCC reminder slid in ✓ |
+| Target=GBP, amount=200 | UK exception red box, no toggle ✓ |
+| EUR + geoCountry FR | Rule = 100 / 0.12 ✓ |
+| EUR + geoCountry DE | Rule = 50 / 0.11 ✓ |
+| EUR + geoCountry IT (not in dict) | Generic EUR fallback 100 / 0.11 ✓ |
+| EUR + no geo | Generic EUR fallback ✓ |
+
+### Service Worker
+
+`v38 → v39`. CSS additions + JS additions + minor `vWeather()` template change.
 
 ## 11. v5.0 final state — preserved disciplines
 

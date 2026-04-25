@@ -5,7 +5,7 @@
 //   api.exchangerate-api.com         → network-first with cache fallback
 //   everything else                  → passthrough
 
-const CACHE = 'fx-weather-v38';
+const CACHE = 'fx-weather-v39';
 
 self.addEventListener('install', () => {
     self.skipWaiting();

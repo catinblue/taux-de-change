@@ -303,6 +303,91 @@
             margin-top: 6px;
         }
 
+        /* === v7.2.1 Tax-Free Radar === */
+        .vat-radar { margin-top: 6px; }
+        .vat-radar:empty { display: none; }
+        .vat-radar-gap {
+            font-size: 11px; font-weight: 400;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.2px;
+            line-height: 1.4;
+            padding: 2px 4px;
+        }
+        .vat-radar-eligible, .vat-radar-active {
+            display: inline-flex; align-items: center;
+            background: rgba(90, 147, 116, 0.18);
+            border: 1px solid rgba(90, 147, 116, 0.5);
+            border-radius: 999px;
+            padding: 7px 14px;
+            color: var(--accent-green);
+            font-family: inherit; font-size: 11px; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+            cursor: pointer;
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+            transition: background 0.15s ease, transform 0.1s ease;
+            box-shadow: 0 0 0 0 rgba(90, 147, 116, 0);
+            animation: vatPulse 2.4s ease-in-out infinite;
+        }
+        .vat-radar-eligible:active, .vat-radar-active:active {
+            background: rgba(90, 147, 116, 0.35);
+            transform: scale(0.97);
+        }
+        .vat-radar-active {
+            background: rgba(90, 147, 116, 0.35);
+            border-color: rgba(90, 147, 116, 0.7);
+            color: #FFFFFF;
+        }
+        @keyframes vatPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(90, 147, 116, 0.22); }
+            50%      { box-shadow: 0 0 0 6px rgba(90, 147, 116, 0); }
+        }
+        .vat-radar-uk {
+            font-size: 11px; font-weight: 500;
+            color: rgba(255, 200, 200, 0.85);
+            background: rgba(180, 60, 60, 0.18);
+            border: 1px solid rgba(180, 60, 60, 0.32);
+            border-radius: 12px;
+            padding: 8px 12px;
+            line-height: 1.4;
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+        }
+        .vat-radar-dcc {
+            margin-top: 8px;
+            font-size: 10px; font-weight: 400;
+            color: rgba(255, 220, 180, 0.7);
+            letter-spacing: 0.2px;
+            line-height: 1.4;
+            padding: 7px 10px;
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 200, 100, 0.18);
+            border-radius: 10px;
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+            animation: dccFadeIn 0.4s ease both;
+        }
+        @keyframes dccFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Lumina Flip: hero amounts strikethrough → green slide-in */
+        @keyframes luminaFlip {
+            0%   { opacity: 1; transform: translateY(0); }
+            35%  { opacity: 0; transform: translateY(10px); }
+            41%  { opacity: 0; transform: translateY(-14px); }
+            65%  { opacity: 1; transform: translateY(0); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .lumina-flipping {
+            animation: luminaFlip 0.55s cubic-bezier(0.4, 0.2, 0.4, 1) both;
+        }
+        #hero-amount-text.savings-on,
+        .hero-target-amount.savings-on {
+            color: var(--accent-green) !important;
+        }
+
         /* === v7.2 Hero contextual tip strip === */
         .hero-tip-strip {
             font-size: 11px; font-weight: 400;
@@ -1587,6 +1672,11 @@
                 CNY: "💡 Foreign cards rarely work — bind Alipay TourCard or WeChat Pay before landing."
             },
             currencyTipFallback: "💡 Local tip — coming soon",
+            vatRadarGap:       "Tax-free threshold — add {gap} {ccy} more to qualify",
+            vatRadarEligible:  "🏷️ Tax-free unlocked · refund ~{rate}%",
+            vatRadarActive:    "✓ Refund applied · {rate}% off · tap to revert",
+            vatRadarUk:        "🛑 The UK abolished tourist VAT refunds in 2020 — what you see is the final price.",
+            vatRadarDcc:       "⚠ At the refund desk, ask for the refund in {TARGET} (local). Never let them convert to {BASE} — that's DCC.",
             pickerTitleBase: "Bill currency",
             pickerTitleTarget: "Card currency",
             pickerTitleAnchor: "Anchor currency",
@@ -1689,6 +1779,11 @@
                 CNY: "💡 外卡基本不通 —— 落地前绑好 Alipay TourCard 或 WeChat Pay。"
             },
             currencyTipFallback: "💡 本地小贴士 —— 待补",
+            vatRadarGap:       "离免税门槛还差 {gap} {ccy} 凑单",
+            vatRadarEligible:  "🏷️ 已触发免税 · 预计退回 ~{rate}%",
+            vatRadarActive:    "✓ 已应用退税 · 立省 {rate}% · 再点回到含税原价",
+            vatRadarUk:        "🛑 英国 2020 年起已取消游客退税 —— 当前即为最终价格。",
+            vatRadarDcc:       "⚠ 退税柜台请坚持退 {TARGET}(本地货币),绝不接受换算成 {BASE} —— 那是 DCC 陷阱。",
             pickerTitleBase: "账单币种",
             pickerTitleTarget: "卡片币种",
             pickerTitleAnchor: "参照物币种",
@@ -1791,6 +1886,11 @@
                 CNY: "💡 Les cartes étrangères passent rarement — liez Alipay TourCard ou WeChat Pay avant l'arrivée."
             },
             currencyTipFallback: "💡 Astuce locale — bientôt",
+            vatRadarGap:       "Seuil détaxe — ajoutez encore {gap} {ccy} pour y prétendre",
+            vatRadarEligible:  "🏷️ Détaxe déclenchée · remboursement ~{rate}%",
+            vatRadarActive:    "✓ Détaxe appliquée · -{rate}% · touchez pour revenir au prix taxé",
+            vatRadarUk:        "🛑 Le Royaume-Uni a supprimé la détaxe touriste en 2020 — c'est le prix final.",
+            vatRadarDcc:       "⚠ Au guichet, exigez le remboursement en {TARGET} (devise locale). Refusez la conversion en {BASE} — c'est le piège DCC.",
             pickerTitleBase: "Devise de l'addition",
             pickerTitleTarget: "Devise de ma carte",
             pickerTitleAnchor: "Devise du repère",
@@ -1899,7 +1999,9 @@
         splitOpen: false,
         splitPeople: 2,
         splitPayer: 'zero',
-        zenMode: false
+        zenMode: false,
+        vatRefundOn: false,
+        geoCountry: null            // filled by /api/geo when available; used for EUR sub-rules
     };
 
     function t() { return I18N[S.lang]; }
@@ -2111,12 +2213,14 @@
         closeCurrencyModal();
         if (currentPickerType === 'base' && S.base !== curr) {
             S.base = curr;
+            S.vatRefundOn = false;     // VAT rule may differ; reset toggle
             resetCostCaches();
             renderContent();
             await fetchR();
             renderContent();
         } else if (currentPickerType === 'target' && S.target !== curr) {
             S.target = curr;
+            S.vatRefundOn = false;     // VAT rule changes with target
             resetCostCaches();
             renderContent();
             await fetchR();
@@ -2255,14 +2359,18 @@
     // === Weather tab (v7.0 — floating hero + white sheet) ===
     function vWeather() {
         const d = t();
+        reconcileVatState();   // ensure stuck-on toggle gets cleaned up before render
         const bannerShown = localStorage.getItem('fx_banner_dismissed') !== 'true';
         const dccText = d.dccShield.replace('{BASE}', S.base).replace('{TARGET}', S.target);
-        const targetAmount = (S.amount && S.cr) ? (S.amount * S.cr) : 0;
+        const eff = effectiveBaseAmount();
+        const targetAmount = (eff && S.cr) ? (eff * S.cr) : 0;
         const targetStr = targetAmount > 0
             ? targetAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })
             : '—';
+        const baseStr = eff > 0 ? Number(eff).toLocaleString() : '';
         const baseFull = currencyName(S.base);
         const targetFull = currencyName(S.target);
+        const savingsCls = S.vatRefundOn ? ' savings-on' : '';
 
         return `
             <section class="hero">
@@ -2276,7 +2384,7 @@
                         <span class="hero-label picker-unit" onclick="openCurrencyModal('base')">${S.base} · ${baseFull}</span>
                     </div>
                     <div class="hero-amount-input" id="calc-in" onclick="openKeypad()" role="button" tabindex="0">
-                        <span id="hero-amount-text">${S.amount > 0 ? Number(S.amount).toLocaleString() : ''}</span><span class="hero-cursor" aria-hidden="true"></span>
+                        <span id="hero-amount-text" class="${savingsCls.trim()}">${baseStr}</span><span class="hero-cursor" aria-hidden="true"></span>
                     </div>
                     <div class="hero-keypad-hint">⌨️ ${d.heroKeypadHint}</div>
                 </div>
@@ -2292,8 +2400,9 @@
                     <div class="hero-row">
                         <span class="hero-label picker-unit" onclick="openCurrencyModal('target')">${S.target} · ${targetFull}</span>
                     </div>
-                    <div class="hero-target-amount" id="hero-target-amount">${targetStr}</div>
+                    <div class="hero-target-amount${S.vatRefundOn ? ' savings-on' : ''}" id="hero-target-amount">${targetStr}</div>
                 </div>
+                <div id="vat-radar" class="vat-radar">${renderVatRadar()}</div>
                 <div class="action-pills">
                     <span class="action-pill" role="status">${renderHeroWeatherLabel()}</span>
                     <button class="action-pill" onclick="openSplitModal()" aria-label="split">${d.splitTrigger || 'AA'}</button>
@@ -2394,6 +2503,85 @@
         _swipeStartX = null; _swipeStartY = null;
     }, { passive: true });
 
+    // === v7.2.1 Tax-Free Radar — render + toggle + Lumina Flip ===
+    function renderVatRadar() {
+        const d = t();
+        if (!S.amount || S.amount <= 0 || !S.cr) return '';
+        // UK exception
+        if (S.target === 'GBP') {
+            return `<div class="vat-radar-uk">${d.vatRadarUk}</div>`;
+        }
+        const rule = currentVatRule();
+        if (!rule) return '';
+        const spendInTarget = S.amount * S.cr;
+        if (spendInTarget < rule.threshold) {
+            const gap = Math.ceil(rule.threshold - spendInTarget);
+            const gapStr = gap.toLocaleString();
+            const txt = d.vatRadarGap.replace('{gap}', gapStr).replace('{ccy}', S.target);
+            return `<div class="vat-radar-gap">${txt}</div>`;
+        }
+        const ratePct = Math.round(rule.rate * 100);
+        if (S.vatRefundOn) {
+            const txt = d.vatRadarActive.replace('{rate}', ratePct);
+            const dcc = d.vatRadarDcc.replace('{BASE}', S.base).replace('{TARGET}', S.target);
+            return `
+                <button class="vat-radar-active" onclick="toggleVatRefund()">${txt}</button>
+                <div class="vat-radar-dcc">${dcc}</div>
+            `;
+        }
+        const txt = d.vatRadarEligible.replace('{rate}', ratePct);
+        return `<button class="vat-radar-eligible" onclick="toggleVatRefund()">${txt}</button>`;
+    }
+
+    function refreshVatRadar() {
+        const slot = document.getElementById('vat-radar');
+        if (slot) slot.innerHTML = renderVatRadar();
+    }
+
+    // Update hero base + target text (and accent-green tint) given current
+    // VAT toggle state. Used both by toggleVatRefund mid-flip and by
+    // updateKeypad on every keystroke so the hero stays in sync.
+    function applyHeroAmountValues() {
+        reconcileVatState();
+        const eff = effectiveBaseAmount();
+        const heroBase   = document.getElementById('hero-amount-text');
+        const heroTarget = document.getElementById('hero-target-amount');
+        [heroBase, heroTarget].forEach(el => {
+            if (el) el.classList.toggle('savings-on', S.vatRefundOn);
+        });
+        if (heroBase) {
+            heroBase.textContent = eff > 0
+                ? Number(eff.toFixed(2)).toLocaleString()
+                : '';
+        }
+        if (heroTarget) {
+            const tv = (eff > 0 && S.cr) ? eff * S.cr : 0;
+            heroTarget.textContent = tv > 0
+                ? tv.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                : '—';
+        }
+    }
+
+    function toggleVatRefund() {
+        if (!S.amount || !S.cr) return;
+        const rule = currentVatRule();
+        if (!rule || rule.uk) return;
+        if (S.amount * S.cr < rule.threshold) return;
+        haptic();
+        S.vatRefundOn = !S.vatRefundOn;
+        // Lumina Flip: animate hero numbers, swap text mid-flip
+        const els = ['hero-amount-text', 'hero-target-amount']
+            .map(id => document.getElementById(id))
+            .filter(Boolean);
+        els.forEach(el => el.classList.add('lumina-flipping'));
+        setTimeout(() => applyHeroAmountValues(), 220);
+        setTimeout(() => els.forEach(el => el.classList.remove('lumina-flipping')), 600);
+        // Refresh radar (toggle/active label + DCC reminder)
+        refreshVatRadar();
+        // Zen overlay tracks hero values too
+        if (S.zenMode) renderZenOverlay();
+    }
+
     // === v7.2 Rate transparency popover ===
     function showRateInfo(key) {
         haptic();
@@ -2421,6 +2609,7 @@
         const tmp = S.base;
         S.base = S.target;
         S.target = tmp;
+        S.vatRefundOn = false;        // post-swap target probably has a different VAT rule
         resetCostCaches();
         renderContent();
         await fetchR();
@@ -2446,6 +2635,58 @@
         CH: 'CHF', LI: 'CHF', CN: 'CNY', SG: 'SGD', HK: 'HKD'
     };
 
+    // === v7.2.1 Tax-Free Radar — VAT_RULES ===
+    // [推论 · v7.2 PM-curated 2026 baseline]: thresholds in target currency,
+    // refund rate as a decimal (0.10 = 10% off post-refund). EUR sub-rules
+    // are picked when geo-IP resolves the user's country; otherwise the
+    // generic EUR fallback applies. UK is handled via a separate exception
+    // path (no toggle, just informational) since tourist VAT was abolished
+    // in 2020.
+    const VAT_RULES = {
+        // Single-currency rules
+        JPY:    { threshold: 5000,  rate: 0.10  },     // Japan Tax-Free
+        AUD:    { threshold: 300,   rate: 0.10  },     // TRS Refund
+        SGD:    { threshold: 100,   rate: 0.09  },     // SG Tourist Refund
+        KRW:    { threshold: 30000, rate: 0.10  },     // Korea Tax-Free
+        CHF:    { threshold: 300,   rate: 0.077 },     // CH MWST Refund
+        // EUR sub-rules (used when geoCountry resolves)
+        EUR_FR: { threshold: 100,   rate: 0.12  },     // France Détaxe (PM spec)
+        EUR_DE: { threshold: 50,    rate: 0.11  },     // Germany VAT (PM spec)
+        // Generic EUR fallback when country unknown or other EU member
+        EUR:    { threshold: 100,   rate: 0.11  },
+        // Explicit "no VAT refund" entries — keep so currentVatRule() returns null cleanly
+        USD: null, CNY: null, HKD: null, CAD: null
+        // GBP intentionally omitted — UK exception path renders instead.
+    };
+
+    function currentVatRule() {
+        const target = S.target;
+        if (target === 'GBP') return { uk: true };
+        if (target === 'EUR' && S.geoCountry) {
+            const subKey = `EUR_${S.geoCountry}`;
+            if (VAT_RULES[subKey]) return VAT_RULES[subKey];
+        }
+        return VAT_RULES[target] || null;
+    }
+
+    // Returns the BASE-currency amount the user actually pays after refund.
+    function effectiveBaseAmount() {
+        if (!S.vatRefundOn) return S.amount;
+        const rule = currentVatRule();
+        if (!rule || rule.uk) return S.amount;
+        return S.amount * (1 - rule.rate);
+    }
+
+    // If current state would leave a "refund applied" toggle stuck on after
+    // the user changed amount/target below threshold, silently flip it off.
+    function reconcileVatState() {
+        if (!S.vatRefundOn) return;
+        const rule = currentVatRule();
+        if (!rule || rule.uk) { S.vatRefundOn = false; return; }
+        const spendInTarget = (S.amount || 0) * (S.cr || 0);
+        if (spendInTarget < rule.threshold) S.vatRefundOn = false;
+    }
+
     async function autoDetectGeoPPP() {
         if (_geoDetectStarted) return;
         if (localStorage.getItem('fx_geo_dismissed') === 'true') return;
@@ -2459,6 +2700,7 @@
             const data = await res.json();
             country = (data.country || '').toUpperCase();
             city = data.city || '';
+            if (country) S.geoCountry = country; // VAT_RULES EUR sub-rules read this
         } catch (err) {
             console.info('[Geo] /api/geo unreachable (likely local dev):', err.message);
             return;
@@ -2909,17 +3151,9 @@
         const result = safeEval(_keypadExpr);
         if (!isNaN(result) && isFinite(result)) {
             S.amount = result < 0 ? 0 : result;
-            const heroText = document.getElementById('hero-amount-text');
-            if (heroText) heroText.textContent = S.amount > 0
-                ? Number(S.amount.toFixed(2)).toLocaleString()
-                : '';
-            const targetEl = document.getElementById('hero-target-amount');
-            if (targetEl) {
-                const tv = (S.amount > 0 && S.cr) ? (S.amount * S.cr) : 0;
-                targetEl.textContent = tv > 0
-                    ? tv.toLocaleString(undefined, { maximumFractionDigits: 2 })
-                    : '—';
-            }
+            // hero base + target (respects VAT toggle, also reconciles state)
+            applyHeroAmountValues();
+            refreshVatRadar();
             const panel = document.getElementById('routing-panel');
             if (panel) { panel.innerHTML = renderRoutes(); tickRoutes(); }
             const pppSlot = document.getElementById('ppp-slot');

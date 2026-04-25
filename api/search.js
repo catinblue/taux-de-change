@@ -1,37 +1,51 @@
-// FX Weather — LLM price-search endpoint (Vercel Serverless, CommonJS)
-// Front-end posts {query, currency}; we proxy to OpenAI with a strict JSON
-// system prompt and validate the response shape server-side so bad LLM output
-// never reaches the client.
+// FX Weather — Mistral compound price-search endpoint (Vercel Serverless, CommonJS)
+// Front-end posts {query, currency}; we proxy to Mistral and return an ARRAY of
+// 3 related price points spanning the spectrum (e.g., budget / mid / premium,
+// or local-cafe / chain / supermarket variants), so the user instantly sees a
+// pricing range instead of a single point.
 //
 // Deploy:
-//   vercel env add LLM_API_KEY   # paste your OpenAI API key
+//   vercel env add MISTRAL_API_KEY   # paste your Mistral API key
 //   vercel deploy
 //
-// Request  : POST /api/search    Body: { "query": "PS5 in Japan", "currency": "USD" }
-// Response : { "emoji": "🎮", "label": "PS5 (Tokyo)", "price": 539, "currency": "USD" }
+// Request  : POST /api/search    Body: { "query": "Coffee in Paris", "currency": "EUR" }
+// Response : { "items": [
+//                { "emoji":"☕", "label":"Local cafe espresso (Paris)",  "price":2.5,  "currency":"EUR" },
+//                { "emoji":"☕", "label":"Starbucks latte tall (Paris)", "price":5.2,  "currency":"EUR" },
+//                { "emoji":"🥤", "label":"Supermarket bottled coffee",   "price":1.8,  "currency":"EUR" }
+//              ] }
 
-const MODEL = 'gpt-4o-mini';
+const MODEL = 'mistral-small-latest';
+const MISTRAL_ENDPOINT = 'https://api.mistral.ai/v1/chat/completions';
 
 const SYSTEM_PROMPT = `You are a price-estimation assistant for a travel-FX app.
 
-The user will give you an item description and a target currency. Return a SINGLE
-JSON object with exactly these four fields and nothing else:
+Given an item description and a target currency, return a SINGLE JSON OBJECT with one
+key "items" whose value is an ARRAY of EXACTLY 3 related price points spanning the
+realistic spectrum for that item in the relevant city/region. Examples of spectra:
+  - budget / mid / premium variant of the same product
+  - local independent / chain / supermarket version
+  - small / medium / large size
 
+Each item is an object with EXACTLY these four keys:
 {
-  "emoji": "<one emoji that represents the item>",
-  "label": "<short name + city in parentheses, <=32 chars>",
+  "emoji": "<one emoji>",
+  "label": "<short name including the city in parentheses, <=32 chars>",
   "price": <number in the target currency, no symbol, no thousands separator>,
   "currency": "<ISO 4217 three-letter code, matching the request>"
 }
 
+Final shape:
+{ "items": [ <item1>, <item2>, <item3> ] }
+
 Rules:
-- Price must be a realistic current-market estimate for the specified city/region.
-- If no city is specified, infer the most canonical city for that item and note it
-  in the label. Example: "PS5 in Japan" -> label "PS5 (Tokyo)".
 - Use the target currency given in the request. Do NOT convert to local currency.
-- Never wrap the JSON in code fences. Never add commentary.
-- If the item is not a product/service or is unsafe, return
-  {"emoji":"🏷️","label":"Unknown","price":0,"currency":"<requested>"}.`;
+- If no city is specified, infer the most canonical city for the item and put it in each label.
+- Order items from cheapest to most expensive.
+- Never wrap the JSON in code fences. Never add commentary outside JSON.
+- If the item is not a real product/service or is unsafe, return:
+  { "items": [ { "emoji":"🏷️","label":"Unknown","price":0,"currency":"<requested>" } ] }
+  (a single-element array — front-end will display a "no results" hint).`;
 
 const CORS = {
     'Access-Control-Allow-Origin': '*',
@@ -44,14 +58,31 @@ function applyCors(res) {
     for (const [k, v] of Object.entries(CORS)) res.setHeader(k, v);
 }
 
+// Normalise a raw item from the model into a strict client-trustable shape.
+function coerceItem(raw, fallbackCurrency) {
+    if (!raw || typeof raw !== 'object') return null;
+    const emoji = typeof raw.emoji === 'string' && raw.emoji.length <= 4 ? raw.emoji : '🏷️';
+    const label = typeof raw.label === 'string' ? raw.label.slice(0, 64) : 'Unknown';
+    const priceNum = Number(raw.price);
+    if (!Number.isFinite(priceNum) || priceNum < 0) return null;
+    const currency = typeof raw.currency === 'string' && /^[A-Z]{3}$/.test(raw.currency)
+        ? raw.currency
+        : fallbackCurrency;
+    return {
+        emoji,
+        label,
+        price: Math.round(priceNum * 100) / 100,
+        currency,
+    };
+}
+
 module.exports = async function handler(req, res) {
     applyCors(res);
 
     if (req.method === 'OPTIONS') return res.status(204).end();
     if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' });
-    if (!process.env.LLM_API_KEY) return res.status(500).json({ error: 'Server misconfigured: missing LLM_API_KEY' });
+    if (!process.env.MISTRAL_API_KEY) return res.status(500).json({ error: 'Server misconfigured: missing MISTRAL_API_KEY' });
 
-    // Vercel auto-parses JSON bodies when Content-Type: application/json
     const body = req.body || {};
     const query = typeof body.query === 'string' ? body.query.trim() : '';
     const currency = typeof body.currency === 'string' ? body.currency.trim().toUpperCase() : '';
@@ -65,13 +96,13 @@ module.exports = async function handler(req, res) {
 
     const userMsg = `Item: ${query}\nTarget currency: ${currency}`;
 
-    let openaiRes;
+    let mistralRes;
     try {
-        openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        mistralRes = await fetch(MISTRAL_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.LLM_API_KEY}`,
+                'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
             },
             body: JSON.stringify({
                 model: MODEL,
@@ -81,20 +112,20 @@ module.exports = async function handler(req, res) {
                 ],
                 response_format: { type: 'json_object' },
                 temperature: 0.2,
-                max_tokens: 120,
+                max_tokens: 400,
             }),
         });
     } catch (err) {
         return res.status(502).json({ error: 'Upstream unreachable', detail: String(err) });
     }
 
-    if (!openaiRes.ok) {
-        const text = await openaiRes.text().catch(() => '');
-        return res.status(502).json({ error: 'Upstream error', status: openaiRes.status, detail: text.slice(0, 400) });
+    if (!mistralRes.ok) {
+        const text = await mistralRes.text().catch(() => '');
+        return res.status(502).json({ error: 'Upstream error', status: mistralRes.status, detail: text.slice(0, 400) });
     }
 
     let chat;
-    try { chat = await openaiRes.json(); }
+    try { chat = await mistralRes.json(); }
     catch { return res.status(502).json({ error: 'Upstream returned non-JSON' }); }
 
     const content = chat && chat.choices && chat.choices[0] && chat.choices[0].message
@@ -105,20 +136,14 @@ module.exports = async function handler(req, res) {
     try { parsed = JSON.parse(content); }
     catch { return res.status(502).json({ error: 'Model output not valid JSON', raw: content.slice(0, 400) }); }
 
-    const emoji = typeof parsed.emoji === 'string' && parsed.emoji.length <= 4 ? parsed.emoji : '🏷️';
-    const label = typeof parsed.label === 'string' ? parsed.label.slice(0, 64) : 'Unknown';
-    const priceNum = Number(parsed.price);
-    if (!Number.isFinite(priceNum) || priceNum < 0) {
-        return res.status(502).json({ error: 'Model returned invalid price' });
-    }
-    const outCur = typeof parsed.currency === 'string' && /^[A-Z]{3}$/.test(parsed.currency)
-        ? parsed.currency
-        : currency;
+    // Accept either { items: [...] } or a bare array (some models drift).
+    const rawItems = Array.isArray(parsed) ? parsed
+        : Array.isArray(parsed.items) ? parsed.items
+        : null;
+    if (!rawItems) return res.status(502).json({ error: 'Model output missing items array' });
 
-    res.status(200).json({
-        emoji,
-        label,
-        price: Math.round(priceNum * 100) / 100,
-        currency: outCur,
-    });
+    const items = rawItems.map(it => coerceItem(it, currency)).filter(Boolean).slice(0, 3);
+    if (items.length === 0) return res.status(502).json({ error: 'No valid items returned' });
+
+    res.status(200).json({ items });
 };

@@ -1,6 +1,6 @@
 # FX Weather — Product Requirements Document
 
-**Version:** v7.1 — Vercel Edition (tab-moods + four-op calculator + real Geo-IP + LLM search + Playbook 8)
+**Version:** v7.2 Omniscient (Mistral compound search + tag-aware Guide + visceral PPP + rate tooltips + Zen Checkout)
 **Build target:** `weather.html` · Service Worker `fx-weather-v32` · Manifest `FX Weather`
 **Status:** v5.0 Editorial → v5.0.1 Interaction polish → v6.0 Lumina reskin → v6.1 De-cardification → v6.3 Lumina Elite (feature release). Atomic CSS + HTML + JS additions; `calcRouting` / `calcAnchors` / `calcSplit` / business-logic untouched.
 **Scope arc:** v2.0 bilingual PWA → v3.0 Nomad routing → v4.0 glassmorphism + trilingual → v4.1 Custom Anchors → v4.2 ATM Slider → v4.3 VAT Refund card → v4.4 AA Splitter → **v5.0 Editorial Fintech reskin + PPP seeding**.
@@ -772,6 +772,105 @@ Choice of host: Vercel. The project already targets Vercel for static hosting (p
 
 - Local file:// or `python -m http.server` testing will show `[Geo] /api/geo unreachable` in the console and no banner. That's expected — the functions only exist on Vercel.
 - First-anchor-per-category is a rough "best effort" picker; users can still fully edit the seeded anchors in the Backpack tab.
+
+## 10.9 v7.2 Omniscient — Mistral, contextual Guide, visceral PPP, rate transparency, Zen (shipped)
+
+PM directive ("the previous spec was too thin — build an elite AI-native financial terminal, not a basic calculator"). Five upgrades layered on top of v7.1 Vercel edition without breaking the deploy story — same `/api/*` topology, same tab/keypad/RPN core. PM's locked decisions (b → γ → II → tooltips approved → icon+swipe bonus) drove every implementation choice.
+
+### 1. Mistral + compound 3-item search
+
+**Backend (`api/search.js`)**
+
+- OpenAI swapped out: env var `LLM_API_KEY` → **`MISTRAL_API_KEY`**; endpoint → `https://api.mistral.ai/v1/chat/completions`; model → `mistral-small-latest` (fast/cheap; PM allowed `mistral-large-latest` if quality issues surface).
+- System prompt rewritten to require an **array** of 3 related price points spanning a realistic spectrum (budget / mid / premium, or local / chain / supermarket). Final shape: `{ "items": [ <item1>, <item2>, <item3> ] }`. Items ordered cheapest → most expensive.
+- Server-side `coerceItem()` runs before returning: emoji ≤ 4 chars or `🏷️` fallback; label sliced to 64 chars; price coerced to finite ≥ 0; currency must match `^[A-Z]{3}$` or falls back to request currency. Empty / all-invalid → 502.
+- `max_tokens: 400` (was 120) to fit 3 items.
+- Tolerates `[…]` bare-array drift (some models ignore the wrapper key) — accepts either shape and trims to 3.
+
+**Frontend**
+
+- `searchAnchor()` rewritten to handle `{ items }` array. New `_searchResults` state. Renders 3 result cards under search bar via `renderSearchResults()`.
+- New CSS class `.result-card` (sage-tint background, accent-green dashed border, 4-col grid: emoji / label / price / `＋`).
+- `addResultAnchor(idx)` adds **just** the clicked item to `fx_anchors`; the card disappears from the result list (so user can keep tapping the others if they want). PM rule: never auto-shovel into anchors.
+
+### 2. Tag-aware Guide + Smart Hero Tip
+
+**Tag system**
+
+- New `GUIDE_TAGS` array indexed parallel to `guideCards` (so it stays language-neutral while content remains in I18N). Each entry mixes currency codes (where the tip is materially more relevant for that currency's region) and topical tags (`cash` / `card` / `tipping` / `weekend` / `vat` / `local-payment`).
+- `vGuide()` now sorts: `score = GUIDE_TAGS[origIdx].includes(S.target) ? 1 : 0`, descending; ties keep original order. The original index is preserved through the sort so `S.openCard` (which tracks expanded state) survives a target-currency change.
+
+**Smart Hero Tip (CURRENCY_TIPS, γ — static + fallback)**
+
+- `currencyTips` dict in I18N for **5 high-confidence currencies** (EUR / USD / GBP / JPY / CNY), trilingual EN/ZH/FR. Each tip is one sentence, no fake-precise numbers, marked `[推论 · v7.2 PM-vetted]` in code. Sample: GBP → "London tube accepts foreign contactless — skip the Oyster card."
+- `currencyTipFallback` for any other currency: "💡 Local tip — coming soon" (and ZH / FR equivalents).
+- New `.hero-tip-strip` element in `vWeather()`, sits below the action-pills row inside the dark gradient hero. Glass styling: `rgba(0,0,0,0.22)` bg, `rgba(255,255,255,0.08)` border, 6px backdrop-blur. Per PM: zero LLM calls on currency switch — pure static lookup.
+
+### 3. Move PPP entry + Visceral PPP Progress Bar
+
+**Entry-point migration**
+
+- `<button class="anchor-add-btn" onclick="openDiscovery()">…</button>` removed from `vBackpack()` (PM: "rip it out").
+- New `<button class="local-anchor-cta">` placed in `vWeather()` directly under the routes section. Glowing dashed pill: `1px dashed rgba(90,147,116,0.5)` border + `@keyframes anchorPulse 2.6s` box-shadow halo. Disabled state when `getAnchors().length >= MAX_ANCHORS`.
+- New i18n key `addLocalAnchor` in EN/ZH/FR.
+
+**PPP Progress Bar**
+
+- `renderPPPProgressBar()`: when `S.amount > 0`, takes `calcAnchors(S.amount)` output, sorts by `count` desc, picks **top 2**, formats as `≈ 32× Big Mac (Shanghai)  |  ≈ 24× Coffee (Paris)`. PM-locked rule: never invent housing/rent data — only multiply against existing user anchors (option II).
+- Lives in `<div id="ppp-progress-slot">` between routes and the Add Local Anchor CTA. `:empty` selector collapses borders so the line is invisible when no amount.
+- `updateKeypad()` updates this slot live alongside `#routing-panel` and `#ppp-slot`.
+
+### 4. Rate Transparency Tooltips
+
+**Approved copy (locked, not editable post-merge without PM nod)** — EN/ZH/FR:
+
+- **`rateInfoZero`** — "0.35% is the mid-market spread benchmark used by services like Wise and Revolut on the EUR corridor. The real-world range is roughly 0.4–0.65% depending on volatility. [推论 · industry baseline]"
+- **`rateInfoCard`** — "1.5% is the baseline hidden network loss bundled into Visa / Mastercard cross-border transactions. Your issuer bank may add another 0–3% as a 'foreign transaction fee'. [推论 · per Visa public docs]"
+- **`rateInfoAtm`** — "This is the per-withdrawal machine fee charged by the foreign ATM. The local ATM operator may add an extra 1.5–4 EUR-equivalent surcharge that's not included here. [估算]"
+
+**UI**
+
+- New `.info-icon-btn` (16×16, accent-green ⓘ glyph, 0.62 opacity) inline next to:
+  - `setting-label` for each of the 3 rate rows in `vBackpack()` settings
+  - `route-method` for each route card in `renderRoutes()` (3 cards × 1 ⓘ each = 3 in-context tooltips)
+- New global modal `#rate-info-modal` (Lumina sheet style — drag handle + uppercase header + body). `showRateInfo(key)` populates and shows; `closeRateInfo()` dismisses. `event.stopPropagation()` on the icon prevents the click from bubbling to the parent route card.
+
+**ZH gotcha fixed**: full-width quotation marks `"…"` inside a `"…"` JS string literal terminate the string. Replaced with corner brackets `「…」` in `rateInfoCard.zh` to keep the parser happy.
+
+### 5. Zen Checkout Mode
+
+- `S.zenMode` flag added to global state.
+- New global overlay `#zen-overlay` (z-index 11000, pure `#000000`). Stack: `clamp(76px, 21vw, 132px)` font-weight-200 target amount → 11px uppercase target-code → 1px hairline divider → `clamp(36px, 9vw, 56px)` weight-200 base amount at 70% opacity → uppercase base-code at 40%. Per PM: pitch black, just the numbers.
+- Trigger icon: `.zen-trigger` button positioned `position: absolute; top: 6px; right: 0` inside `.hero` (which now declares `position: relative`). 32×32 glass pill with the universal "expand to fullscreen" 4-corner-bracket SVG icon.
+- Exit: ✕ at `top + safe-area, left: 16px`. Tap-anywhere-to-exit on the overlay (with `event.stopPropagation()` on the inner stack so amounts aren't clickable).
+- Bonus gesture: passive `touchstart` / `touchend` on `document` checks for horizontal-right swipe (`dx > 90 && |dy| < 40`) **only when**: `S.activeTab === 'weather'`, `!S.zenMode`, and no `.modal-overlay.show` is active. Conservatively scoped per PM's iOS Safari concern.
+- `updateKeypad()` calls `renderZenOverlay()` if zen is on, so the displayed numbers stay live.
+
+### Service Worker
+
+`v37 → v38`. CSS, JS, and HTML all touched.
+
+### Frontend ↔ Backend contract changes (single bump)
+
+- `POST /api/search` request body unchanged (`{query, currency}`).
+- `POST /api/search` response shape: **was** `{emoji, label, price, currency}` → **is** `{ items: [{emoji, label, price, currency}, …] }`. Frontend coupled — both must deploy together. This is the only breaking change in v7.2.
+
+### Verified locally (Playwright run)
+
+- Hero zen-trigger icon visible top-right
+- CNY tip strip renders ("💡 Foreign cards rarely work — bind Alipay TourCard or WeChat Pay before landing.")
+- ⓘ on each route card; clicking opens rate-info popover with the locked copy
+- PPP progress strip below routes: `≈ 32× Big Mac (Shanghai)  |  ≈ 24× Coffee (Paris)`
+- "+ ADD A LOCAL ANCHOR" glowing CTA at the bottom of the weather sheet
+- Zen mode: pitch black overlay, 801 CNY + 100 EUR centred, exit ✕
+- Guide tab with target=CNY: "Tipping: The Invisible Tax" and "Go Local on Payments" rise to top (CNY-tagged cards)
+- Backpack tab: 3 ⓘ icons next to the 3 wallet rates; **0** anchor-add buttons (correctly removed)
+- BODMAS still computes: `15+4.5*2 → 24` ✓
+
+### Pending (need real Vercel deploy)
+
+- `MISTRAL_API_KEY` env var must be added in Vercel for `/api/search` to function.
+- Mistral compound search response (3-item array) verified against schema only locally; needs end-to-end test on the deployed preview URL.
 
 ## 11. v5.0 final state — preserved disciplines
 

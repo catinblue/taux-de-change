@@ -744,6 +744,61 @@
         }
         .tab-body { padding: 0; }
 
+        /* === v7.3 Guide section labels + Live Intel feed === */
+        .guide-section-label {
+            font-size: 10px; font-weight: 600;
+            color: var(--text-main); opacity: 0.55;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            padding: 18px 0 8px;
+        }
+        .guide-section-label.intel-section {
+            padding-top: 24px;
+            border-top: 1px solid #F0F0F0;
+            margin-top: 12px;
+        }
+        .intel-card {
+            position: relative;
+        }
+        .intel-card .flashcard-label::after {
+            content: 'AI';
+            display: inline-block;
+            font-size: 8px; font-weight: 700; letter-spacing: 0.8px;
+            color: var(--accent-green);
+            background: rgba(90, 147, 116, 0.12);
+            border: 1px solid rgba(90, 147, 116, 0.3);
+            border-radius: 4px;
+            padding: 1px 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        .intel-loading {
+            font-size: 12px; font-weight: 400;
+            color: var(--text-main); opacity: 0.6;
+            padding: 22px 0;
+            text-align: center;
+            line-height: 1.5;
+            animation: intelPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes intelPulse {
+            0%, 100% { opacity: 0.4; }
+            50%      { opacity: 0.85; }
+        }
+        .intel-error {
+            font-size: 11px; font-weight: 400;
+            color: var(--text-main); opacity: 0.55;
+            padding: 14px 4px;
+            line-height: 1.5;
+        }
+        .intel-disclaimer {
+            font-size: 10px; font-weight: 400;
+            color: var(--text-main); opacity: 0.45;
+            padding: 16px 4px 4px;
+            text-align: center;
+            line-height: 1.4;
+            letter-spacing: 0.2px;
+        }
+
         /* === v7.0 Flashcards: minimalist accordion rows on white === */
         .flashcard {
             background: none;
@@ -1714,17 +1769,17 @@
             timeMachineCost: "Withdrawing 1,000 {BASE} today costs <span class='delta-cost'>{delta} {TARGET}</span> more than {date}.",
             pppPrefix: "≈",
             guideTitle: "Pocket Guide",
-            guideSubtitle: "Tiny tips that keep your wallet safe abroad.",
+            guideSubtitle: "Three iron rules. Five live insights for wherever you land.",
             guideCards: [
-                { emoji: "🧛‍♂️", title: "The DCC Vampire", body: "Never pay in your home currency. Always choose the local currency on the machine!" },
-                { emoji: "🏧",    title: "The ATM Monster", body: "ATMs charge a flat fee. Withdrawing small amounts often will eat your money alive." },
-                { emoji: "🎓",    title: "Timing is Everything", body: "Big transfer coming up? Check our weather indicator — wait for a sunny day to send!" },
-                { emoji: "💸",    title: "The Refund Counter Trap", body: "At the airport VAT desk, always take your refund in {BASE}. If you choose {TARGET}, they will skim another 5% using terrible exchange rates!" },
-                { emoji: "🛑",    title: "The Weekend Markup", body: "Card networks and neobanks freeze FX markets from late Friday to early Monday. To hedge, many add a ~0.5–1% weekend spread on top of the weekday rate. Rule of thumb: settle big cross-currency bills on weekdays, not Sunday brunch." },
-                { emoji: "💵",    title: "Cash or Plastic?", body: "Pay where the locals pay. Germany and Japan still run heavy on cash — a meat market or a ramen shop may politely decline foreign Visa. Sweden, UK and most Nordics are effectively cashless; hauling a wallet of krona just loses you ATM fees twice." },
-                { emoji: "🪙",    title: "Tipping: The Invisible Tax", body: "The US expects 18–20% at sit-down restaurants. Most of continental Europe bakes service into the bill (rounding up a euro or two is enough). In Japan, tipping is mildly rude — staff will chase you down the street to return the coin." },
-                { emoji: "📱",    title: "Go Local on Payments", body: "Foreign-card surcharges vanish the moment you hop onto the local rail: PromptPay in Thailand, PIX in Brazil, UPI in India, iDEAL at Dutch checkouts, Alipay / WeChat Pay in mainland China. Most of these top up from a cheap local prepaid card or e-wallet." }
+                { emoji: "🧛‍♂️", title: "The DCC Vampire", body: "Never pay in your home currency at a card terminal. Always tap 'pay in local currency' — DCC hides a 3–7% spread on top of the network rate." },
+                { emoji: "🏧",    title: "The ATM Monster", body: "Foreign ATMs charge a flat per-withdrawal fee. Pulling out €30 four times bleeds you four times — withdraw less often, in larger chunks." },
+                { emoji: "🛑",    title: "The Weekend Markup", body: "Card networks and neobanks freeze FX markets from late Friday to early Monday. They typically add about 0.5–1% weekend spread to hedge. Settle big cross-currency bills on weekdays." }
             ],
+            ironRulesLabel:    "Iron rules",
+            localIntelLabel:   "Local intel",
+            intelLoadingLabel: "📡 Tuning into local intel…",
+            intelErrorLabel:   "Local intel unavailable right now. Iron rules above still apply.",
+            intelDisclaimer:   "🤖 AI-generated by Mistral. Verify before relying.",
             backpackTitle: "My Backpack",
             backpackSubtitle: "Make this app feel like yours.",
             hapticLabel: "Vibration",
@@ -1821,17 +1876,17 @@
             timeMachineCost: "今天取 1,000 {BASE},比 {date} 多花 <span class='delta-cost'>{delta} {TARGET}</span>。",
             pppPrefix: "≈",
             guideTitle: "口袋避坑指南",
-            guideSubtitle: "几条小贴士,让钱包在境外更稳。",
+            guideSubtitle: "三条铁律 + 五条本地实时情报。",
             guideCards: [
-                { emoji: "🧛‍♂️", title: "警惕 DCC 吸血鬼", body: "刷卡时绝对不要选人民币结算,永远选当地货币!" },
-                { emoji: "🏧",    title: "ATM 吞金兽", body: "境外取款有高昂的单笔机具费,千万别频繁去取小额现金。" },
-                { emoji: "🎓",    title: "交学费看天气", body: "准备交学费或大额汇款?看看主页的天气指示 — 挑个晴天再行动!" },
-                { emoji: "💸",    title: "退税柜台的暗刀", body: "机场退税时,永远要求退 {BASE}(当地货币)!如果选了 {TARGET},退税公司会用极差的汇率再偷偷割你 5% 的韭菜!" },
-                { emoji: "🛑",    title: "周末加价暗坑", body: "周五晚到周一早,外汇市场关门。Visa / Mastercard / Revolut 这期间往往加收一层约 0.5–1% 的风险溢价。大额消费尽量放到工作日结清,别留到周日早午餐。" },
-                { emoji: "💵",    title: "现金还是刷卡?", body: "入乡随俗。德国、日本仍是现金重度社会,菜市场和拉面馆可能直接拒绝外卡;北欧、英国基本无现金,带一兜硬币只会多交两遍 ATM 费。出发前先问下当地习惯。" },
-                { emoji: "🪙",    title: "小费 — 隐形税", body: "美国堂食 18–20% 是下限。欧洲大陆多数把服务费直接写进账单,凑个整就够。日本给小费属于失礼 — 店员会追出来还你硬币。" },
-                { emoji: "📱",    title: "走本地支付轨道", body: "外卡手续费一上本地通道就消失:泰国 PromptPay、巴西 PIX、印度 UPI、荷兰 iDEAL、中国大陆 Alipay / WeChat Pay。大多支持本地预付卡 / 电子钱包充值,比刷外卡省得多。" }
+                { emoji: "🧛‍♂️", title: "警惕 DCC 吸血鬼", body: "POS 终端问你「用本国货币还是当地货币?」时,永远选当地。DCC 会在网络汇率上再叠 3–7% 的隐形价差。" },
+                { emoji: "🏧",    title: "ATM 吞金兽", body: "境外 ATM 单笔固定机具费。每次取 €30 取四次 = 收四遍费 —— 单笔多取一些,降低次数。" },
+                { emoji: "🛑",    title: "周末加价暗坑", body: "周五晚到周一早,外汇市场关门。卡网和 neobank 常在这期间加 0.5–1% 风险溢价对冲。大额消费尽量周中结清。" }
             ],
+            ironRulesLabel:    "铁律",
+            localIntelLabel:   "本地情报",
+            intelLoadingLabel: "📡 正在拉取本地情报…",
+            intelErrorLabel:   "本地情报暂不可用,上面三条铁律仍然有效。",
+            intelDisclaimer:   "🤖 由 Mistral AI 生成,采纳前请自行核实。",
             backpackTitle: "我的背包",
             backpackSubtitle: "把这个 App 调成最适合你的样子。",
             hapticLabel: "震动反馈",
@@ -1930,15 +1985,15 @@
             guideTitle: "Guide de poche",
             guideSubtitle: "Quelques astuces pour protéger votre portefeuille.",
             guideCards: [
-                { emoji: "🧛‍♂️", title: "Le Piège DCC", body: "Ne payez jamais dans votre devise. Choisissez toujours la monnaie locale sur le terminal !" },
-                { emoji: "🏧",    title: "Le Monstre du DAB", body: "Les distributeurs prennent des frais fixes. Évitez de retirer de petites sommes trop souvent." },
-                { emoji: "🎓",    title: "Le Bon Timing", body: "Un gros transfert à faire ? Regardez l'indicateur météo — attendez une journée ensoleillée !" },
-                { emoji: "💸",    title: "Le Piège de la Détaxe", body: "Au guichet de détaxe, demandez toujours le remboursement en {BASE}. Choisir {TARGET} leur permet de voler 5% avec un taux de change catastrophique !" },
-                { emoji: "🛑",    title: "La Majoration Week-end", body: "Les marchés FX ferment du vendredi soir au lundi matin. Visa, Mastercard et Revolut appliquent souvent une marge d'environ 0,5–1% pour couvrir le risque. Réflexe : réglez vos gros achats en devise étrangère en semaine, pas le dimanche au brunch." },
-                { emoji: "💵",    title: "Espèces ou carte ?", body: "Adaptez-vous au pays. L'Allemagne et le Japon restent très cash — un marché ou un petit resto peut refuser une Visa étrangère. La Suède, le Royaume-Uni et les pays nordiques sont quasi sans espèces : traîner des pièces ne vous coûtera que des frais de DAB." },
-                { emoji: "🪙",    title: "Pourboires — l'impôt invisible", body: "Aux USA, 18–20% au restaurant est un plancher. L'Europe continentale inclut le service : arrondir d'un ou deux euros suffit. Au Japon, laisser un pourboire est ressenti comme impoli — le serveur vous rattrapera pour rendre la pièce." },
-                { emoji: "📱",    title: "Passez sur les rails locaux", body: "Les frais cartes étrangères disparaissent dès qu'on passe local : PromptPay en Thaïlande, PIX au Brésil, UPI en Inde, iDEAL aux Pays-Bas, Alipay / WeChat Pay en Chine. La plupart se rechargent via une prépayée locale ou un e-wallet bon marché." }
+                { emoji: "🧛‍♂️", title: "Le Piège DCC", body: "Au terminal, ne payez jamais dans votre devise — toujours dans la devise locale. La DCC ajoute 3–7% de marge sur le taux réseau." },
+                { emoji: "🏧",    title: "Le Monstre du DAB", body: "Les DAB étrangers facturent des frais fixes par retrait. Retirer 30 € quatre fois = quatre fois la facture. Faites moins de retraits, plus gros." },
+                { emoji: "🛑",    title: "La Majoration Week-end", body: "Le marché FX ferme du vendredi soir au lundi matin. Réseaux et néobanques ajoutent typiquement ~0,5–1% de marge week-end. Réglez les gros achats en semaine." }
             ],
+            ironRulesLabel:    "Règles d'airain",
+            localIntelLabel:   "Renseignement local",
+            intelLoadingLabel: "📡 Récupération des renseignements…",
+            intelErrorLabel:   "Renseignement local indisponible. Les règles d'airain ci-dessus tiennent.",
+            intelDisclaimer:   "🤖 Généré par Mistral AI. Vérifiez avant de vous y fier.",
             backpackTitle: "Mon Sac à Dos",
             backpackSubtitle: "Rendez cette appli vraiment vôtre.",
             hapticLabel: "Vibration",
@@ -2001,7 +2056,11 @@
         splitPayer: 'zero',
         zenMode: false,
         vatRefundOn: false,
-        geoCountry: null            // filled by /api/geo when available; used for EUR sub-rules
+        geoCountry: null,           // filled by /api/geo when available; used for EUR sub-rules + intel
+        intelCards: [],             // v7.3 — last fetched live-intel array (5 items)
+        intelLoading: false,
+        intelError: false,
+        intelKey: null              // 'JP_en' style — identifies which (country, lang) intelCards belong to
     };
 
     function t() { return I18N[S.lang]; }
@@ -2221,6 +2280,7 @@
         } else if (currentPickerType === 'target' && S.target !== curr) {
             S.target = curr;
             S.vatRefundOn = false;     // VAT rule changes with target
+            invalidateIntelOnContextChange();   // intel is per-country, must re-fetch
             resetCostCaches();
             renderContent();
             await fetchR();
@@ -2243,6 +2303,7 @@
         S.lang = lang;
         localStorage.setItem('fx_lang', S.lang);
         applyI18n();
+        invalidateIntelOnContextChange();   // intel cache is per-lang, must re-fetch
         renderLangSwitch();
         renderContent();
     }
@@ -2347,6 +2408,8 @@
 
     function renderContent() {
         const c = document.getElementById('content');
+        // Sync cache hit for intel BEFORE rendering Guide so cached path skips loader.
+        if (S.activeTab === 'guide') ensureGuideIntelSync();
         if      (S.activeTab === 'weather')  c.innerHTML = vWeather();
         else if (S.activeTab === 'guide')    c.innerHTML = vGuide();
         else if (S.activeTab === 'backpack') c.innerHTML = vBackpack();
@@ -2354,6 +2417,7 @@
         renderDock();
         applyTabGradient(S.activeTab);
         if (S.activeTab === 'weather') { tickRoutes(); tickPPP(); maybeRenderGeoBanner(); }
+        if (S.activeTab === 'guide')   { ensureGuideIntel(); }   // async no-op or fetch
     }
 
     // === Weather tab (v7.0 — floating hero + white sheet) ===
@@ -2610,6 +2674,7 @@
         S.base = S.target;
         S.target = tmp;
         S.vatRefundOn = false;        // post-swap target probably has a different VAT rule
+        invalidateIntelOnContextChange();
         resetCostCaches();
         renderContent();
         await fetchR();
@@ -2777,6 +2842,94 @@
         localStorage.setItem('fx_geo_dismissed', 'true');
         const slot = document.getElementById('geo-banner');
         if (slot) { slot.classList.remove('show'); slot.innerHTML = ''; }
+    }
+
+    // === v7.3 Live Intel (Mistral country-specific tip feed) ===
+    const INTEL_TTL_MS = 24 * 60 * 60 * 1000;
+
+    // Best-effort country fallback when geo-IP didn't resolve. Returns the
+    // first country whose currency matches S.target — for EUR this gives
+    // 'FR' (most-common tourist Eurozone destination), good enough for tips.
+    function reverseCcyToCountry(ccy) {
+        for (const country in COUNTRY_TO_CCY) {
+            if (COUNTRY_TO_CCY[country] === ccy) return country;
+        }
+        return null;
+    }
+
+    function intelKeyFor(country, lang) { return `${country}_${lang}`; }
+
+    // Synchronous cache hit check — populates S.intelCards if a fresh entry
+    // exists for the current (country, lang) pair. Called BEFORE vGuide()
+    // renders so the cached path skips the loading flicker.
+    function ensureGuideIntelSync() {
+        const country = (S.geoCountry || reverseCcyToCountry(S.target) || '').toUpperCase();
+        if (!country) return false;
+        const key = intelKeyFor(country, S.lang);
+        if (S.intelKey === key && S.intelCards.length > 0) return true;
+        const raw = localStorage.getItem(`fx_intel_${key}`);
+        if (!raw) return false;
+        try {
+            const { items, ts } = JSON.parse(raw);
+            if (Array.isArray(items) && items.length > 0 && Date.now() - ts < INTEL_TTL_MS) {
+                S.intelCards   = items;
+                S.intelKey     = key;
+                S.intelLoading = false;
+                S.intelError   = false;
+                return true;
+            }
+        } catch {}
+        return false;
+    }
+
+    async function ensureGuideIntel() {
+        if (ensureGuideIntelSync()) return; // fresh cache covers this turn
+        const country = (S.geoCountry || reverseCcyToCountry(S.target) || '').toUpperCase();
+        if (!country) return;
+        const key = intelKeyFor(country, S.lang);
+        S.intelCards   = [];
+        S.intelLoading = true;
+        S.intelError   = false;
+        S.intelKey     = key;
+        refreshGuideIntelDom();
+        try {
+            const res = await fetch('/api/intel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ country, currency: S.target, lang: S.lang })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            const items = Array.isArray(data && data.items)
+                ? data.items.filter(it => it && it.title && it.body)
+                : [];
+            if (items.length === 0) throw new Error('Empty items');
+            S.intelCards   = items;
+            S.intelLoading = false;
+            S.intelError   = false;
+            localStorage.setItem(`fx_intel_${key}`,
+                JSON.stringify({ items, ts: Date.now() }));
+        } catch (err) {
+            console.warn('[Intel] /api/intel fetch failed:', err.message);
+            S.intelCards   = [];
+            S.intelLoading = false;
+            S.intelError   = true;
+        }
+        refreshGuideIntelDom();
+    }
+
+    function refreshGuideIntelDom() {
+        const slot = document.getElementById('intel-slot');
+        if (slot) slot.innerHTML = renderGuideIntelSlot();
+    }
+
+    // Reset intel when target / lang changes so a stale cache from another
+    // country doesn't show until the new fetch completes.
+    function invalidateIntelOnContextChange() {
+        S.intelCards   = [];
+        S.intelLoading = false;
+        S.intelError   = false;
+        S.intelKey     = null;
     }
 
     function renderPPPContent() {
@@ -3441,36 +3594,26 @@
     }
 
     // === Guide tab ===
-    // [推论] Tag map indexed by guideCards position. Currency codes mark cards
-    // where the tip is materially MORE relevant for that currency's region.
-    // Topical tags (cash / card / atm / tipping / weekend / vat / local-payment)
-    // are kept for future filter UIs.
+    // [推论] Tag map indexed by guideCards position — now only the 3 universal
+    // iron rules. Country-specific tips were retired in v7.3 in favor of the
+    // /api/intel live feed; the tag-sort no-ops for the iron rules but the
+    // structure is kept so future iron-rule additions can declare context.
     const GUIDE_TAGS = [
-        ['card', 'fee'],                              // 0 — DCC Vampire (universal)
-        ['atm', 'fee'],                                // 1 — ATM Monster (universal)
-        ['transfer', 'timing'],                        // 2 — Timing is Everything (universal)
-        ['EUR', 'GBP', 'vat', 'refund'],               // 3 — Refund Counter Trap (EU travelers)
-        ['weekend', 'card'],                           // 4 — Weekend Markup (universal card)
-        ['JPY', 'EUR', 'GBP', 'cash'],                 // 5 — Cash or Plastic? (DE/JP cash, SE/UK cashless)
-        ['USD', 'JPY', 'CNY', 'tipping'],              // 6 — Tipping Culture
-        ['CNY', 'EUR', 'local-payment']                // 7 — Local Payment Networks
+        ['card', 'fee', 'dcc'],     // 0 — DCC Vampire
+        ['atm', 'fee'],              // 1 — ATM Monster
+        ['weekend', 'card', 'fx']    // 2 — Weekend Markup
     ];
 
     function vGuide() {
         const d = t();
         const interp = (s) => s.replace(/\{BASE\}/g, S.base).replace(/\{TARGET\}/g, S.target);
 
-        // Sort by tag-match against S.target; tied cards keep original order
-        const ordered = d.guideCards.map((c, origIdx) => ({
-            c,
-            origIdx,
-            score: (GUIDE_TAGS[origIdx] || []).includes(S.target) ? 1 : 0
-        })).sort((a, b) => b.score - a.score || a.origIdx - b.origIdx);
-
-        const cards = ordered.map(({ c, origIdx }, displayIdx) => {
-            const open = S.openCard === origIdx;
+        // Iron rules — fixed order, three universal traps
+        const ironCards = d.guideCards.map((c, idx) => {
+            const cardKey = `iron:${idx}`;
+            const open = S.openCard === cardKey;
             return `
-                <div class="flashcard${open ? ' open' : ''}" style="--stagger:${displayIdx + 1}" onclick="toggleCard(${origIdx})">
+                <div class="flashcard${open ? ' open' : ''}" style="--stagger:${idx + 1}" onclick="toggleCard('${cardKey}')">
                     <div class="flashcard-header">
                         <div class="flashcard-title">
                             <span class="flashcard-emoji">${c.emoji}</span>
@@ -3482,6 +3625,7 @@
                 </div>
             `;
         }).join('');
+
         return `
             <div class="bottom-sheet full">
                 <div class="sheet-handle"></div>
@@ -3489,13 +3633,49 @@
                     <h1 class="tab-title">${d.guideTitle}</h1>
                     <p class="tab-subtitle">${d.guideSubtitle}</p>
                 </section>
-                <section class="tab-body">${cards}</section>
+                <section class="tab-body">
+                    <div class="guide-section-label">${d.ironRulesLabel}</div>
+                    ${ironCards}
+                    <div class="guide-section-label intel-section">${d.localIntelLabel}${S.geoCountry ? ` · ${S.geoCountry}` : ''}</div>
+                    <div id="intel-slot">${renderGuideIntelSlot()}</div>
+                </section>
             </div>
         `;
     }
-    function toggleCard(i) {
+
+    function renderGuideIntelSlot() {
+        const d = t();
+        if (S.intelLoading) {
+            return `<div class="intel-loading">${d.intelLoadingLabel}</div>`;
+        }
+        if (S.intelError && S.intelCards.length === 0) {
+            return `<div class="intel-error">${d.intelErrorLabel}</div>`;
+        }
+        if (S.intelCards.length === 0) {
+            // Initial state before fetch starts (e.g. /api/intel unreachable in local dev)
+            return '';
+        }
+        const cards = S.intelCards.map((it, idx) => {
+            const cardKey = `intel:${idx}`;
+            const open = S.openCard === cardKey;
+            return `
+                <div class="flashcard intel-card${open ? ' open' : ''}" style="--stagger:${idx + 1}" onclick="toggleCard('${cardKey}')">
+                    <div class="flashcard-header">
+                        <div class="flashcard-title">
+                            <span class="flashcard-emoji">${it.emoji || '📍'}</span>
+                            <span class="flashcard-label">${escapeHtml(it.title)}</span>
+                        </div>
+                        <span class="flashcard-chevron">▼</span>
+                    </div>
+                    <div class="flashcard-body">${escapeHtml(it.body)}</div>
+                </div>
+            `;
+        }).join('');
+        return `${cards}<div class="intel-disclaimer">${d.intelDisclaimer}</div>`;
+    }
+    function toggleCard(key) {
         haptic();
-        S.openCard = (S.openCard === i) ? null : i;
+        S.openCard = (S.openCard === key) ? null : key;
         renderContent();
     }
 

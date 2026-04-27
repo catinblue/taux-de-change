@@ -43,17 +43,13 @@ cd taux-de-change
 vercel link
 vercel env add MISTRAL_API_KEY    # paste key when prompted
 vercel deploy --prod
-```
 
-Local frontend-only (no `/api/*`):
-```bash
+# Local frontend-only (no /api/*)
 python -m http.server 8765
 # open http://localhost:8765/weather.html
-```
 
-Local dev with serverless emulation:
-```bash
-vercel dev   # serves static + api/* on localhost:3000
+# Local dev with serverless emulation (static + api/* on :3000)
+vercel dev
 ```
 
 ---
@@ -69,7 +65,6 @@ Custom shunting-yard tokeniser plus an RPN evaluator parses BODMAS expressions i
 | `5*-3` | `-15` | unary after binary op |
 | `100/0` | `NaN` | UI reverts to last valid amount |
 
-Keypad layout:
 ```
    1   2   3
    4   5   6
@@ -90,20 +85,20 @@ Three-state micro-interaction below the target amount, driven by a hardcoded `VA
 | At/above, on | active pill + DCC reminder strip | tap to revert |
 | Target = GBP | red box: `🛑 UK abolished tourist refunds in 2020` | informational |
 
-Country rules:
-
-| Target | Threshold | Refund |
-|--------|-----------|--------|
-| `JPY` | 5 000 | 10 % |
-| `AUD` | 300 | 10 % |
-| `SGD` | 100 | 9 % |
-| `KRW` | 30 000 | 10 % |
-| `CHF` | 300 | 7.7 % |
-| `EUR` (geo `FR`) | 100 | 12 % |
-| `EUR` (geo `DE`) | 50 | 11 % |
-| `EUR` (other) | 100 | 11 % |
-| `GBP` | — | UK exception |
-| `USD` `CNY` `HKD` `CAD` | — | not applicable |
+```js
+const VAT_RULES = {
+  JPY:    { threshold: 5000,  rate: 0.10  },     // Japan Tax-Free
+  AUD:    { threshold: 300,   rate: 0.10  },     // TRS Refund
+  SGD:    { threshold: 100,   rate: 0.09  },     // SG Tourist Refund
+  KRW:    { threshold: 30000, rate: 0.10  },     // Korea Tax-Free
+  CHF:    { threshold: 300,   rate: 0.077 },     // Swiss MWST Refund
+  EUR_FR: { threshold: 100,   rate: 0.12  },     // France Détaxe (geo-resolved)
+  EUR_DE: { threshold: 50,    rate: 0.11  },     // Germany VAT (geo-resolved)
+  EUR:    { threshold: 100,   rate: 0.11  },     // generic Eurozone fallback
+  // GBP routed through UK-exception path (no toggle)
+  // USD / CNY / HKD / CAD: not applicable
+};
+```
 
 ## Smart Discovery (Mistral)
 
@@ -134,7 +129,7 @@ Response: { "items": [
 | Tier | Source | Content |
 |------|--------|---------|
 | Iron rules | hardcoded i18n | DCC vampire · ATM monster · weekend markup |
-| Live intel | Mistral `mistral-small-latest` | local payment rails · regulatory quirks · brand arbitrage · timing traps |
+| Live intel | Mistral `mistral-small-latest` | local payment rails · regulatory quirks · brand arbitrage · timing traps · each card tagged with `AI` badge |
 
 ```
 Request:  POST /api/intel
@@ -145,8 +140,6 @@ Response: { "items": [
             ... × 5
           ] }
 ```
-
-Each card carries an inline `AI` badge and a footer disclaimer.
 
 ## The Travel Cycle
 
@@ -187,18 +180,6 @@ Each card carries an inline `AI` badge and a footer disclaimer.
 | `MISTRAL_API_KEY` | yes | — | Powers `/api/search` and `/api/intel`. |
 
 `/api/geo` reads Vercel edge headers; no env var.
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | `weather.html` single file, vanilla JS, Outfit font |
-| Service Worker | cache-first shell · network-first FX rates · passthrough `/api/*` |
-| Serverless | Vercel Functions, Node 20+, CommonJS |
-| LLM | Mistral `mistral-small-latest` |
-| Geo | Vercel edge `x-vercel-ip-*` headers |
-| FX rates | exchangerate-api (current) + frankfurter.dev (30-day) |
-| State | `localStorage` only |
 
 ## Requirements
 

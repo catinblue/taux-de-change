@@ -202,9 +202,9 @@ Each card carries an inline `AI` badge and a footer disclaimer.
 
 ## Requirements
 
-- A modern browser (`100dvh` · `backdrop-filter`)
-- A Vercel account
+- A Vercel account (free Hobby tier sufficient)
 - A Mistral API key
+- Node 18+ (for the Vercel CLI)
 
 ## Repository Structure
 
